@@ -3,7 +3,11 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 
-const LoginPage = () => {
+const LoginPage = ({
+  searchParams,
+}: {
+  searchParams: { callbackUrl: string };
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [alert, setAlert] = useState({
     status: false,
@@ -12,6 +16,10 @@ const LoginPage = () => {
   });
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  const callbackUrl = searchParams?.callbackUrl
+    ? searchParams?.callbackUrl
+    : "/redirect";
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -37,6 +45,7 @@ const LoginPage = () => {
           message: "login success",
           color: "success",
         });
+        window.location.href = callbackUrl;
       }
     } catch (error) {
       setIsLoading(false);
