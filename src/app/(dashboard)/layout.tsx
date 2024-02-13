@@ -3,7 +3,6 @@ import DashboardHeader from "@/components/DashboardHeader";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { authOptions } from "@/libs/authOptions";
 import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
 import Script from "next/script";
 
 const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {

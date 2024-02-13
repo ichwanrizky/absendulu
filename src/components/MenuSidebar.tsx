@@ -48,7 +48,6 @@ const MenuSidebar = ({ accessToken }: { accessToken: string }) => {
   }
 
   const menuGroups = data?.data;
-  console.log(menuGroups);
 
   return (
     <div className="nav accordion" id="accordionSidenav">
