@@ -41,8 +41,8 @@ model menu {
   menu          String?
   path          String?
   urut          Int?
-  menu_group    menu_group?   @relation(fields: [menu_group_id], references: [id])
   menu_group_id Int?
+  menu_group    menu_group?   @relation(fields: [menu_group_id], references: [id])
   access_menu   access_menu[]
 }
 

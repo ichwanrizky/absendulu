@@ -4,7 +4,20 @@ import useSWR, { mutate } from "swr";
 import ModalCreate from "./modalCreate";
 import ModalEdit from "./modalEdit";
 
+type Menu = {
+  id: number;
+  menu: string;
+  path: string;
+  urut: number;
+  menu_group_id: number;
+  menu_group: MenuGroup;
+};
+
 type MenuGroup = {
+  menu_group: string;
+};
+
+type MenuGroups = {
   id: number;
   menu_group: string;
   urut: number;
@@ -16,49 +29,81 @@ interface isLoadingProps {
   [key: number]: boolean;
 }
 
-const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
+const MenuData = ({ accessToken }: { accessToken: string }) => {
+  const [isLoadingCreate, setIsLoadingCreate] = useState(false);
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
 
   const [isModalCreateOpen, setModalCreateOpen] = useState(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState(false);
 
-  const [dataEdit, setDataEdit] = useState({} as MenuGroup);
+  const [menuGroups, setMenuGroups] = useState({} as MenuGroups[]);
+  const [dataEdit, setDataEdit] = useState({} as Menu);
 
   const closeModal = () => {
     setModalCreateOpen(false);
     setIsModalEditOpen(false);
-    mutate(
-      process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menugroup"
-    );
+    mutate(process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menu");
   };
 
-  const handleCreate = () => {
-    setModalCreateOpen(true);
-  };
-
-  const handleEdit = async (id: number) => {
-    setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
+  const handleCreate = async () => {
+    setIsLoadingCreate(true);
     try {
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/configuration/menugroup/" +
-          id,
+        process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menugroup",
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
           },
         }
       );
-      const res = await response.json();
 
+      const res = await response.json();
       if (!response.ok) {
         alert(res.message);
       } else {
-        setDataEdit(res.data);
+        setMenuGroups(res.data);
+        setModalCreateOpen(true);
+      }
+    } catch (error) {
+      alert("something went wrong");
+    }
+    setIsLoadingCreate(false);
+  };
+
+  const handleEdit = async (id: number) => {
+    setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
+    try {
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menugroup",
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const response2 = await fetch(
+        process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menu/" + id,
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const res = await response.json();
+      const res2 = await response2.json();
+      if (!response.ok || !response2.ok) {
+        alert(!response.ok ? res.message : res2.message);
+      } else {
+        setMenuGroups(res.data);
+        setDataEdit(res2.data);
         setIsModalEditOpen(true);
       }
     } catch (error) {
+      console.log(error);
+
       alert("something went wrong");
     }
     setIsLoadingEdit((prev) => ({ ...prev, [id]: false }));
@@ -69,9 +114,7 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
       setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
       try {
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/configuration/menugroup/" +
-            id,
+          process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menu/" + id,
           {
             method: "DELETE",
             headers: {
@@ -84,7 +127,7 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
         alert(res.message);
         if (response.ok) {
           mutate(
-            process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menugroup"
+            process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menu"
           );
         }
       } catch (error) {
@@ -106,7 +149,7 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
   };
 
   const { data, error, isLoading } = useSWR(
-    process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menugroup",
+    process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menu",
     fetcher
   );
 
@@ -118,7 +161,7 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
     return <>something went wrong</>;
   }
 
-  const menuGroups = data?.data;
+  const menus = data?.data;
   const actions = data?.actions;
 
   return (
@@ -126,15 +169,29 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
       <div className="card-body">
         <div className="row">
           <div className="col-sm-12">
-            {actions?.includes("insert") && (
-              <button
-                type="button"
-                className="btn btn-primary btn-sm fw-bold"
-                onClick={() => handleCreate()}
-              >
-                Add Data
-              </button>
-            )}
+            {actions?.includes("insert") &&
+              (isLoadingCreate ? (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm fw-bold"
+                  disabled
+                >
+                  <span
+                    className="spinner-border spinner-border-sm me-2"
+                    role="status"
+                    aria-hidden="true"
+                  />{" "}
+                  Loading...
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm fw-bold"
+                  onClick={() => handleCreate()}
+                >
+                  Add Data
+                </button>
+              ))}
           </div>
         </div>
 
@@ -145,16 +202,12 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
                   No
                 </th>
-                <th className="fw-semibold fs-6">Menu Group</th>
-                <th className="fw-semibold fs-6" style={{ width: "5%" }}>
-                  Urut
+                <th className="fw-semibold fs-6">Menu</th>
+                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
+                  Path
                 </th>
-                <th className="fw-semibold fs-6" style={{ width: "5%" }}>
+                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
                   Group
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "20%" }}>
-                  {" "}
-                  Parent ID
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
                   Action
@@ -162,26 +215,19 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
               </tr>
             </thead>
             <tbody>
-              {menuGroups?.length === 0 ? (
+              {menus?.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={5}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
               ) : (
-                menuGroups?.map((item: MenuGroup, index: number) => (
+                menus?.map((item: Menu, index: number) => (
                   <tr key={index}>
                     <td align="center">{index + 1}</td>
-                    <td>{item.menu_group}</td>
-                    <td align="center">{item.urut}</td>
-                    <td align="center">
-                      {item.group === 1 ? (
-                        <span className="badge bg-success">True</span>
-                      ) : (
-                        <span className="badge bg-danger">False</span>
-                      )}
-                    </td>
-                    <td>{item.parent_id}</td>
+                    <td>{item.menu}</td>
+                    <td>{item.path}</td>
+                    <td>{item.menu_group.menu_group}</td>
                     <td>
                       <div className="d-flex gap-2">
                         {actions?.includes("update") &&
@@ -235,6 +281,7 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
           isModalOpen={isModalCreateOpen}
           onClose={closeModal}
           accessToken={accessToken}
+          menuGroups={menuGroups}
         />
       )}
 
@@ -244,10 +291,11 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
           isModalOpen={isModalEditOpen}
           onClose={closeModal}
           accessToken={accessToken}
-          data={dataEdit}
+          menuGroups={menuGroups}
+          dataEdit={dataEdit}
         />
       )}
     </>
   );
 };
-export default MenuGroupData;
+export default MenuData;
