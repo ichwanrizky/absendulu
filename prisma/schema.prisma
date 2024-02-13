@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model roles {
+  id          Int           @id @default(autoincrement())
+  role_name   String
+  user        user[]
+  access_menu access_menu[]
+}
+
+model user {
+  id        Int       @id @default(autoincrement())
+  username  String    @unique
+  password  String
+  createdAt DateTime? @db.DateTime(0)
+  roles     roles?    @relation(fields: [rolesId], references: [id])
+  rolesId   Int?
+  Session   Session[]
+}
+
+model menu_group {
+  id         Int     @id @default(autoincrement())
+  menu_group String  @unique
+  urut       Int?
+  group      Int?
+  parent_id  String?
+  menu       menu[]
+}
+
+model menu {
+  id            Int           @id @default(autoincrement())
+  menu          String?
+  path          String?
+  urut          Int?
+  menu_group    menu_group?   @relation(fields: [menu_group_id], references: [id])
+  menu_group_id Int?
+  access_menu   access_menu[]
+}
+
+model access_menu {
+  id      Int     @id @default(autoincrement())
+  menu_id Int?
+  menu    menu?   @relation(fields: [menu_id], references: [id])
+  action  String?
+  role_id Int?
+  roles   roles?  @relation(fields: [role_id], references: [id])
+}
+
+model Session {
+  id        Int       @id @default(autoincrement())
+  token     String    @unique @db.VarChar(300)
+  user_id   Int
+  user      user      @relation(fields: [user_id], references: [id])
+  createdAt DateTime? @db.DateTime(0)
+  expiredAt DateTime? @db.DateTime(0)
+  expired   Boolean   @default(false)
+
+  @@unique([token, user_id])
+}
