@@ -51,8 +51,8 @@ model access_menu {
   menu_id Int?
   menu    menu?   @relation(fields: [menu_id], references: [id])
   action  String?
-  role_id Int?
-  roles   roles?  @relation(fields: [role_id], references: [id])
+  role_id Int
+  roles   roles   @relation(fields: [role_id], references: [id])
 }
 
 model Session {
