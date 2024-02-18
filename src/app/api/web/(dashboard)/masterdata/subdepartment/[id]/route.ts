@@ -59,7 +59,7 @@ export async function GET(
       );
     }
 
-    var data = await prisma.subDepartment.findFirst({
+    var data = await prisma.sub_department.findFirst({
       where: {
         id: Number(id),
       },
@@ -202,7 +202,7 @@ export async function POST(
     const nama_sub_department = body.get("nama_sub_department")!.toString();
     const department = body.get("department")!.toString();
 
-    var create = await prisma.subDepartment.update({
+    var create = await prisma.sub_department.update({
       data: {
         nama_sub_department: nama_sub_department,
         department: {
@@ -349,7 +349,7 @@ export async function DELETE(
       );
     }
 
-    var deletes = await prisma.subDepartment.delete({
+    var deletes = await prisma.sub_department.delete({
       where: {
         id: Number(id),
       },

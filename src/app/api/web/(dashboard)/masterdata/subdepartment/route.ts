@@ -55,7 +55,7 @@ export async function GET(req: Request) {
         }
       );
     }
-    var data = await prisma.subDepartment.findMany({
+    var data = await prisma.sub_department.findMany({
       include: {
         department: {
           select: {
@@ -187,7 +187,7 @@ export async function POST(req: Request) {
     const nama_sub_department = body.get("nama_sub_department")!.toString();
     const department = body.get("department")!.toString();
 
-    var create = await prisma.subDepartment.create({
+    var create = await prisma.sub_department.create({
       data: {
         nama_sub_department: nama_sub_department,
         department: {

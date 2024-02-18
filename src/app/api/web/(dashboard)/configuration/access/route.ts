@@ -188,16 +188,29 @@ export async function POST(req: Request) {
     const body = await req.formData();
     const roles = body.get("roles");
     const access = body.get("access");
+    const akses_department = body.get("akses_department");
 
     const parseAccess = access ? JSON.parse(access as string) : [];
+    const parseAksesDepartment = akses_department
+      ? JSON.parse(akses_department as string)
+      : [];
 
-    const create = await prisma.access_menu.createMany({
-      data: parseAccess.map((item: any) => ({
-        menu_id: item.menu,
-        action: item.type.join(","),
-        role_id: Number(roles),
-      })),
-    });
+    const create = await prisma.$transaction([
+      prisma.access_department.createMany({
+        data: parseAksesDepartment.map((item: any) => ({
+          role_id: Number(roles),
+          department_id: item.value,
+        })),
+      }),
+
+      prisma.access_menu.createMany({
+        data: parseAccess.map((item: any) => ({
+          menu_id: item.menu,
+          action: item.type.join(","),
+          role_id: Number(roles),
+        })),
+      }),
+    ]);
 
     if (!create) {
       return new NextResponse(

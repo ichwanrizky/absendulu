@@ -11,10 +11,11 @@ datasource db {
 }
 
 model roles {
-  id          Int           @id @default(autoincrement())
-  role_name   String        @unique
-  user        user[]
-  access_menu access_menu[]
+  id                Int                 @id @default(autoincrement())
+  role_name         String              @unique
+  user              user[]
+  access_menu       access_menu[]
+  access_department access_department[]
 }
 
 model user {
@@ -24,7 +25,7 @@ model user {
   createdAt DateTime? @db.DateTime(0)
   roles     roles?    @relation(fields: [rolesId], references: [id])
   rolesId   Int?
-  Session   Session[]
+  session   session[]
 }
 
 model menu_group {
@@ -57,7 +58,15 @@ model access_menu {
   @@unique([menu_id, role_id])
 }
 
-model Session {
+model access_department {
+  id            Int        @id @default(autoincrement())
+  role_id       Int
+  roles         roles      @relation(fields: [role_id], references: [id])
+  department_id Int
+  department    department @relation(fields: [department_id], references: [id])
+}
+
+model session {
   id        Int       @id @default(autoincrement())
   token     String    @unique @db.VarChar(300)
   user_id   Int
@@ -66,22 +75,23 @@ model Session {
   expiredAt DateTime? @db.DateTime(0)
   expired   Boolean   @default(false)
 
-  @@unique([token, user_id])
+  @@unique([user_id, token])
 }
 
-model Department {
-  id              Int             @id @default(autoincrement())
-  nama_department String
-  lot             String?
-  latitude        String?
-  longitude       String?
-  radius          String?
-  SubDepartment   SubDepartment[]
+model department {
+  id                Int                 @id @default(autoincrement())
+  nama_department   String
+  lot               String?
+  latitude          String?
+  longitude         String?
+  radius            String?
+  sub_department    sub_department[]
+  access_department access_department[]
 }
 
-model SubDepartment {
-  id                  Int        @id @default(autoincrement())
+model sub_department {
+  id                  Int         @id @default(autoincrement())
   nama_sub_department String
   department_id       Int
-  department          Department @relation(fields: [department_id], references: [id])
+  department          department? @relation(fields: [department_id], references: [id])
 }

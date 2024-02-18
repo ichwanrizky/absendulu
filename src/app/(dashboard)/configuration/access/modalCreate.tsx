@@ -1,6 +1,7 @@
 "use client";
 import { roles } from "@prisma/client";
 import { useState } from "react";
+import Select from "react-select";
 
 type Props = {
   isModalOpen: any;
@@ -8,6 +9,7 @@ type Props = {
   accessToken?: string;
   dataRoles?: Roles[];
   dataMenuGroup?: MenuGroup[];
+  dataDepartment?: Department[];
 };
 
 type Roles = {
@@ -29,11 +31,34 @@ type Menu = {
   menu: string;
 };
 
+type Department = {
+  id: number;
+  nama_department: string;
+  lot: string;
+  latitude: string;
+  longitude: string;
+  radius: string;
+};
+
 const ModalCreate = (props: Props) => {
-  const { isModalOpen, onClose, accessToken, dataRoles, dataMenuGroup } = props;
+  const {
+    isModalOpen,
+    onClose,
+    accessToken,
+    dataRoles,
+    dataMenuGroup,
+    dataDepartment,
+  } = props;
 
   const [isLoading, setIsLoading] = useState(false);
   const [roles, setRoles] = useState("");
+  const [aksesDepartment, setAksesDepartment] = useState<any>([
+    {
+      value: null,
+      label: null,
+    },
+  ]);
+
   const [access, setAccess] = useState<any>([]);
 
   const handleChangeAccess = (
@@ -62,12 +87,18 @@ const ModalCreate = (props: Props) => {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    if (access.length === 0) {
+      alert("Please select at least one access");
+      return;
+    }
+
     if (confirm("Add this data?")) {
       setIsLoading(true);
       try {
         const body = new FormData();
         body.append("roles", roles);
         body.append("access", JSON.stringify(access));
+        body.append("akses_department", JSON.stringify(aksesDepartment));
 
         const response = await fetch(
           process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/access",
@@ -136,6 +167,22 @@ const ModalCreate = (props: Props) => {
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  <div className="form-group mb-3">
+                    <label className="mb-1 fw-semibold small">
+                      Akses Department
+                    </label>
+                    <Select
+                      options={dataDepartment?.map((item: Department) => ({
+                        value: item.id,
+                        label: item.nama_department.toUpperCase(),
+                      }))}
+                      required
+                      isMulti
+                      isClearable
+                      onChange={(e: any) => setAksesDepartment(e)}
+                    />
                   </div>
 
                   {dataMenuGroup?.map((item: MenuGroup, index: number) => (

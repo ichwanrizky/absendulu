@@ -203,11 +203,21 @@ export async function POST(
 
     const body = await req.formData();
     const access = body.get("access");
+    const akses_department = body.get("akses_department");
 
     const parseAccess = access ? JSON.parse(access as string) : [];
+    const parseAksesDepartment = akses_department
+      ? JSON.parse(akses_department as string)
+      : [];
 
     const create = await prisma.$transaction([
       prisma.access_menu.deleteMany({
+        where: {
+          role_id: Number(id),
+        },
+      }),
+
+      prisma.access_department.deleteMany({
         where: {
           role_id: Number(id),
         },
@@ -218,6 +228,13 @@ export async function POST(
           menu_id: item.menu,
           action: item.type.join(","),
           role_id: Number(id),
+        })),
+      }),
+
+      prisma.access_department.createMany({
+        data: parseAksesDepartment.map((item: any) => ({
+          role_id: Number(id),
+          department_id: item.value,
         })),
       }),
     ]);
@@ -355,11 +372,18 @@ export async function DELETE(
       );
     }
 
-    var deletes = await prisma.access_menu.deleteMany({
-      where: {
-        role_id: Number(id),
-      },
-    });
+    const deletes = await prisma.$transaction([
+      prisma.access_department.deleteMany({
+        where: {
+          role_id: Number(id),
+        },
+      }),
+      prisma.access_menu.deleteMany({
+        where: {
+          role_id: Number(id),
+        },
+      }),
+    ]);
 
     if (!deletes) {
       return new NextResponse(

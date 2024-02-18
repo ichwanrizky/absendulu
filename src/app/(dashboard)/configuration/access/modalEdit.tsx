@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Select from "react-select";
 
 type Props = {
   isModalOpen: any;
@@ -7,6 +8,8 @@ type Props = {
   accessToken?: string;
   dataAccess: Access[];
   dataMenuGroup?: MenuGroup[];
+  dataDepartment?: Department[];
+  dataAccessDepartment?: AccessDepartment[];
 };
 
 type Access = {
@@ -36,9 +39,32 @@ type Menu = {
   menu: string;
 };
 
+type Department = {
+  id: number;
+  nama_department: string;
+  lot: string;
+  latitude: string;
+  longitude: string;
+  radius: string;
+};
+
+type AccessDepartment = {
+  id: number;
+  role_id: number;
+  department_id: number;
+  department: Department;
+};
+
 const ModalEdit = (props: Props) => {
-  const { isModalOpen, onClose, accessToken, dataAccess, dataMenuGroup } =
-    props;
+  const {
+    isModalOpen,
+    onClose,
+    accessToken,
+    dataAccess,
+    dataMenuGroup,
+    dataDepartment,
+    dataAccessDepartment,
+  } = props;
 
   const [isLoading, setIsLoading] = useState(false);
   const [access, setAccess] = useState<any>(
@@ -46,6 +72,12 @@ const ModalEdit = (props: Props) => {
       menu: item.menu_id,
       type: item.action.split(","),
       isChecked: true,
+    }))
+  );
+  const [aksesDepartment, setAksesDepartment] = useState<any>(
+    dataAccessDepartment?.map((item: AccessDepartment) => ({
+      value: item.department_id,
+      label: item.department.nama_department.toUpperCase(),
     }))
   );
 
@@ -80,6 +112,7 @@ const ModalEdit = (props: Props) => {
       try {
         const body = new FormData();
         body.append("access", JSON.stringify(access));
+        body.append("akses_department", JSON.stringify(aksesDepartment));
 
         const response = await fetch(
           process.env.NEXT_PUBLIC_API_URL +
@@ -143,6 +176,23 @@ const ModalEdit = (props: Props) => {
                       className="form-control"
                       value={dataAccess[0].roles.role_name.toUpperCase()}
                       readOnly
+                    />
+                  </div>
+
+                  <div className="form-group mb-3">
+                    <label className="mb-1 fw-semibold small">
+                      Akses Department
+                    </label>
+                    <Select
+                      options={dataDepartment?.map((item: Department) => ({
+                        value: item.id,
+                        label: item.nama_department.toUpperCase(),
+                      }))}
+                      value={aksesDepartment}
+                      required
+                      isMulti
+                      isClearable
+                      onChange={(e: any) => setAksesDepartment(e)}
                     />
                   </div>
 

@@ -31,6 +31,22 @@ type Menu = {
   menu: string;
 };
 
+type Department = {
+  id: number;
+  nama_department: string;
+  lot: string;
+  latitude: string;
+  longitude: string;
+  radius: string;
+};
+
+type AccessDepartment = {
+  id: number;
+  role_id: number;
+  department_id: number;
+  department: Department;
+};
+
 interface isLoadingProps {
   [key: number]: boolean;
 }
@@ -46,13 +62,15 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
   const [dataRoles, setDataRoles] = useState({} as Roles[]);
   const [dataMenuGroup, setdataMenuGroup] = useState({} as MenuGroup[]);
   const [dataAccess, setDataAccess] = useState({} as Access[]);
+  const [dataDepartment, setDataDepartment] = useState({} as Department[]);
+  const [dataAccessDepartment, setDataAccessDepartment] = useState(
+    {} as AccessDepartment[]
+  );
 
   const closeModal = () => {
     setModalCreateOpen(false);
     setIsModalEditOpen(false);
-    mutate(
-      process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menugroup"
-    );
+    mutate(process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/access");
   };
 
   const handleCreate = async () => {
@@ -81,11 +99,29 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
       );
       const resMenu = await responseMenu.json();
 
-      if (!responseRoles.ok || !responseMenu.ok) {
-        alert(!responseRoles.ok ? resRoles.message : resMenu.message);
+      // get department
+      const responseDepartment = await fetch(
+        process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department",
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const resDepartment = await responseDepartment.json();
+
+      if (!responseRoles.ok || !responseMenu.ok || !responseDepartment.ok) {
+        alert(
+          !responseRoles.ok
+            ? resRoles.message
+            : !responseMenu.ok
+            ? resMenu.message
+            : resDepartment.message
+        );
       } else {
         setDataRoles(resRoles.data);
         setdataMenuGroup(resMenu.data);
+        setDataDepartment(resDepartment.data);
         setModalCreateOpen(true);
       }
     } catch (error) {
@@ -119,11 +155,50 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
       );
       const resMenu = await responseMenu.json();
 
-      if (!response.ok || !responseMenu.ok) {
-        alert(!response.ok ? res.message : resMenu.message);
+      // get department
+      const responseDepartment = await fetch(
+        process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department",
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const resDepartment = await responseDepartment.json();
+
+      // get akses department
+      const responseAccessDepartment = await fetch(
+        process.env.NEXT_PUBLIC_API_URL +
+          "/api/web/configuration/access_department/" +
+          id,
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const resAccessDepartment = await responseAccessDepartment.json();
+
+      if (
+        !response.ok ||
+        !responseMenu.ok ||
+        !responseDepartment.ok ||
+        !responseAccessDepartment.ok
+      ) {
+        alert(
+          !response.ok
+            ? res.message
+            : !responseMenu.ok
+            ? resMenu.message
+            : !responseDepartment.ok
+            ? resDepartment.message
+            : resAccessDepartment.message
+        );
       } else {
         setDataAccess(res.data);
         setdataMenuGroup(resMenu.data);
+        setDataDepartment(resDepartment.data);
+        setDataAccessDepartment(resAccessDepartment.data);
         setIsModalEditOpen(true);
       }
     } catch (error) {
@@ -300,6 +375,7 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
           accessToken={accessToken}
           dataRoles={dataRoles}
           dataMenuGroup={dataMenuGroup}
+          dataDepartment={dataDepartment}
         />
       )}
 
@@ -311,6 +387,8 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
           accessToken={accessToken}
           dataAccess={dataAccess}
           dataMenuGroup={dataMenuGroup}
+          dataDepartment={dataDepartment}
+          dataAccessDepartment={dataAccessDepartment}
         />
       )}
     </>
