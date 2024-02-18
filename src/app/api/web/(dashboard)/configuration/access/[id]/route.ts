@@ -27,7 +27,7 @@ export async function GET(
     }
 
     const roleId = session[1].roleId;
-    const roleAccess = await checkRoles(roleId, "/configuration/menu");
+    const roleAccess = await checkRoles(roleId, "/configuration/access");
     if (!roleAccess) {
       return new NextResponse(
         JSON.stringify({
@@ -59,9 +59,12 @@ export async function GET(
       );
     }
 
-    var data = await prisma.menu.findFirst({
+    const data = await prisma.access_menu.findMany({
+      include: {
+        roles: true,
+      },
       where: {
-        id: Number(id),
+        role_id: Number(id),
       },
     });
 
@@ -150,24 +153,8 @@ export async function POST(
     }
 
     const roleId = session[1].roleId;
-    const roleAccess = await checkRoles(roleId, "/configuration/menu");
+    const roleAccess = await checkRoles(roleId, "/configuration/access");
     if (!roleAccess) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Unauthorized",
-        }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
-
-    const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
-    if (!actions.includes("update")) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -198,33 +185,48 @@ export async function POST(
       );
     }
 
-    const body = await req.formData();
-    const menu_group = body.get("menu_group")!.toString();
-    const menu = body.get("menu")!.toString();
-    const urut = body.get("urut")!.toString();
-    const path = body.get("path")!.toString();
-
-    var create = await prisma.menu.update({
-      data: {
-        menu_group: {
-          connect: {
-            id: Number(menu_group),
+    const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
+    if (!actions.includes("update")) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
           },
+        }
+      );
+    }
+
+    const body = await req.formData();
+    const access = body.get("access");
+
+    const parseAccess = access ? JSON.parse(access as string) : [];
+
+    const create = await prisma.$transaction([
+      prisma.access_menu.deleteMany({
+        where: {
+          role_id: Number(id),
         },
-        menu: menu,
-        urut: Number(urut),
-        path: path,
-      },
-      where: {
-        id: Number(id),
-      },
-    });
+      }),
+
+      prisma.access_menu.createMany({
+        data: parseAccess.map((item: any) => ({
+          menu_id: item.menu,
+          action: item.type.join(","),
+          role_id: Number(id),
+        })),
+      }),
+    ]);
 
     if (!create) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to update menu",
+          message: "Failed to update access",
         }),
         {
           status: 500,
@@ -238,7 +240,7 @@ export async function POST(
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to update menu",
+        message: "Success to update access",
         data: create,
       }),
       {
@@ -305,7 +307,7 @@ export async function DELETE(
     }
 
     const roleId = session[1].roleId;
-    const roleAccess = await checkRoles(roleId, "/configuration/menu");
+    const roleAccess = await checkRoles(roleId, "/configuration/menugroup");
     if (!roleAccess) {
       return new NextResponse(
         JSON.stringify({
@@ -353,9 +355,9 @@ export async function DELETE(
       );
     }
 
-    var deletes = await prisma.menu.delete({
+    var deletes = await prisma.access_menu.deleteMany({
       where: {
-        id: Number(id),
+        role_id: Number(id),
       },
     });
 
@@ -363,7 +365,7 @@ export async function DELETE(
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to delete menu",
+          message: "Failed to delete access",
         }),
         {
           status: 404,
@@ -377,7 +379,7 @@ export async function DELETE(
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to delete menu",
+        message: "Success to delete access",
         data: deletes,
       }),
       {

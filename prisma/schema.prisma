@@ -12,7 +12,7 @@ datasource db {
 
 model roles {
   id          Int           @id @default(autoincrement())
-  role_name   String
+  role_name   String        @unique
   user        user[]
   access_menu access_menu[]
 }
@@ -53,6 +53,8 @@ model access_menu {
   action  String?
   role_id Int
   roles   roles   @relation(fields: [role_id], references: [id])
+
+  @@unique([menu_id, role_id])
 }
 
 model Session {

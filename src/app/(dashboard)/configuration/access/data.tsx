@@ -4,6 +4,14 @@ import useSWR, { mutate } from "swr";
 import ModalCreate from "./modalCreate";
 import ModalEdit from "./modalEdit";
 
+type Access = {
+  id: number;
+  menu_id: number;
+  action: string[];
+  role_id: number;
+  roles: Roles;
+};
+
 type Roles = {
   id: number;
   role_name: string;
@@ -37,6 +45,7 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
 
   const [dataRoles, setDataRoles] = useState({} as Roles[]);
   const [dataMenuGroup, setdataMenuGroup] = useState({} as MenuGroup[]);
+  const [dataAccess, setDataAccess] = useState({} as Access[]);
 
   const closeModal = () => {
     setModalCreateOpen(false);
@@ -51,7 +60,7 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
     try {
       // get roles
       const responseRoles = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/roles",
+        process.env.NEXT_PUBLIC_API_URL + "/api/web/getrolesaccess",
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -85,32 +94,43 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
     setIsLoadingCreate(false);
   };
 
-  // const handleEdit = async (id: number) => {
-  //   setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
-  //   try {
-  //     const response = await fetch(
-  //       process.env.NEXT_PUBLIC_API_URL +
-  //         "/api/web/configuration/menugroup/" +
-  //         id,
-  //       {
-  //         headers: {
-  //           authorization: `Bearer ${accessToken}`,
-  //         },
-  //       }
-  //     );
-  //     const res = await response.json();
+  const handleEdit = async (id: number) => {
+    setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
+    try {
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/access/" + id,
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const res = await response.json();
 
-  //     if (!response.ok) {
-  //       alert(res.message);
-  //     } else {
-  //       setDataEdit(res.data);
-  //       setIsModalEditOpen(true);
-  //     }
-  //   } catch (error) {
-  //     alert("something went wrong");
-  //   }
-  //   setIsLoadingEdit((prev) => ({ ...prev, [id]: false }));
-  // };
+      // get menu
+      const responseMenu = await fetch(
+        process.env.NEXT_PUBLIC_API_URL +
+          "/api/web/configuration/menugroup_menu",
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const resMenu = await responseMenu.json();
+
+      if (!response.ok || !responseMenu.ok) {
+        alert(!response.ok ? res.message : resMenu.message);
+      } else {
+        setDataAccess(res.data);
+        setdataMenuGroup(resMenu.data);
+        setIsModalEditOpen(true);
+      }
+    } catch (error) {
+      alert("something went wrong");
+    }
+    setIsLoadingEdit((prev) => ({ ...prev, [id]: false }));
+  };
 
   const handleDelete = async (id: number) => {
     if (confirm("Delete this data?")) {
@@ -118,7 +138,7 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
       try {
         const response = await fetch(
           process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/configuration/menugroup/" +
+            "/api/web/configuration/access/" +
             id,
           {
             method: "DELETE",
@@ -132,7 +152,7 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
         alert(res.message);
         if (response.ok) {
           mutate(
-            process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menugroup"
+            process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/access"
           );
         }
       } catch (error) {
@@ -154,7 +174,7 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
   };
 
   const { data, error, isLoading } = useSWR(
-    process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menugroup",
+    process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/access",
     fetcher
   );
 
@@ -166,7 +186,7 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
     return <>something went wrong</>;
   }
 
-  const menuGroups = data?.data;
+  const access = data?.data;
   const actions = data?.actions;
 
   return (
@@ -207,22 +227,67 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
                   No
                 </th>
-                <th className="fw-semibold fs-6">Menu Group</th>
-                <th className="fw-semibold fs-6" style={{ width: "5%" }}>
-                  Urut
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "5%" }}>
-                  Group
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "20%" }}>
-                  {" "}
-                  Parent ID
-                </th>
+                <th className="fw-semibold fs-6">Roles</th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
                   Action
                 </th>
               </tr>
             </thead>
+            <tbody>
+              {access?.length === 0 ? (
+                <tr>
+                  <td colSpan={3}>
+                    <div className="text-center">Tidak ada data</div>
+                  </td>
+                </tr>
+              ) : (
+                access?.map((item: Roles, index: number) => (
+                  <tr key={index}>
+                    <td align="center">{index + 1}</td>
+                    <td>{item.role_name.toUpperCase()}</td>
+                    <td>
+                      <div className="d-flex gap-2">
+                        {actions?.includes("update") &&
+                          (isLoadingEdit[item.id] ? (
+                            <button className="btn btn-success btn-sm" disabled>
+                              <span
+                                className="spinner-border spinner-border-sm"
+                                role="status"
+                                aria-hidden="true"
+                              />
+                            </button>
+                          ) : (
+                            <button
+                              className="btn btn-success btn-sm"
+                              onClick={() => handleEdit(item.id)}
+                            >
+                              Edit
+                            </button>
+                          ))}
+
+                        {actions?.includes("delete") &&
+                          (isLoadingDelete[item.id] ? (
+                            <button className="btn btn-danger btn-sm" disabled>
+                              <span
+                                className="spinner-border spinner-border-sm"
+                                role="status"
+                                aria-hidden="true"
+                              />
+                            </button>
+                          ) : (
+                            <button
+                              className="btn btn-danger btn-sm"
+                              onClick={() => handleDelete(item.id)}
+                            >
+                              Delete
+                            </button>
+                          ))}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
           </table>
         </div>
       </div>
@@ -239,14 +304,15 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
       )}
 
       {/* modal edit */}
-      {/* {isModalEditOpen && (
+      {isModalEditOpen && (
         <ModalEdit
           isModalOpen={isModalEditOpen}
           onClose={closeModal}
           accessToken={accessToken}
-          data={dataEdit}
+          dataAccess={dataAccess}
+          dataMenuGroup={dataMenuGroup}
         />
-      )} */}
+      )}
     </>
   );
 };

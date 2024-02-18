@@ -24,7 +24,7 @@ export async function GET(req: Request) {
     }
 
     const roleId = session[1].roleId;
-    const roleAccess = await checkRoles(roleId, "/configuration/menugroup");
+    const roleAccess = await checkRoles(roleId, "/configuration/access");
     if (!roleAccess) {
       return new NextResponse(
         JSON.stringify({
@@ -41,9 +41,18 @@ export async function GET(req: Request) {
     }
 
     const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
-    var data = await prisma.menu_group.findMany({
+    const roles = await prisma.access_menu.groupBy({
+      by: ["role_id"],
+    });
+
+    const data = await prisma.roles.findMany({
+      where: {
+        id: {
+          in: roles.map((role) => role.role_id),
+        },
+      },
       orderBy: {
-        urut: "asc",
+        role_name: "asc",
       },
     });
 
@@ -130,7 +139,7 @@ export async function POST(req: Request) {
     }
 
     const roleId = session[1].roleId;
-    const roleAccess = await checkRoles(roleId, "/configuration/menugroup");
+    const roleAccess = await checkRoles(roleId, "/configuration/access");
     if (!roleAccess) {
       return new NextResponse(
         JSON.stringify({
@@ -163,25 +172,24 @@ export async function POST(req: Request) {
     }
 
     const body = await req.formData();
-    const menu_group = body.get("menu_group")!.toString();
-    const urut = body.get("urut")!.toString();
-    const group = body.get("group")!.toString();
-    const parent_id = body.get("parent_id")!.toString();
+    const roles = body.get("roles");
+    const access = body.get("access");
 
-    var create = await prisma.menu_group.create({
-      data: {
-        menu_group: menu_group,
-        urut: Number(urut),
-        group: Number(group),
-        parent_id: parent_id,
-      },
+    const parseAccess = access ? JSON.parse(access as string) : [];
+
+    const create = await prisma.access_menu.createMany({
+      data: parseAccess.map((item: any) => ({
+        menu_id: item.menu,
+        action: item.type.join(","),
+        role_id: Number(roles),
+      })),
     });
 
     if (!create) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to create menu group",
+          message: "Failed to create access",
         }),
         {
           status: 500,
@@ -195,7 +203,7 @@ export async function POST(req: Request) {
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to create menu group",
+        message: "Success to create access",
         data: create,
       }),
       {

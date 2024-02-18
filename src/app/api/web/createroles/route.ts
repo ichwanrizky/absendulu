@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { checkSession } from "@/libs/checkSession";
-import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
 
-export async function GET(req: Request) {
+export async function POST(req: Request) {
   try {
-    const authorization = req.headers.get("Authorization");
+    const body = await req.formData();
+    const role_name = body.get("role_name")!.toString();
+    const password = body.get("password")!.toString();
 
-    const session = await checkSession(authorization);
-    if (!session[0]) {
+    if (password != process.env.PASSWORD_BYPASS) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -23,28 +22,20 @@ export async function GET(req: Request) {
       );
     }
 
-    var data = await prisma.menu_group.findMany({
-      include: {
-        menu: {
-          select: {
-            id: true,
-            menu: true,
-          },
-        },
-      },
-      orderBy: {
-        urut: "asc",
+    var create = await prisma.roles.create({
+      data: {
+        role_name: role_name,
       },
     });
 
-    if (!data) {
+    if (!create) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Data not found",
+          message: "Failed to create roles",
         }),
         {
-          status: 404,
+          status: 500,
           headers: {
             "Content-Type": "application/json",
           },
@@ -55,8 +46,8 @@ export async function GET(req: Request) {
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "success",
-        data: data,
+        message: "Success to create roles",
+        data: create,
       }),
       {
         status: 200,

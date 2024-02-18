@@ -113,7 +113,7 @@ export async function GET(
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Internal Server Error",
+          message: error.name,
         }),
         {
           status: 500,
@@ -264,7 +264,7 @@ export async function POST(
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Internal Server Error",
+          message: error.name,
         }),
         {
           status: 500,
@@ -403,7 +403,7 @@ export async function DELETE(
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Internal Server Error",
+          message: error.name,
         }),
         {
           status: 500,

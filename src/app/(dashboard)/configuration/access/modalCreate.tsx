@@ -33,46 +33,65 @@ const ModalCreate = (props: Props) => {
   const { isModalOpen, onClose, accessToken, dataRoles, dataMenuGroup } = props;
 
   const [isLoading, setIsLoading] = useState(false);
-  const [menuGroup, setMenuGroup] = useState("");
-  const [urut, setUrut] = useState("");
-  const [group, setGroup] = useState("1");
+  const [roles, setRoles] = useState("");
+  const [access, setAccess] = useState<any>([]);
+
+  const handleChangeAccess = (
+    menu: number,
+    type: string,
+    isChecked: boolean
+  ) => {
+    const existMenu = access.find((item: any) => item.menu === menu);
+
+    if (!existMenu) {
+      setAccess([...access, { menu, type: [type], isChecked }]);
+    } else {
+      if (isChecked) {
+        existMenu.type.push(type);
+        setAccess([...access]);
+      } else {
+        existMenu.type = existMenu.type.filter((item: any) => item !== type);
+        if (existMenu.type.length === 0) {
+          setAccess(access.filter((item: any) => item.menu !== menu));
+        } else {
+          setAccess([...access]);
+        }
+      }
+    }
+  };
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    // if (confirm("Add this data?")) {
-    //   setIsLoading(true);
-    //   try {
-    //     const parentId = menuGroup.replace(/\s/g, "").toLowerCase();
+    if (confirm("Add this data?")) {
+      setIsLoading(true);
+      try {
+        const body = new FormData();
+        body.append("roles", roles);
+        body.append("access", JSON.stringify(access));
 
-    //     const body = new FormData();
-    //     body.append("menu_group", menuGroup);
-    //     body.append("urut", urut);
-    //     body.append("group", group);
-    //     body.append("parent_id", parentId);
+        const response = await fetch(
+          process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/access",
+          {
+            method: "POST",
+            headers: {
+              authorization: `Bearer ${accessToken}`,
+            },
+            body: body,
+          }
+        );
 
-    //     const response = await fetch(
-    //       process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menugroup",
-    //       {
-    //         method: "POST",
-    //         headers: {
-    //           authorization: `Bearer ${accessToken}`,
-    //         },
-    //         body: body,
-    //       }
-    //     );
-
-    //     const res = await response.json();
-    //     if (!response.ok) {
-    //       alert(res.message);
-    //     } else {
-    //       alert(res.message);
-    //       onClose();
-    //     }
-    //   } catch (error) {
-    //     alert("something went wrong");
-    //   }
-    //   setIsLoading(false);
-    // }
+        const res = await response.json();
+        if (!response.ok) {
+          alert(res.message);
+        } else {
+          alert(res.message);
+          onClose();
+        }
+      } catch (error) {
+        alert("something went wrong");
+      }
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -105,7 +124,11 @@ const ModalCreate = (props: Props) => {
                 <div className="modal-body">
                   <div className="form-group mb-3">
                     <label className="mb-1 fw-semibold small">Roles</label>
-                    <select className="form-select" required>
+                    <select
+                      className="form-select"
+                      required
+                      onChange={(e) => setRoles(e.target.value)}
+                    >
                       <option value="">-PILIH--</option>
                       {dataRoles?.map((item: roles, index: number) => (
                         <option value={item.id} key={index}>
@@ -136,18 +159,22 @@ const ModalCreate = (props: Props) => {
                               <td className="fw-semibold">
                                 {itemMenu.menu.toUpperCase()}
                               </td>
-                              <td align="center">
-                                <input type="checkbox" />
-                              </td>
-                              <td align="center">
-                                <input type="checkbox" />
-                              </td>
-                              <td align="center">
-                                <input type="checkbox" />
-                              </td>
-                              <td align="center">
-                                <input type="checkbox" />
-                              </td>
+                              {["view", "insert", "update", "delete"].map(
+                                (list: string, index: number) => (
+                                  <td align="center" key={index}>
+                                    <input
+                                      type="checkbox"
+                                      onChange={(e) => {
+                                        handleChangeAccess(
+                                          itemMenu.id,
+                                          list,
+                                          e.target.checked
+                                        );
+                                      }}
+                                    />
+                                  </td>
+                                )
+                              )}
                             </tr>
                           ))}
                         </tbody>

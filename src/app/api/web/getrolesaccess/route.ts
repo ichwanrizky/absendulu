@@ -23,19 +23,17 @@ export async function GET(req: Request) {
       );
     }
 
-    var data = await prisma.menu_group.findMany({
-      include: {
-        menu: {
-          select: {
-            id: true,
-            menu: true,
-          },
+    var data = await prisma.roles.findMany({
+      where: {
+        access_menu: {
+          none: {},
         },
       },
       orderBy: {
-        urut: "asc",
+        role_name: "asc",
       },
     });
+    console.log(data);
 
     if (!data) {
       return new NextResponse(
@@ -66,6 +64,8 @@ export async function GET(req: Request) {
       }
     );
   } catch (error) {
+    console.log(error);
+
     if (error instanceof Error) {
       if (error?.name == "TokenExpiredError") {
         return new NextResponse(

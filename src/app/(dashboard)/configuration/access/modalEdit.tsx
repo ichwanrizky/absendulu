@@ -5,7 +5,21 @@ type Props = {
   isModalOpen: any;
   onClose: any;
   accessToken?: string;
-  data: MenuGroup;
+  dataAccess: Access[];
+  dataMenuGroup?: MenuGroup[];
+};
+
+type Access = {
+  id: number;
+  menu_id: number;
+  action: string[];
+  role_id: number;
+  roles: Roles;
+};
+
+type Roles = {
+  id: number;
+  role_name: string;
 };
 
 type MenuGroup = {
@@ -14,33 +28,63 @@ type MenuGroup = {
   urut: number;
   group: number;
   parent_id: string;
+  menu: Menu[];
+};
+
+type Menu = {
+  id: number;
+  menu: string;
 };
 
 const ModalEdit = (props: Props) => {
-  const { isModalOpen, onClose, accessToken, data } = props;
+  const { isModalOpen, onClose, accessToken, dataAccess, dataMenuGroup } =
+    props;
 
   const [isLoading, setIsLoading] = useState(false);
-  const [menuGroup, setMenuGroup] = useState(data.menu_group);
-  const [urut, setUrut] = useState(data.urut.toString());
-  const [group, setGroup] = useState(data.group.toString());
+  const [access, setAccess] = useState<any>(
+    dataAccess.map((item: any) => ({
+      menu: item.menu_id,
+      type: item.action.split(","),
+      isChecked: true,
+    }))
+  );
+
+  const handleChangeAccess = (
+    menu: number,
+    type: string,
+    isChecked: boolean
+  ) => {
+    const existMenu = access.find((item: any) => item.menu === menu);
+
+    if (!existMenu) {
+      setAccess([...access, { menu, type: [type], isChecked }]);
+    } else {
+      if (isChecked) {
+        existMenu.type.push(type);
+        setAccess([...access]);
+      } else {
+        existMenu.type = existMenu.type.filter((item: any) => item !== type);
+        if (existMenu.type.length === 0) {
+          setAccess(access.filter((item: any) => item.menu !== menu));
+        } else {
+          setAccess([...access]);
+        }
+      }
+    }
+  };
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     if (confirm("Edit this data?")) {
       setIsLoading(true);
       try {
-        const parentId = menuGroup.replace(/\s/g, "").toLowerCase();
-
         const body = new FormData();
-        body.append("menu_group", menuGroup);
-        body.append("urut", urut);
-        body.append("group", group);
-        body.append("parent_id", parentId);
+        body.append("access", JSON.stringify(access));
 
         const response = await fetch(
           process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/configuration/menugroup/" +
-            data.id,
+            "/api/web/configuration/access/" +
+            dataAccess[0].role_id,
           {
             method: "POST",
             headers: {
@@ -72,7 +116,7 @@ const ModalEdit = (props: Props) => {
           style={{ display: "block" }}
         ></div>
         <div
-          className="modal fade show"
+          className="modal modal-lg fade show"
           tabIndex={-1}
           role="dialog"
           style={{ display: "block" }}
@@ -82,7 +126,7 @@ const ModalEdit = (props: Props) => {
               <div className="modal-content">
                 <div className="modal-header">
                   <h1 className="modal-title fs-5 fw-semibold   ">
-                    Edit Menu Group
+                    Edit Access
                   </h1>
                   <button
                     type="button"
@@ -93,38 +137,63 @@ const ModalEdit = (props: Props) => {
                 </div>
                 <div className="modal-body">
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Menu Group</label>
+                    <label className="mb-1 fw-semibold small">Roles</label>
                     <input
                       type="text"
                       className="form-control"
-                      onChange={(e) => setMenuGroup(e.target.value)}
-                      value={menuGroup}
-                      required
+                      value={dataAccess[0].roles.role_name.toUpperCase()}
+                      readOnly
                     />
                   </div>
 
-                  <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Urut</label>
-                    <input
-                      type="number"
-                      className="form-control"
-                      onChange={(e) => setUrut(e.target.value)}
-                      value={urut}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Group</label>
-                    <select
-                      className="form-select"
-                      onChange={(e) => setGroup(e.target.value)}
-                      value={group}
-                    >
-                      <option value="1">TRUE</option>
-                      <option value="0">FALSE</option>
-                    </select>
-                  </div>
+                  {dataMenuGroup?.map((item: MenuGroup, index: number) => (
+                    <div key={index} className="form-group mb-3">
+                      <label className="mb-1 fw-semibold small">
+                        {item.menu_group.toUpperCase()}
+                      </label>
+                      <table className="table table-bordered" width={"100%"}>
+                        <thead>
+                          <tr>
+                            <th>MENU</th>
+                            <th style={{ width: "10%" }}>VIEW</th>
+                            <th style={{ width: "10%" }}>INSERT</th>
+                            <th style={{ width: "10%" }}>UPDATE</th>
+                            <th style={{ width: "10%" }}>DELETE</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {item.menu?.map((itemMenu: Menu, index: number) => (
+                            <tr key={index} style={{ fontSize: "10pt" }}>
+                              <td className="fw-semibold">
+                                {itemMenu.menu.toUpperCase()}
+                              </td>
+                              {["view", "insert", "update", "delete"].map(
+                                (list: string, index: number) => (
+                                  <td align="center" key={index}>
+                                    <input
+                                      type="checkbox"
+                                      checked={access.find(
+                                        (item: any) =>
+                                          item.menu === itemMenu.id &&
+                                          item.type.includes(list)
+                                      )}
+                                      onChange={(e) => {
+                                        handleChangeAccess(
+                                          itemMenu.id,
+                                          list,
+                                          e.target.checked
+                                        );
+                                      }}
+                                    />
+                                  </td>
+                                )
+                              )}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ))}
                 </div>
                 <div className="modal-footer">
                   <button

@@ -1,21 +1,24 @@
 import { NextResponse } from "next/server";
-import { checkSession } from "@/libs/checkSession";
-import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
 
-export async function GET(req: Request) {
-  try {
-    const authorization = req.headers.get("Authorization");
+const bcrypt = require("bcrypt");
 
-    const session = await checkSession(authorization);
-    if (!session[0]) {
+export async function POST(req: Request) {
+  try {
+    const body = await req.formData();
+    const username = body.get("username")!.toString();
+    const password = body.get("password")!.toString();
+    const role = body.get("role")!.toString();
+
+    const hashPassword = await bcrypt.hash(password, 10);
+    if (!hashPassword) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Unauthorized",
+          message: "Something went wrong",
         }),
         {
-          status: 401,
+          status: 500,
           headers: {
             "Content-Type": "application/json",
           },
@@ -23,28 +26,32 @@ export async function GET(req: Request) {
       );
     }
 
-    var data = await prisma.menu_group.findMany({
-      include: {
-        menu: {
-          select: {
-            id: true,
-            menu: true,
+    // format date
+    const currendDate = new Date();
+    const formattedDate = new Date(currendDate);
+    formattedDate.setHours(formattedDate.getHours() + 7);
+
+    var create = await prisma.user.create({
+      data: {
+        username: username,
+        password: hashPassword,
+        roles: {
+          connect: {
+            id: Number(role),
           },
         },
-      },
-      orderBy: {
-        urut: "asc",
+        createdAt: formattedDate,
       },
     });
 
-    if (!data) {
+    if (!create) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Data not found",
+          message: "Failed to create user",
         }),
         {
-          status: 404,
+          status: 500,
           headers: {
             "Content-Type": "application/json",
           },
@@ -55,8 +62,8 @@ export async function GET(req: Request) {
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "success",
-        data: data,
+        message: "Success to create user",
+        data: create,
       }),
       {
         status: 200,
@@ -67,21 +74,6 @@ export async function GET(req: Request) {
     );
   } catch (error) {
     if (error instanceof Error) {
-      if (error?.name == "TokenExpiredError") {
-        return new NextResponse(
-          JSON.stringify({
-            status: false,
-            message: "Session Expired",
-          }),
-          {
-            status: 401,
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-      }
-
       return new NextResponse(
         JSON.stringify({
           status: false,

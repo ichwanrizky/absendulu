@@ -156,7 +156,7 @@ export async function GET(req: Request) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Internal Server Error",
+          message: error.name,
         }),
         {
           status: 500,
