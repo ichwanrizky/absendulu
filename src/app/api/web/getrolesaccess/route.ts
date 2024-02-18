@@ -33,7 +33,6 @@ export async function GET(req: Request) {
         role_name: "asc",
       },
     });
-    console.log(data);
 
     if (!data) {
       return new NextResponse(
@@ -64,8 +63,6 @@ export async function GET(req: Request) {
       }
     );
   } catch (error) {
-    console.log(error);
-
     if (error instanceof Error) {
       if (error?.name == "TokenExpiredError") {
         return new NextResponse(

@@ -68,3 +68,12 @@ model Session {
 
   @@unique([token, user_id])
 }
+
+model Department {
+  id              Int     @id @default(autoincrement())
+  nama_department String
+  lot             String?
+  latitude        String?
+  longitude       String?
+  radius          String?
+}
