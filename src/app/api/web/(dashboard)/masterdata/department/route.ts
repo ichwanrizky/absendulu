@@ -41,6 +41,20 @@ export async function GET(req: Request) {
     }
 
     const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
+    if (!actions.includes("view")) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
     var data = await prisma.department.findMany({
       orderBy: {
         nama_department: "asc",

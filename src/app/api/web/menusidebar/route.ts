@@ -98,7 +98,12 @@ export async function GET(req: Request) {
           where: {
             access_menu: {
               some: {
-                role_id: roleId,
+                AND: {
+                  role_id: roleId,
+                  action: {
+                    contains: "view",
+                  },
+                },
               },
             },
           },
@@ -112,7 +117,12 @@ export async function GET(req: Request) {
           some: {
             access_menu: {
               some: {
-                role_id: roleId,
+                AND: {
+                  role_id: roleId,
+                  action: {
+                    contains: "view",
+                  },
+                },
               },
             },
           },
