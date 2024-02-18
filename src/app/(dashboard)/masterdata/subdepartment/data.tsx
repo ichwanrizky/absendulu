@@ -3,41 +3,51 @@ import { useState } from "react";
 import useSWR, { mutate } from "swr";
 import ModalCreate from "./modalCreate";
 import ModalEdit from "./modalEdit";
-import { roles } from "@prisma/client";
 
-type Roles = {
+type SubDepartment = {
   id: number;
-  role_name: string;
+  nama_sub_department: string;
+  department_id: number;
+  department: Department;
+};
+type Department = {
+  id: number;
+  nama_department: string;
+  lot: string;
+  latitude: string;
+  longitude: string;
+  radius: string;
 };
 
 interface isLoadingProps {
   [key: number]: boolean;
 }
 
-const RolesData = ({ accessToken }: { accessToken: string }) => {
+const SubDepartmentData = ({ accessToken }: { accessToken: string }) => {
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
 
+  const [isLoadingCreate, setIsLoadingCreate] = useState(false);
   const [isModalCreateOpen, setModalCreateOpen] = useState(false);
+  const [isModalFilterOpen, setIsModalFilterOpen] = useState(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState(false);
 
-  const [dataEdit, setDataEdit] = useState({} as roles);
+  const [dataEdit, setDataEdit] = useState({} as SubDepartment);
+  const [dataDepartment, setDataDepartment] = useState({} as Department[]);
 
   const closeModal = () => {
     setModalCreateOpen(false);
     setIsModalEditOpen(false);
-    mutate(process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/roles");
+    mutate(
+      process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/subdepartment"
+    );
   };
 
-  const handleCreate = () => {
-    setModalCreateOpen(true);
-  };
-
-  const handleEdit = async (id: number) => {
-    setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
+  const handleCreate = async () => {
+    setIsLoadingCreate(true);
     try {
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/roles/" + id,
+        process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department",
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -49,6 +59,46 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
       if (!response.ok) {
         alert(res.message);
       } else {
+        setDataDepartment(res.data);
+        setModalCreateOpen(true);
+      }
+    } catch (error) {
+      alert("something went wrong");
+    }
+    setIsLoadingCreate(false);
+  };
+
+  const handleEdit = async (id: number) => {
+    setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
+    try {
+      // get department
+      const responseDepartment = await fetch(
+        process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department",
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const resDepartment = await responseDepartment.json();
+
+      // get edit data
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_API_URL +
+          "/api/web/masterdata/subdepartment/" +
+          id,
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const res = await response.json();
+
+      if (!response.ok || !responseDepartment.ok) {
+        alert(!response.ok ? res.message : resDepartment.message);
+      } else {
+        setDataDepartment(resDepartment.data);
         setDataEdit(res.data);
         setIsModalEditOpen(true);
       }
@@ -64,7 +114,7 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
       try {
         const response = await fetch(
           process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/configuration/roles/" +
+            "/api/web/masterdata/subdepartment/" +
             id,
           {
             method: "DELETE",
@@ -78,7 +128,8 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
         alert(res.message);
         if (response.ok) {
           mutate(
-            process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/roles"
+            process.env.NEXT_PUBLIC_API_URL +
+              "/api/web/masterdata/subdepartment"
           );
         }
       } catch (error) {
@@ -86,6 +137,10 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
       }
       setIsLoadingDelete((prev) => ({ ...prev, [id]: false }));
     }
+  };
+
+  const handleFilter = () => {
+    setIsModalFilterOpen(true);
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -100,7 +155,7 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
   };
 
   const { data, error, isLoading } = useSWR(
-    process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/roles",
+    process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/subdepartment",
     fetcher
   );
 
@@ -112,7 +167,7 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
     return <>something went wrong</>;
   }
 
-  const roles = data?.data;
+  const subDepartments = data?.data;
   const actions = data?.actions;
 
   return (
@@ -120,15 +175,37 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
       <div className="card-body">
         <div className="row">
           <div className="col-sm-12">
-            {actions?.includes("insert") && (
-              <button
-                type="button"
-                className="btn btn-primary btn-sm fw-bold"
-                onClick={() => handleCreate()}
-              >
-                Add Data
-              </button>
-            )}
+            {actions?.includes("insert") &&
+              (isLoadingCreate ? (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm fw-bold"
+                  disabled
+                >
+                  <span
+                    className="spinner-border spinner-border-sm me-2"
+                    role="status"
+                    aria-hidden="true"
+                  />{" "}
+                  Loading...
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm fw-bold"
+                  onClick={() => handleCreate()}
+                >
+                  Add Data
+                </button>
+              ))}
+
+            <button
+              type="button"
+              className="btn btn-dark btn-sm fw-bold ms-2"
+              onClick={() => handleFilter()}
+            >
+              Filter Data
+            </button>
           </div>
         </div>
 
@@ -139,24 +216,32 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
                   No
                 </th>
-                <th className="fw-semibold fs-6">Role Name</th>
+                <th className="fw-semibold fs-6">Sub Department</th>
+                <th className="fw-semibold fs-6" style={{ width: "30%" }}>
+                  Department
+                </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
                   Action
                 </th>
               </tr>
             </thead>
             <tbody>
-              {roles?.length === 0 ? (
+              {subDepartments?.length === 0 ? (
                 <tr>
-                  <td colSpan={3}>
+                  <td colSpan={5}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
               ) : (
-                roles?.map((item: Roles, index: number) => (
+                subDepartments?.map((item: SubDepartment, index: number) => (
                   <tr key={index}>
                     <td align="center">{index + 1}</td>
-                    <td>{item.role_name}</td>
+                    <td align="left">
+                      {item.nama_sub_department.toUpperCase()}
+                    </td>
+                    <td align="left">
+                      {item.department.nama_department.toUpperCase()}
+                    </td>
                     <td>
                       <div className="d-flex gap-2">
                         {actions?.includes("update") &&
@@ -210,6 +295,7 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
           isModalOpen={isModalCreateOpen}
           onClose={closeModal}
           accessToken={accessToken}
+          dataDepartment={dataDepartment}
         />
       )}
 
@@ -219,10 +305,11 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
           isModalOpen={isModalEditOpen}
           onClose={closeModal}
           accessToken={accessToken}
+          dataDepartment={dataDepartment}
           data={dataEdit}
         />
       )}
     </>
   );
 };
-export default RolesData;
+export default SubDepartmentData;

@@ -1,8 +1,8 @@
 import { authOptions } from "@/libs/authOptions";
 import { getServerSession } from "next-auth";
-import MenuData from "./data";
+import SubDepartmentData from "./data";
 
-const MenuPage = async () => {
+const SubDepartmentPage = async () => {
   const session: any = await getServerSession(authOptions);
 
   if (!session) {
@@ -18,7 +18,7 @@ const MenuPage = async () => {
               <div className="col-auto mt-4">
                 <h1 className="page-header-title">
                   <div className="page-header-icon"></div>
-                  <span style={{ fontSize: "1.8rem" }}>MENUS</span>
+                  <span style={{ fontSize: "1.8rem" }}>SUB DEPARTMENTS</span>
                 </h1>
               </div>
             </div>
@@ -28,12 +28,12 @@ const MenuPage = async () => {
 
       <div className="container-xl px-4 mt-n10">
         <div className="card mb-4">
-          <div className="card-header">Data Menu</div>
-          <MenuData accessToken={session.user.accessToken} />
+          <div className="card-header">Data Sub Department</div>
+          <SubDepartmentData accessToken={session.user.accessToken} />
         </div>
       </div>
     </main>
   );
 };
 
-export default MenuPage;
+export default SubDepartmentPage;

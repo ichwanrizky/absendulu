@@ -70,10 +70,18 @@ model Session {
 }
 
 model Department {
-  id              Int     @id @default(autoincrement())
+  id              Int             @id @default(autoincrement())
   nama_department String
   lot             String?
   latitude        String?
   longitude       String?
   radius          String?
+  SubDepartment   SubDepartment[]
+}
+
+model SubDepartment {
+  id                  Int        @id @default(autoincrement())
+  nama_sub_department String
+  department_id       Int
+  department          Department @relation(fields: [department_id], references: [id])
 }

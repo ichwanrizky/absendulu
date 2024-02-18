@@ -35,7 +35,7 @@ interface isLoadingProps {
   [key: number]: boolean;
 }
 
-const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
+const AccessData = ({ accessToken }: { accessToken: string }) => {
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
 
@@ -316,4 +316,4 @@ const MenuGroupData = ({ accessToken }: { accessToken: string }) => {
     </>
   );
 };
-export default MenuGroupData;
+export default AccessData;

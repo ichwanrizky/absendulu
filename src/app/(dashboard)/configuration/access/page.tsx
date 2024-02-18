@@ -1,8 +1,8 @@
 import { authOptions } from "@/libs/authOptions";
 import { getServerSession } from "next-auth";
-import MenuGroupData from "./data";
+import AccessData from "./data";
 
-const MenuGroupPage = async () => {
+const AccessPage = async () => {
   const session: any = await getServerSession(authOptions);
 
   if (!session) {
@@ -29,11 +29,11 @@ const MenuGroupPage = async () => {
       <div className="container-xl px-4 mt-n10">
         <div className="card mb-4">
           <div className="card-header">Data Access</div>
-          <MenuGroupData accessToken={session.user.accessToken} />
+          <AccessData accessToken={session.user.accessToken} />
         </div>
       </div>
     </main>
   );
 };
 
-export default MenuGroupPage;
+export default AccessPage;
