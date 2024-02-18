@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { checkSession } from "@/libs/checkSession";
 import { checkRoles } from "@/libs/checkRoles";
+import { checkDepartments } from "@/libs/checkDepartments";
 import prisma from "@/libs/db";
 
 export async function GET(req: Request) {
@@ -55,7 +56,15 @@ export async function GET(req: Request) {
         }
       );
     }
+
+    const departmentAccess = await checkDepartments(roleId);
+
     var data = await prisma.department.findMany({
+      where: {
+        id: {
+          in: departmentAccess.map((item) => item.department_id),
+        },
+      },
       orderBy: {
         nama_department: "asc",
       },
