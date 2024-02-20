@@ -101,7 +101,7 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
 
       // get department
       const responseDepartment = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/department",
+        process.env.NEXT_PUBLIC_API_URL + "/api/web/getalldepartment",
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -157,7 +157,7 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
 
       // get department
       const responseDepartment = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/department",
+        process.env.NEXT_PUBLIC_API_URL + "/api/web/getalldepartment",
         {
           headers: {
             authorization: `Bearer ${accessToken}`,

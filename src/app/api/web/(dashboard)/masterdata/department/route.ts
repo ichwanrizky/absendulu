@@ -58,7 +58,6 @@ export async function GET(req: Request) {
     }
 
     const departmentAccess = await checkDepartments(roleId);
-
     var data = await prisma.department.findMany({
       where: {
         id: {

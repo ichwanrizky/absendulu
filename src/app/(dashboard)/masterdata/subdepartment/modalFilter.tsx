@@ -5,44 +5,28 @@ type Props = {
   isModalOpen: any;
   onClose: any;
   accessToken?: string;
+  dataDepartment: Department[];
+  onFilter: any;
+};
+
+type Department = {
+  id: number;
+  nama_department: string;
+  lot: string;
+  latitude: string;
+  longitude: string;
+  radius: string;
 };
 
 const ModalFilter = (props: Props) => {
-  const { isModalOpen, onClose, accessToken } = props;
+  const { isModalOpen, onClose, accessToken, dataDepartment, onFilter } = props;
   const [isLoading, setIsLoading] = useState(false);
+  const [department, setDepartment] = useState("");
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    // if (confirm("Add this data?")) {
-    //   setIsLoading(true);
-    //   try {
-    //     const body = new FormData();
-    //     body.append("department", department);
-    //     body.append("nama_sub_department", namaSubDepartment);
-
-    //     const response = await fetch(
-    //       process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/subdepartment",
-    //       {
-    //         method: "POST",
-    //         headers: {
-    //           authorization: `Bearer ${accessToken}`,
-    //         },
-    //         body: body,
-    //       }
-    //     );
-
-    //     const res = await response.json();
-    //     if (!response.ok) {
-    //       alert(res.message);
-    //     } else {
-    //       alert(res.message);
-    //       onClose();
-    //     }
-    //   } catch (error) {
-    //     alert("something went wrong");
-    //   }
-    //   setIsLoading(false);
-    // }
+    onFilter(department);
+    onClose();
   };
 
   return (
@@ -73,8 +57,18 @@ const ModalFilter = (props: Props) => {
                 <div className="modal-body">
                   <div className="form-group mb-3">
                     <label className="mb-1 fw-semibold small">Department</label>
-                    <select className="form-select" required>
+                    <select
+                      className="form-select"
+                      onChange={(e) => setDepartment(e.target.value)}
+                    >
                       <option value="">--PILIH--</option>
+                      {dataDepartment?.map(
+                        (item: Department, index: number) => (
+                          <option value={item.id} key={index}>
+                            {item.nama_department.toUpperCase()}
+                          </option>
+                        )
+                      )}
                     </select>
                   </div>
                 </div>
@@ -101,7 +95,7 @@ const ModalFilter = (props: Props) => {
                     </button>
                   ) : (
                     <button type="submit" className="btn btn-primary btn-sm">
-                      Save changes
+                      Filter Data
                     </button>
                   )}
                 </div>
