@@ -24,7 +24,13 @@ interface isLoadingProps {
   [key: number]: boolean;
 }
 
-const SubDepartmentData = ({ accessToken }: { accessToken: string }) => {
+const SubDepartmentData = ({
+  accessToken,
+  departments,
+}: {
+  accessToken: string;
+  departments: Department[];
+}) => {
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
 
@@ -35,67 +41,31 @@ const SubDepartmentData = ({ accessToken }: { accessToken: string }) => {
   const [isModalEditOpen, setIsModalEditOpen] = useState(false);
 
   const [dataEdit, setDataEdit] = useState({} as SubDepartment);
-  const [dataDepartment, setDataDepartment] = useState({} as Department[]);
 
   // filter
-  const [filter, setFilter] = useState({});
-  console.log(filter);
+  const [filter, setFilter] = useState<any>("");
 
   const closeModal = () => {
     setModalCreateOpen(false);
     setIsModalEditOpen(false);
     setIsModalFilterOpen(false);
-    // mutate(
-    //   process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/subdepartment"
-    // );
-  };
-
-  const handleFilterData = (department: any) => {
-    department ? setFilter({ department: department }) : setFilter({});
     mutate(
       process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/subdepartment"
     );
   };
 
-  const handleCreate = async () => {
-    setIsLoadingCreate(true);
-    try {
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department",
-        {
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-      const res = await response.json();
+  const handleFilterData = (department: any) => {
+    setIsModalFilterOpen(false);
+    department ? setFilter({ department: department }) : setFilter("");
+  };
 
-      if (!response.ok) {
-        alert(res.message);
-      } else {
-        setDataDepartment(res.data);
-        setModalCreateOpen(true);
-      }
-    } catch (error) {
-      alert("something went wrong");
-    }
-    setIsLoadingCreate(false);
+  const handleCreate = async () => {
+    setModalCreateOpen(true);
   };
 
   const handleEdit = async (id: number) => {
     setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
     try {
-      // get department
-      const responseDepartment = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department",
-        {
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-      const resDepartment = await responseDepartment.json();
-
       // get edit data
       const response = await fetch(
         process.env.NEXT_PUBLIC_API_URL +
@@ -109,10 +79,9 @@ const SubDepartmentData = ({ accessToken }: { accessToken: string }) => {
       );
       const res = await response.json();
 
-      if (!response.ok || !responseDepartment.ok) {
-        alert(!response.ok ? res.message : resDepartment.message);
+      if (!response.ok) {
+        alert(res.message);
       } else {
-        setDataDepartment(resDepartment.data);
         setDataEdit(res.data);
         setIsModalEditOpen(true);
       }
@@ -154,42 +123,14 @@ const SubDepartmentData = ({ accessToken }: { accessToken: string }) => {
   };
 
   const handleFilter = async () => {
-    setIsLoadingFilter(true);
-    try {
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department",
-        {
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-      const res = await response.json();
-
-      if (!response.ok) {
-        alert(res.message);
-      } else {
-        setDataDepartment(res.data);
-        setIsModalFilterOpen(true);
-      }
-    } catch (error) {
-      alert("something went wrong");
-    }
-    setIsLoadingFilter(false);
+    setIsModalFilterOpen(true);
   };
 
   const fetcher = (url: RequestInfo) => {
-    const body = new FormData();
-    body.append(
-      "filter",
-      Object.keys(filter).length ? JSON.stringify(filter) : ""
-    );
     return fetch(url, {
-      method: "POST",
       headers: {
         authorization: `Bearer ${accessToken}`,
       },
-      body,
       next: {
         revalidate: 60,
       },
@@ -197,7 +138,11 @@ const SubDepartmentData = ({ accessToken }: { accessToken: string }) => {
   };
 
   const { data, error, isLoading } = useSWR(
-    process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/subdepartment/get",
+    filter === ""
+      ? process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/subdepartment"
+      : process.env.NEXT_PUBLIC_API_URL +
+          "/api/web/masterdata/subdepartment?filter=" +
+          JSON.stringify(filter),
     fetcher
   );
 
@@ -209,8 +154,6 @@ const SubDepartmentData = ({ accessToken }: { accessToken: string }) => {
     return <>something went wrong</>;
   }
 
-  console.log(data);
-
   const subDepartments = data?.data;
   const actions = data?.actions;
 
@@ -219,50 +162,30 @@ const SubDepartmentData = ({ accessToken }: { accessToken: string }) => {
       <div className="card-body">
         <div className="row">
           <div className="col-sm-12">
-            {actions?.includes("insert") &&
-              (isLoadingCreate ? (
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm fw-bold"
-                  disabled
-                >
-                  <span
-                    className="spinner-border spinner-border-sm me-2"
-                    role="status"
-                    aria-hidden="true"
-                  />{" "}
-                  Loading...
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm fw-bold"
-                  onClick={() => handleCreate()}
-                >
-                  Add Data
-                </button>
-              ))}
-
-            {isLoadingFilter ? (
+            {actions?.includes("insert") && (
               <button
                 type="button"
-                className="btn btn-dark btn-sm fw-bold ms-2"
-                disabled
+                className="btn btn-primary btn-sm fw-bold"
+                onClick={() => handleCreate()}
               >
-                <span
-                  className="spinner-border spinner-border-sm me-2"
-                  role="status"
-                  aria-hidden="true"
-                />{" "}
-                Loading...
+                Add Data
               </button>
-            ) : (
+            )}
+
+            <button
+              type="button"
+              className="btn btn-dark btn-sm fw-bold ms-2"
+              onClick={() => handleFilter()}
+            >
+              Filter Data
+            </button>
+            {filter !== "" && (
               <button
                 type="button"
-                className="btn btn-dark btn-sm fw-bold ms-2"
-                onClick={() => handleFilter()}
+                className="btn btn-outline-dark btn-sm fw-bold ms-1"
+                onClick={() => setFilter("")}
               >
-                Filter Data
+                Reset
               </button>
             )}
           </div>
@@ -354,7 +277,7 @@ const SubDepartmentData = ({ accessToken }: { accessToken: string }) => {
           isModalOpen={isModalCreateOpen}
           onClose={closeModal}
           accessToken={accessToken}
-          dataDepartment={dataDepartment}
+          dataDepartment={departments}
         />
       )}
 
@@ -364,7 +287,7 @@ const SubDepartmentData = ({ accessToken }: { accessToken: string }) => {
           isModalOpen={isModalEditOpen}
           onClose={closeModal}
           accessToken={accessToken}
-          dataDepartment={dataDepartment}
+          dataDepartment={departments}
           data={dataEdit}
         />
       )}
@@ -375,8 +298,9 @@ const SubDepartmentData = ({ accessToken }: { accessToken: string }) => {
           isModalOpen={isModalFilterOpen}
           onClose={closeModal}
           accessToken={accessToken}
-          dataDepartment={dataDepartment}
+          dataDepartment={departments}
           onFilter={handleFilterData}
+          filterData={filter}
         />
       )}
     </>

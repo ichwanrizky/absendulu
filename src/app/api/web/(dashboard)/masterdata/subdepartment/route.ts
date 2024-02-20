@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { checkSession } from "@/libs/checkSession";
 import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
+import { checkDepartments } from "@/libs/checkDepartments";
 
 export async function GET(req: Request) {
   try {
@@ -55,18 +56,55 @@ export async function GET(req: Request) {
         }
       );
     }
-    var data = await prisma.sub_department.findMany({
-      include: {
-        department: {
-          select: {
-            nama_department: true,
+
+    const departmentAccess = await checkDepartments(roleId);
+    departmentAccess[0];
+
+    const searchParams = new URL(req.url).searchParams;
+    const filter = searchParams.get("filter");
+    console.log("🚀 ~ GET ~ filter:", filter);
+
+    if (filter === null) {
+      var data = await prisma.sub_department.findMany({
+        include: {
+          department: {
+            select: {
+              nama_department: true,
+            },
           },
         },
-      },
-      orderBy: {
-        nama_sub_department: "asc",
-      },
-    });
+        where: {
+          department: {
+            id: {
+              in: departmentAccess.map((item) => item.department_id),
+            },
+          },
+        },
+        orderBy: {
+          nama_sub_department: "asc",
+        },
+      });
+    } else {
+      const parseFilter = JSON.parse(filter!.toString());
+
+      var data = await prisma.sub_department.findMany({
+        include: {
+          department: {
+            select: {
+              nama_department: true,
+            },
+          },
+        },
+        where: {
+          department: {
+            id: Number(parseFilter.department),
+          },
+        },
+        orderBy: {
+          nama_sub_department: "asc",
+        },
+      });
+    }
 
     if (!data) {
       return new NextResponse(

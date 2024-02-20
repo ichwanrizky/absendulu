@@ -2,12 +2,36 @@ import { authOptions } from "@/libs/authOptions";
 import { getServerSession } from "next-auth";
 import SubDepartmentData from "./data";
 
+const getDepartments = async (token: string) => {
+  const response = await fetch(
+    process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department",
+    {
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+      next: {
+        revalidate: 60,
+      },
+    }
+  );
+
+  const res = await response.json();
+
+  if (response.ok) {
+    return res.data;
+  }
+
+  return [];
+};
+
 const SubDepartmentPage = async () => {
   const session: any = await getServerSession(authOptions);
 
   if (!session) {
     return null;
   }
+
+  const departments = await getDepartments(session.user.accessToken);
 
   return (
     <main>
@@ -29,7 +53,10 @@ const SubDepartmentPage = async () => {
       <div className="container-xl px-4 mt-n10">
         <div className="card mb-4">
           <div className="card-header">Data Sub Department</div>
-          <SubDepartmentData accessToken={session.user.accessToken} />
+          <SubDepartmentData
+            accessToken={session.user.accessToken}
+            departments={departments}
+          />
         </div>
       </div>
     </main>

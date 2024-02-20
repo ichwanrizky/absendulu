@@ -7,6 +7,7 @@ type Props = {
   accessToken?: string;
   dataDepartment: Department[];
   onFilter: any;
+  filterData: any;
 };
 
 type Department = {
@@ -19,14 +20,23 @@ type Department = {
 };
 
 const ModalFilter = (props: Props) => {
-  const { isModalOpen, onClose, accessToken, dataDepartment, onFilter } = props;
+  const {
+    isModalOpen,
+    onClose,
+    accessToken,
+    dataDepartment,
+    onFilter,
+    filterData,
+  } = props;
+
   const [isLoading, setIsLoading] = useState(false);
-  const [department, setDepartment] = useState("");
+  const [department, setDepartment] = useState(
+    filterData === "" ? "" : filterData.department
+  );
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     onFilter(department);
-    onClose();
   };
 
   return (
@@ -60,6 +70,7 @@ const ModalFilter = (props: Props) => {
                     <select
                       className="form-select"
                       onChange={(e) => setDepartment(e.target.value)}
+                      value={department}
                     >
                       <option value="">--PILIH--</option>
                       {dataDepartment?.map(
