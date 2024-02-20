@@ -87,6 +87,7 @@ model department {
   radius            String?
   sub_department    sub_department[]
   access_department access_department[]
+  pegawai           pegawai[]
 }
 
 model sub_department {
@@ -94,4 +95,41 @@ model sub_department {
   nama_sub_department String
   department_id       Int
   department          department? @relation(fields: [department_id], references: [id])
+  pegawai             pegawai[]
+}
+
+model pegawai {
+  id                Int             @id @default(autoincrement())
+  panji_id          String?         @unique
+  nama              String?
+  nik_kp            String?
+  tmp_lahir         String?
+  tgl_lahir         DateTime?       @db.DateTime(0)
+  jk                String?
+  agama             String?
+  kebangsaan        String?
+  alamat            String?
+  rt                String?
+  rw                String?
+  kel               String?
+  kec               String?
+  kota              String?
+  telp              String?
+  status_nikah      String?
+  tgl_join          DateTime?       @db.DateTime(0)
+  tgl_selesai       DateTime?       @db.DateTime(0)
+  tgl_reset         DateTime?       @db.DateTime(0)
+  email             String?
+  position          String?
+  npwp              String?
+  jenis_bank        String?
+  no_rek            String?
+  bpjs_tk           String?
+  bpjs_kes          String?
+  department_id     Int
+  department        department?     @relation(fields: [department_id], references: [id])
+  sub_department_id Int
+  sub_department    sub_department? @relation(fields: [sub_department_id], references: [id])
+  is_active         Boolean         @default(true)
+  is_overtime       Boolean         @default(false)
 }
