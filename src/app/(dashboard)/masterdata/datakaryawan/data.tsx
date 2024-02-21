@@ -6,6 +6,7 @@ import ModalEdit from "./modalEdit";
 import ModalFilter from "./modalFilter";
 
 type Karyawan = {
+  number: number;
   id: number;
   panji_id: string;
   nama: string;
@@ -67,6 +68,8 @@ const KaryawanData = ({
   accessToken: string;
   departments: Department[];
 }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+
   const [isLoadingFilter, setIsLoadingFilter] = useState(false);
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
@@ -91,7 +94,9 @@ const KaryawanData = ({
     setIsModalFilterOpen(false);
     mutate(
       process.env.NEXT_PUBLIC_API_URL +
-        "/api/web/masterdata/datakaryawan?filter=" +
+        "/api/web/masterdata/datakaryawan?page=" +
+        currentPage +
+        "&filter=" +
         JSON.stringify(filter)
     );
   };
@@ -199,7 +204,9 @@ const KaryawanData = ({
         if (response.ok) {
           mutate(
             process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/masterdata/datakaryawan?filter=" +
+              "/api/web/masterdata/datakaryawan?page=" +
+              currentPage +
+              "&filter=" +
               JSON.stringify(filter)
           );
         }
@@ -223,7 +230,9 @@ const KaryawanData = ({
 
   const { data, error, isLoading } = useSWR(
     process.env.NEXT_PUBLIC_API_URL +
-      "/api/web/masterdata/datakaryawan?filter=" +
+      "/api/web/masterdata/datakaryawan?page=" +
+      currentPage +
+      "&filter=" +
       JSON.stringify(filter),
     fetcher
   );
@@ -238,6 +247,52 @@ const KaryawanData = ({
 
   const employees = data?.data;
   const actions = data?.actions;
+
+  const ITEMS_PER_PAGE = data?.itemsPerPage;
+  const MAX_PAGINATION = 5;
+  const TOTAL_PAGES = Math.ceil(data?.total / ITEMS_PER_PAGE);
+
+  const renderPageNumbers = () => {
+    const pageNumbers = [];
+    const startPage = Math.max(1, currentPage - Math.floor(MAX_PAGINATION / 2));
+
+    for (
+      let i = startPage;
+      i <= Math.min(TOTAL_PAGES, startPage + MAX_PAGINATION - 1);
+      i++
+    ) {
+      pageNumbers.push(
+        <li
+          key={i}
+          className={`page-item ${currentPage === i ? "active" : ""}`}
+        >
+          <button className="page-link" onClick={() => setCurrentPage(i)}>
+            {i}
+          </button>
+        </li>
+      );
+    }
+
+    if (TOTAL_PAGES > MAX_PAGINATION) {
+      // Add an ellipsis for additional pages
+      if (startPage > 1) {
+        pageNumbers.unshift(
+          <li key={1} className="page-item disabled">
+            <span className="page-link">...</span>
+          </li>
+        );
+      }
+      if (startPage + MAX_PAGINATION - 1 < TOTAL_PAGES) {
+        pageNumbers.push(
+          <li key={TOTAL_PAGES} className="page-item disabled">
+            <span className="page-link">...</span>
+          </li>
+        );
+      }
+    }
+
+    return pageNumbers;
+  };
 
   return (
     <>
@@ -325,14 +380,14 @@ const KaryawanData = ({
               ) : (
                 employees?.map((item: Karyawan, index: number) => (
                   <tr key={index}>
-                    <td align="center">{index + 1}</td>
-                    <td align="left">{item.panji_id.toUpperCase()}</td>
+                    <td align="center">{item.number}</td>
+                    <td align="left">{item.panji_id?.toUpperCase()}</td>
                     <td align="left">{item.nama.toUpperCase()}</td>
                     <td align="left">
-                      {item.department.nama_department.toUpperCase()}
+                      {item.department?.nama_department.toUpperCase()}
                     </td>
                     <td align="left">
-                      {item.sub_department.nama_sub_department.toUpperCase()}
+                      {item.sub_department?.nama_sub_department.toUpperCase()}
                     </td>
                     <td align="left">{item.position.toUpperCase()}</td>
                     <td>
@@ -381,6 +436,36 @@ const KaryawanData = ({
               )}
             </tbody>
           </table>
+
+          {TOTAL_PAGES > 0 && (
+            <nav>
+              <ul className="pagination">
+                <li
+                  className={`page-item ${currentPage === 1 ? "disabled" : ""}`}
+                >
+                  <button
+                    className="page-link"
+                    onClick={() => setCurrentPage(1)}
+                  >
+                    First
+                  </button>
+                </li>
+                {renderPageNumbers()}
+                <li
+                  className={`page-item ${
+                    currentPage === TOTAL_PAGES ? "disabled" : ""
+                  }`}
+                >
+                  <button
+                    className="page-link"
+                    onClick={() => setCurrentPage(TOTAL_PAGES)}
+                  >
+                    Last
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          )}
         </div>
       </div>
 

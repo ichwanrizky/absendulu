@@ -100,7 +100,7 @@ model sub_department {
 
 model pegawai {
   id                Int             @id @default(autoincrement())
-  panji_id          String          @unique
+  panji_id          String?
   nama              String
   nik_ktp           String
   tmp_lahir         String?

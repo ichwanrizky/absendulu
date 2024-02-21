@@ -61,10 +61,29 @@ export async function GET(req: Request) {
     // departmentAccess[0];
 
     const searchParams = new URL(req.url).searchParams;
+
+    // filter
     const filter = searchParams.get("filter");
     const parseFilter = JSON.parse(filter!.toString());
 
-    const data = await prisma.pegawai.findMany({
+    // page
+    const page = searchParams.get("page");
+
+    const totalData = await prisma.pegawai.count({
+      where: {
+        department: {
+          id: Number(parseFilter.department),
+        },
+        ...(parseFilter.subDepartment && {
+          sub_department: {
+            id: Number(parseFilter.subDepartment),
+          },
+        }),
+      },
+    });
+
+    var ITEMS_PER_PAGE = 10;
+    var data = await prisma.pegawai.findMany({
       include: {
         department: {
           select: {
@@ -87,7 +106,49 @@ export async function GET(req: Request) {
           },
         }),
       },
+      orderBy: {
+        nama: "asc",
+      },
+      skip: page ? (parseInt(page) - 1) * ITEMS_PER_PAGE : 0,
+      take: ITEMS_PER_PAGE,
     });
+
+    data = data.map((data, index) => {
+      return {
+        number: page
+          ? (Number(page) - 1) * ITEMS_PER_PAGE + index + 1
+          : index + 1,
+        ...data,
+      };
+    });
+
+    // const data = await prisma.pegawai.findMany({
+    //   include: {
+    //     department: {
+    //       select: {
+    //         nama_department: true,
+    //       },
+    //     },
+    //     sub_department: {
+    //       select: {
+    //         nama_sub_department: true,
+    //       },
+    //     },
+    //   },
+    //   where: {
+    //     department: {
+    //       id: Number(parseFilter.department),
+    //     },
+    //     ...(parseFilter.subDepartment && {
+    //       sub_department: {
+    //         id: Number(parseFilter.subDepartment),
+    //       },
+    //     }),
+    //   },
+    //   orderBy: {
+    //     nama: "asc",
+    //   },
+    // });
 
     if (!data) {
       return new NextResponse(
@@ -110,6 +171,8 @@ export async function GET(req: Request) {
         message: "success",
         data: data,
         actions: actions,
+        itemsPerPage: ITEMS_PER_PAGE,
+        total: totalData,
       }),
       {
         status: 200,
