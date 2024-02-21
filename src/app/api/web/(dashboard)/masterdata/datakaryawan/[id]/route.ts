@@ -426,7 +426,7 @@ export async function DELETE(
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to delete sub department",
+        message: "Success to delete data karyawan",
         data: deletes,
       }),
       {

@@ -89,7 +89,11 @@ const KaryawanData = ({
     setModalCreateOpen(false);
     setIsModalEditOpen(false);
     setIsModalFilterOpen(false);
-    mutate(process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department");
+    mutate(
+      process.env.NEXT_PUBLIC_API_URL +
+        "/api/web/masterdata/datakaryawan?filter=" +
+        JSON.stringify(filter)
+    );
   };
 
   const handleFilterData = (department: any, subDepartment: any) => {

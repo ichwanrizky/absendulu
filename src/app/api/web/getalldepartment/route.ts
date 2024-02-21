@@ -26,7 +26,7 @@ export async function GET(req: Request) {
 
     var data = await prisma.department.findMany({
       orderBy: {
-        nama_department: "asc",
+        id: "asc",
       },
     });
 
