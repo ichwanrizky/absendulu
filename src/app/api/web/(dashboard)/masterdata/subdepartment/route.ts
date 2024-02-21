@@ -62,7 +62,6 @@ export async function GET(req: Request) {
 
     const searchParams = new URL(req.url).searchParams;
     const filter = searchParams.get("filter");
-    console.log("🚀 ~ GET ~ filter:", filter);
 
     if (filter === null) {
       var data = await prisma.sub_department.findMany({

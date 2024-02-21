@@ -1,5 +1,8 @@
 "use client";
 import { useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import styles from "./styles.module.css";
 
 type Props = {
   isModalOpen: any;
@@ -37,10 +40,10 @@ const ModalCreate = (props: Props) => {
   const [nik, setNik] = useState("");
   const [posisi, setPosisi] = useState("");
   const [tempatLahir, setTempatLahir] = useState("");
-  const [tanggalLahir, setTanggalLahir] = useState("");
+  const [tanggalLahir, setTanggalLahir] = useState<Date | null>(null);
   const [jenisKelamin, setJenisKelamin] = useState("");
   const [agama, setAgama] = useState("");
-  const [kebangsaan, setKebangsaan] = useState("");
+  const [kebangsaan, setKebangsaan] = useState("indonesia");
   const [alamat, setAlamat] = useState("");
   const [rt, setRt] = useState("");
   const [rw, setRw] = useState("");
@@ -50,7 +53,7 @@ const ModalCreate = (props: Props) => {
   const [telp, setTelp] = useState("");
   const [email, setEmail] = useState("");
   const [statusNikah, setStatusNikah] = useState("");
-  const [tanggalJoin, setTanggalJoin] = useState("");
+  const [tanggalJoin, setTanggalJoin] = useState<Date | null>(null);
   const [npwp, setNpwp] = useState("");
   const [jenisBank, setJenisBank] = useState("");
   const [noRekening, setNoRekening] = useState("");
@@ -91,39 +94,61 @@ const ModalCreate = (props: Props) => {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    // if (confirm("Add this data?")) {
-    //   setIsLoading(true);
-    //   try {
-    //     const body = new FormData();
-    //     body.append("nama_department", namaDepartment);
-    //     body.append("lot", lot);
-    //     body.append("latitude", latitude);
-    //     body.append("longitude", longitude);
-    //     body.append("radius", radius);
+    if (confirm("Add this data?")) {
+      setIsLoading(true);
+      try {
+        const body = new FormData();
+        body.append("nama", nama);
+        body.append("id_karyawan", idKaryawan);
+        body.append("department", department);
+        body.append("sub_department", subDepartment);
+        body.append("nik", nik);
+        body.append("posisi", posisi);
+        body.append("tempat_lahir", tempatLahir);
+        body.append("jenis_kelamin", jenisKelamin);
+        body.append("agama", agama);
+        body.append("kebangsaan", kebangsaan);
+        body.append("alamat", alamat);
+        body.append("rt", rt);
+        body.append("rw", rw);
+        body.append("kelurahan", kelurahan);
+        body.append("kecamatan", kecamatan);
+        body.append("kota", kota);
+        body.append("telp", telp);
+        body.append("email", email);
+        body.append("status_nikah", statusNikah);
+        body.append("npwp", npwp);
+        body.append("jenis_bank", jenisBank);
+        body.append("no_rekening", noRekening);
+        body.append("bpjstk", bpjstk);
+        body.append("bpjkskes", bpjkskes);
 
-    //     const response = await fetch(
-    //       process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department",
-    //       {
-    //         method: "POST",
-    //         headers: {
-    //           authorization: `Bearer ${accessToken}`,
-    //         },
-    //         body: body,
-    //       }
-    //     );
+        body.append("tanggal_lahir", tanggalLahir?.toISOString() || "");
+        body.append("tanggal_join", tanggalJoin?.toISOString() || "");
 
-    //     const res = await response.json();
-    //     if (!response.ok) {
-    //       alert(res.message);
-    //     } else {
-    //       alert(res.message);
-    //       onClose();
-    //     }
-    //   } catch (error) {
-    //     alert("something went wrong");
-    //   }
-    //   setIsLoading(false);
-    // }
+        const response = await fetch(
+          process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/datakaryawan",
+          {
+            method: "POST",
+            headers: {
+              authorization: `Bearer ${accessToken}`,
+            },
+            body: body,
+          }
+        );
+
+        const res = await response.json();
+        if (!response.ok) {
+          alert(res.message);
+        } else {
+          alert(res.message);
+          onClose();
+        }
+      } catch (error) {
+        alert("something went wrong");
+      }
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -240,7 +265,7 @@ const ModalCreate = (props: Props) => {
                       <div className="col-sm-6">
                         <label className="mb-1 fw-semibold small">NIK</label>
                         <input
-                          type="text"
+                          type="number"
                           className="form-control"
                           required
                           onChange={(e) => setNik(e.target.value)}
@@ -279,7 +304,19 @@ const ModalCreate = (props: Props) => {
                         <label className="mb-1 fw-semibold small">
                           Tanggal Lahir
                         </label>
-                        <input type="text" className="form-control" />
+                        <br />
+                        <DatePicker
+                          wrapperClassName={styles.datePicker}
+                          className="form-select"
+                          selected={tanggalLahir}
+                          onChange={(e: Date) => setTanggalLahir(e)}
+                          dateFormat={"yyyy-MM-dd"}
+                          showMonthDropdown
+                          showYearDropdown
+                          scrollableYearDropdown
+                          dropdownMode="select"
+                          required
+                        />
                       </div>
                     </div>
                   </div>
@@ -415,7 +452,7 @@ const ModalCreate = (props: Props) => {
                           Telp/Hp/WA
                         </label>
                         <input
-                          type="text"
+                          type="number"
                           className="form-control"
                           onChange={(e) => setTelp(e.target.value)}
                           value={telp}
@@ -461,7 +498,18 @@ const ModalCreate = (props: Props) => {
                     <label className="mb-1 fw-semibold small">
                       Tanggal Join
                     </label>
-                    <input type="text" className="form-control" />
+                    <br />
+                    <DatePicker
+                      wrapperClassName={styles.datePicker}
+                      className="form-select"
+                      selected={tanggalJoin}
+                      onChange={(e: Date) => setTanggalJoin(e)}
+                      dateFormat={"yyyy-MM-dd"}
+                      showMonthDropdown
+                      showYearDropdown
+                      scrollableYearDropdown
+                      dropdownMode="select"
+                    />
                   </div>
 
                   <div className="form-group mb-3">
@@ -493,7 +541,7 @@ const ModalCreate = (props: Props) => {
                           No Rekening
                         </label>
                         <input
-                          type="text"
+                          type="number"
                           className="form-control"
                           onChange={(e) => setNoRekening(e.target.value)}
                           value={noRekening}
@@ -509,7 +557,7 @@ const ModalCreate = (props: Props) => {
                           BPJS TK
                         </label>
                         <input
-                          type="text"
+                          type="number"
                           className="form-control"
                           onChange={(e) => setBpjstk(e.target.value)}
                           value={bpjstk}
@@ -521,7 +569,7 @@ const ModalCreate = (props: Props) => {
                           BPJS KES
                         </label>
                         <input
-                          type="text"
+                          type="number"
                           className="form-control"
                           onChange={(e) => setBpjkskes(e.target.value)}
                           value={bpjkskes}

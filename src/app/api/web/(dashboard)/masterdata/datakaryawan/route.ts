@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { checkSession } from "@/libs/checkSession";
 import { checkRoles } from "@/libs/checkRoles";
-import { checkDepartments } from "@/libs/checkDepartments";
 import prisma from "@/libs/db";
+import { checkDepartments } from "@/libs/checkDepartments";
 
 export async function GET(req: Request) {
   try {
@@ -25,7 +25,7 @@ export async function GET(req: Request) {
     }
 
     const roleId = session[1].roleId;
-    const roleAccess = await checkRoles(roleId, "/masterdata/department");
+    const roleAccess = await checkRoles(roleId, "/masterdata/datakaryawan");
     if (!roleAccess) {
       return new NextResponse(
         JSON.stringify({
@@ -57,15 +57,36 @@ export async function GET(req: Request) {
       );
     }
 
-    const departmentAccess = await checkDepartments(roleId);
-    var data = await prisma.department.findMany({
-      where: {
-        id: {
-          in: departmentAccess.map((item) => item.department_id),
+    // const departmentAccess = await checkDepartments(roleId);
+    // departmentAccess[0];
+
+    const searchParams = new URL(req.url).searchParams;
+    const filter = searchParams.get("filter");
+    const parseFilter = JSON.parse(filter!.toString());
+    console.log(parseFilter);
+
+    var data = await prisma.pegawai.findMany({
+      include: {
+        department: {
+          select: {
+            nama_department: true,
+          },
+        },
+        sub_department: {
+          select: {
+            nama_sub_department: true,
+          },
         },
       },
-      orderBy: {
-        id: "asc",
+      where: {
+        department: {
+          id: Number(parseFilter.department),
+        },
+        ...(parseFilter.subDepartment && {
+          sub_department: {
+            id: Number(parseFilter.subDepartment),
+          },
+        }),
       },
     });
 
@@ -152,7 +173,7 @@ export async function POST(req: Request) {
     }
 
     const roleId = session[1].roleId;
-    const roleAccess = await checkRoles(roleId, "/masterdata/department");
+    const roleAccess = await checkRoles(roleId, "/masterdata/datakaryawan");
     if (!roleAccess) {
       return new NextResponse(
         JSON.stringify({
@@ -185,19 +206,70 @@ export async function POST(req: Request) {
     }
 
     const body = await req.formData();
-    const nama_department = body.get("nama_department")!.toString();
-    const lot = body.get("lot")?.toString();
-    const latitude = body.get("latitude")?.toString();
-    const longitude = body.get("longitude")?.toString();
-    const radius = body.get("radius")?.toString();
+    const nama = body.get("nama")!.toString();
+    const idKaryawan = body.get("id_karyawan")!.toString();
+    const department = body.get("department")!.toString();
+    const subDepartment = body.get("sub_department")!.toString();
+    const nik = body.get("nik")!.toString();
+    const posisi = body.get("posisi")!.toString();
+    const tempatLahir = body.get("tempat_lahir")?.toString();
+    const jenisKelamin = body.get("jenis_kelamin")!.toString();
+    const agama = body.get("agama")?.toString();
+    const kebangsaan = body.get("kebangsaan")?.toString();
+    const alamat = body.get("alamat")!.toString();
+    const rt = body.get("rt")?.toString();
+    const rw = body.get("rw")?.toString();
+    const kelurahan = body.get("kelurahan")?.toString();
+    const kecamatan = body.get("kecamatan")?.toString();
+    const kota = body.get("kota")?.toString();
+    const telp = body.get("telp")?.toString();
+    const email = body.get("email")?.toString();
+    const statusNikah = body.get("status_nikah")!.toString();
+    const npwp = body.get("npwp")?.toString();
+    const jenisBank = body.get("jenis_bank")?.toString();
+    const noRekening = body.get("no_rekening")?.toString();
+    const bpjstk = body.get("bpjstk")?.toString();
+    const bpjkskes = body.get("bpjkskes")?.toString();
 
-    var create = await prisma.department.create({
+    const tanggalLahir = body.get("tanggal_lahir")!.toString();
+    const tanggalJoin = body.get("tanggal_join")?.toString();
+
+    var create = await prisma.pegawai.create({
       data: {
-        nama_department: nama_department,
-        lot: lot,
-        latitude: latitude,
-        longitude: longitude,
-        radius: radius,
+        panji_id: idKaryawan.toUpperCase(),
+        nama: nama.toUpperCase(),
+        nik_ktp: nik,
+        tmp_lahir: tempatLahir,
+        tgl_lahir: new Date(tanggalLahir),
+        tgl_join: tanggalJoin ? new Date(tanggalJoin) : null,
+        jk: jenisKelamin,
+        agama: agama,
+        kebangsaan: kebangsaan,
+        alamat: alamat,
+        rt: rt,
+        rw: rw,
+        kel: kelurahan,
+        kec: kecamatan,
+        kota: kota,
+        telp: telp,
+        status_nikah: statusNikah,
+        email: email,
+        position: posisi,
+        npwp: npwp,
+        jenis_bank: jenisBank,
+        no_rek: noRekening,
+        bpjs_tk: bpjstk,
+        bpjs_kes: bpjkskes,
+        department: {
+          connect: {
+            id: Number(department),
+          },
+        },
+        sub_department: {
+          connect: {
+            id: Number(subDepartment),
+          },
+        },
       },
     });
 
@@ -205,7 +277,7 @@ export async function POST(req: Request) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to create department",
+          message: "Failed to create karyawan",
         }),
         {
           status: 500,
@@ -219,7 +291,7 @@ export async function POST(req: Request) {
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to create department",
+        message: "Success to create karyawan",
         data: create,
       }),
       {
