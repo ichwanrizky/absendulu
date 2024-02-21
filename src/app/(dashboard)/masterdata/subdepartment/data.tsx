@@ -111,8 +111,12 @@ const SubDepartmentData = ({
         alert(res.message);
         if (response.ok) {
           mutate(
-            process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/masterdata/subdepartment"
+            filter === ""
+              ? process.env.NEXT_PUBLIC_API_URL +
+                  "/api/web/masterdata/subdepartment"
+              : process.env.NEXT_PUBLIC_API_URL +
+                  "/api/web/masterdata/subdepartment?filter=" +
+                  JSON.stringify(filter)
           );
         }
       } catch (error) {

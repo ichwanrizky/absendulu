@@ -46,9 +46,45 @@ const ModalFilter = (props: Props) => {
     filterData === "" ? "" : filterData.subDepartment
   );
 
+  const [subDepartments, setSubDepartments] =
+    useState<SubDepartment[]>(dataSubDepartment);
+
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     onFilter(department, subDepartment);
+  };
+
+  const changeDepartment = async (department: number) => {
+    if (department === 0) {
+      setSubDepartments([]);
+      return;
+    }
+
+    try {
+      setSubDepartments([]);
+
+      const filter = { department: department };
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_API_URL +
+          "/api/web/masterdata/subdepartment?filter=" +
+          JSON.stringify(filter),
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const res = await response.json();
+
+      if (!response.ok) {
+        alert(res.message);
+      } else {
+        setSubDepartments(res.data);
+      }
+    } catch (error) {
+      alert("something went wrong");
+    }
   };
 
   return (
@@ -81,7 +117,10 @@ const ModalFilter = (props: Props) => {
                     <label className="mb-1 fw-semibold small">Department</label>
                     <select
                       className="form-select"
-                      onChange={(e) => setDepartment(e.target.value)}
+                      onChange={(e) => {
+                        setDepartment(e.target.value);
+                        changeDepartment(Number(e.target.value));
+                      }}
                       value={department}
                     >
                       {dataDepartment?.map(
@@ -104,7 +143,7 @@ const ModalFilter = (props: Props) => {
                       value={subDepartment}
                     >
                       <option value="">ALL</option>
-                      {dataSubDepartment?.map(
+                      {subDepartments?.map(
                         (item: SubDepartment, index: number) => (
                           <option value={item.id} key={index}>
                             {item.nama_sub_department.toUpperCase()}

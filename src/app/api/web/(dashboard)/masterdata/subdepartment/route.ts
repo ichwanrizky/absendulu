@@ -79,9 +79,16 @@ export async function GET(req: Request) {
             },
           },
         },
-        orderBy: {
-          nama_sub_department: "asc",
-        },
+        orderBy: [
+          {
+            department: {
+              id: "asc",
+            },
+          },
+          {
+            nama_sub_department: "asc",
+          },
+        ],
       });
     } else {
       const parseFilter = JSON.parse(filter!.toString());

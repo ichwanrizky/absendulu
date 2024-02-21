@@ -75,7 +75,7 @@ const KaryawanData = ({
   const [isModalEditOpen, setIsModalEditOpen] = useState(false);
   const [isModalFilterOpen, setIsModalFilterOpen] = useState(false);
 
-  const [dataEdit, setDataEdit] = useState({} as Department);
+  const [dataEdit, setDataEdit] = useState({} as Karyawan);
   const [subDepartments, setSubDepartments] = useState([] as SubDepartment[]);
 
   // filter
@@ -133,59 +133,77 @@ const KaryawanData = ({
     setModalCreateOpen(true);
   };
 
-  const handleEdit = async (id: number) => {
-    // setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
-    // try {
-    //   const response = await fetch(
-    //     process.env.NEXT_PUBLIC_API_URL +
-    //       "/api/web/masterdata/department/" +
-    //       id,
-    //     {
-    //       headers: {
-    //         authorization: `Bearer ${accessToken}`,
-    //       },
-    //     }
-    //   );
-    //   const res = await response.json();
-    //   if (!response.ok) {
-    //     alert(res.message);
-    //   } else {
-    //     setDataEdit(res.data);
-    //     setIsModalEditOpen(true);
-    //   }
-    // } catch (error) {
-    //   alert("something went wrong");
-    // }
-    // setIsLoadingEdit((prev) => ({ ...prev, [id]: false }));
+  const handleEdit = async (id: number, department: number) => {
+    setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
+    try {
+      // data edit
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_API_URL +
+          "/api/web/masterdata/datakaryawan/" +
+          id,
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const res = await response.json();
+
+      // sub department
+      const responseSubDepartment = await fetch(
+        process.env.NEXT_PUBLIC_API_URL +
+          "/api/web/masterdata/subdepartment?filter=" +
+          JSON.stringify({ department: department }),
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const resSubDepartment = await responseSubDepartment.json();
+
+      if (!response.ok || !responseSubDepartment.ok) {
+        alert(!response.ok ? res.message : resSubDepartment.message);
+      } else {
+        setDataEdit(res.data);
+        setSubDepartments(resSubDepartment.data);
+        setIsModalEditOpen(true);
+      }
+    } catch (error) {
+      alert("something went wrong");
+    }
+    setIsLoadingEdit((prev) => ({ ...prev, [id]: false }));
   };
 
   const handleDelete = async (id: number) => {
-    // if (confirm("Delete this data?")) {
-    //   setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
-    //   try {
-    //     const response = await fetch(
-    //       process.env.NEXT_PUBLIC_API_URL +
-    //         "/api/web/masterdata/department/" +
-    //         id,
-    //       {
-    //         method: "DELETE",
-    //         headers: {
-    //           authorization: `Bearer ${accessToken}`,
-    //         },
-    //       }
-    //     );
-    //     const res = await response.json();
-    //     alert(res.message);
-    //     if (response.ok) {
-    //       mutate(
-    //         process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department"
-    //       );
-    //     }
-    //   } catch (error) {
-    //     alert("something went wrong");
-    //   }
-    //   setIsLoadingDelete((prev) => ({ ...prev, [id]: false }));
-    // }
+    if (confirm("Delete this data?")) {
+      setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
+      try {
+        const response = await fetch(
+          process.env.NEXT_PUBLIC_API_URL +
+            "/api/web/masterdata/datakaryawan/" +
+            id,
+          {
+            method: "DELETE",
+            headers: {
+              authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+        const res = await response.json();
+        alert(res.message);
+        if (response.ok) {
+          mutate(
+            process.env.NEXT_PUBLIC_API_URL +
+              "/api/web/masterdata/datakaryawan?filter=" +
+              JSON.stringify(filter)
+          );
+        }
+      } catch (error) {
+        alert("something went wrong");
+      }
+      setIsLoadingDelete((prev) => ({ ...prev, [id]: false }));
+    }
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -327,7 +345,9 @@ const KaryawanData = ({
                           ) : (
                             <button
                               className="btn btn-success btn-sm"
-                              onClick={() => handleEdit(item.id)}
+                              onClick={() =>
+                                handleEdit(item.id, item.department_id)
+                              }
                             >
                               Edit
                             </button>
@@ -371,14 +391,16 @@ const KaryawanData = ({
       )}
 
       {/* modal edit */}
-      {/* {isModalEditOpen && (
+      {isModalEditOpen && (
         <ModalEdit
           isModalOpen={isModalEditOpen}
           onClose={closeModal}
           accessToken={accessToken}
           data={dataEdit}
+          dataDepartment={departments}
+          dataSubDepartment={subDepartments}
         />
-      )} */}
+      )}
 
       {/* modal filter */}
       {isModalFilterOpen && (
