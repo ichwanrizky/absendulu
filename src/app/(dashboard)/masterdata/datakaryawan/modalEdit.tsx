@@ -73,8 +73,11 @@ const ModalEdit = (props: Props) => {
     dataDepartment,
     dataSubDepartment,
   } = props;
+
+  // loading state
   const [isLoading, setIsLoading] = useState(false);
 
+  // sub department state
   const [subDepartments, setSubDepartments] = useState(dataSubDepartment);
 
   const [nama, setNama] = useState(data.nama);

@@ -57,14 +57,14 @@ export async function GET(req: Request) {
       );
     }
 
-    // const departmentAccess = await checkDepartments(roleId);
-    // departmentAccess[0];
-
     const searchParams = new URL(req.url).searchParams;
 
     // filter
     const filter = searchParams.get("filter");
-    const parseFilter = JSON.parse(filter!.toString());
+    const parseFilter = filter ? JSON.parse(filter) : {};
+
+    // search
+    const search = searchParams.get("search");
 
     // page
     const page = searchParams.get("page");
@@ -74,11 +74,15 @@ export async function GET(req: Request) {
         department: {
           id: Number(parseFilter.department),
         },
+        is_active: parseFilter.active === "1",
         ...(parseFilter.subDepartment && {
           sub_department: {
             id: Number(parseFilter.subDepartment),
           },
         }),
+        nama: {
+          contains: search ? search : undefined,
+        },
       },
     });
 
@@ -100,19 +104,29 @@ export async function GET(req: Request) {
         department: {
           id: Number(parseFilter.department),
         },
+        is_active: parseFilter.active === "1",
         ...(parseFilter.subDepartment && {
           sub_department: {
             id: Number(parseFilter.subDepartment),
           },
         }),
+        nama: {
+          contains: search ? search : undefined,
+        },
       },
-      orderBy: {
-        nama: "asc",
-      },
+      orderBy: [
+        {
+          sub_department: {
+            id: "asc",
+          },
+        },
+        {
+          nama: "asc",
+        },
+      ],
       skip: page ? (parseInt(page) - 1) * ITEMS_PER_PAGE : 0,
       take: ITEMS_PER_PAGE,
     });
-
     data = data.map((data, index) => {
       return {
         number: page
@@ -121,34 +135,6 @@ export async function GET(req: Request) {
         ...data,
       };
     });
-
-    // const data = await prisma.pegawai.findMany({
-    //   include: {
-    //     department: {
-    //       select: {
-    //         nama_department: true,
-    //       },
-    //     },
-    //     sub_department: {
-    //       select: {
-    //         nama_sub_department: true,
-    //       },
-    //     },
-    //   },
-    //   where: {
-    //     department: {
-    //       id: Number(parseFilter.department),
-    //     },
-    //     ...(parseFilter.subDepartment && {
-    //       sub_department: {
-    //         id: Number(parseFilter.subDepartment),
-    //       },
-    //     }),
-    //   },
-    //   orderBy: {
-    //     nama: "asc",
-    //   },
-    // });
 
     if (!data) {
       return new NextResponse(
@@ -183,6 +169,8 @@ export async function GET(req: Request) {
     );
   } catch (error) {
     if (error instanceof Error) {
+      console.log(error.message);
+
       if (error?.name == "TokenExpiredError") {
         return new NextResponse(
           JSON.stringify({

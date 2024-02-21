@@ -38,20 +38,28 @@ const ModalFilter = (props: Props) => {
     filterData,
   } = props;
 
-  const [isLoading, setIsLoading] = useState(false);
+  // department state
   const [department, setDepartment] = useState(
     filterData === "" ? dataDepartment[0].id.toString() : filterData.department
   );
+
+  // sub department state
   const [subDepartment, setSubDepartment] = useState(
     filterData === "" ? "" : filterData.subDepartment
   );
 
+  // status active state
+  const [active, setActive] = useState(
+    filterData === "" ? "" : filterData.active
+  );
+
+  // sub department data state
   const [subDepartments, setSubDepartments] =
     useState<SubDepartment[]>(dataSubDepartment);
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    onFilter(department, subDepartment);
+    onFilter(department, subDepartment, active);
   };
 
   const changeDepartment = async (department: number) => {
@@ -104,7 +112,7 @@ const ModalFilter = (props: Props) => {
             <form onSubmit={handleSubmit}>
               <div className="modal-content">
                 <div className="modal-header">
-                  <h1 className="modal-title fs-5 fw-semibold   ">Filter</h1>
+                  <h1 className="modal-title fs-5 fw-semibold">Filter</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -112,6 +120,7 @@ const ModalFilter = (props: Props) => {
                     aria-label="Close"
                   />
                 </div>
+
                 <div className="modal-body">
                   <div className="form-group mb-3">
                     <label className="mb-1 fw-semibold small">Department</label>
@@ -152,6 +161,20 @@ const ModalFilter = (props: Props) => {
                       )}
                     </select>
                   </div>
+
+                  <div className="form-group mb-3">
+                    <label className="mb-1 fw-semibold small">
+                      Status Active
+                    </label>
+                    <select
+                      className="form-select"
+                      onChange={(e) => setActive(e.target.value)}
+                      value={active}
+                    >
+                      <option value="1">Aktif</option>
+                      <option value="0">Tidak Aktif</option>
+                    </select>
+                  </div>
                 </div>
                 <div className="modal-footer">
                   <button
@@ -161,24 +184,10 @@ const ModalFilter = (props: Props) => {
                   >
                     Close
                   </button>
-                  {isLoading ? (
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-sm"
-                      disabled
-                    >
-                      <span
-                        className="spinner-border spinner-border-sm me-2"
-                        role="status"
-                        aria-hidden="true"
-                      ></span>
-                      Loading...
-                    </button>
-                  ) : (
-                    <button type="submit" className="btn btn-primary btn-sm">
-                      Filter Data
-                    </button>
-                  )}
+
+                  <button type="submit" className="btn btn-primary btn-sm">
+                    Filter Data
+                  </button>
                 </div>
               </div>
             </form>

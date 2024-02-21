@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
 import useSWR, { mutate } from "swr";
-import ModalCreate from "./modalCreate";
-import ModalEdit from "./modalEdit";
 import ModalFilter from "./modalFilter";
+import ModalEdit from "./modalEdit";
+import ModalCreate from "./modalCreate";
 
 type Karyawan = {
   number: number;
@@ -49,14 +49,12 @@ type Department = {
   longitude: string;
   radius: string;
 };
-
 type SubDepartment = {
   id: number;
   nama_sub_department: string;
   department_id: number;
   department: Department;
 };
-
 interface isLoadingProps {
   [key: number]: boolean;
 }
@@ -68,83 +66,37 @@ const KaryawanData = ({
   accessToken: string;
   departments: Department[];
 }) => {
+  // pagination
   const [currentPage, setCurrentPage] = useState(1);
 
+  // loading state
   const [isLoadingFilter, setIsLoadingFilter] = useState(false);
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
 
-  const [isModalCreateOpen, setModalCreateOpen] = useState(false);
+  // modal state
+  const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState(false);
   const [isModalFilterOpen, setIsModalFilterOpen] = useState(false);
 
+  // data state
   const [dataEdit, setDataEdit] = useState({} as Karyawan);
   const [subDepartments, setSubDepartments] = useState([] as SubDepartment[]);
 
-  // filter
+  // filter state
   const [filter, setFilter] = useState({
     filter: false,
     department: departments[0].id.toString(),
     subDepartment: "",
-    search: "",
+    active: "1",
   });
 
-  //search
+  //search state
   const [typingTimeout, setTypingTimeout] = useState<any>();
-
-  const closeModal = () => {
-    setModalCreateOpen(false);
-    setIsModalEditOpen(false);
-    setIsModalFilterOpen(false);
-    mutate(
-      process.env.NEXT_PUBLIC_API_URL +
-        "/api/web/masterdata/datakaryawan?page=" +
-        currentPage +
-        "&filter=" +
-        JSON.stringify(filter)
-    );
-  };
-
-  const handleFilterData = (department: any, subDepartment: any) => {
-    setIsModalFilterOpen(false);
-    setFilter({
-      filter: true,
-      department: department,
-      subDepartment: subDepartment,
-      search: "",
-    });
-  };
-
-  const handleFilter = async () => {
-    setIsLoadingFilter(true);
-    try {
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/subdepartment?filter=" +
-          JSON.stringify({ department: departments[0].id }),
-        {
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-
-      const res = await response.json();
-
-      if (!response.ok) {
-        alert(res.message);
-      } else {
-        setSubDepartments(res.data);
-        setIsModalFilterOpen(true);
-      }
-    } catch (error) {
-      alert("something went wrong");
-    }
-    setIsLoadingFilter(false);
-  };
+  const [search, setSearch] = useState("");
 
   const handleCreate = () => {
-    setModalCreateOpen(true);
+    setIsModalCreateOpen(true);
   };
 
   const handleEdit = async (id: number, department: number) => {
@@ -222,24 +174,70 @@ const KaryawanData = ({
     }
   };
 
-  const handleSearch = (search: any, e: React.FormEvent) => {
+  const handleSearch = (search: any) => {
     if (typingTimeout) clearTimeout(typingTimeout);
-
-    // Set a new timeout
     const newTimeout = setTimeout(() => {
-      setFilter({ ...filter, search: search });
-
-      mutate(
-        process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/datakaryawan?page=" +
-          currentPage +
-          "&filter=" +
-          JSON.stringify(filter)
-      );
+      setSearch(search);
+      setCurrentPage(1);
     }, 1000);
 
     // Update the timeout ID in state
     setTypingTimeout(newTimeout);
+  };
+
+  const handleFilter = async () => {
+    setIsLoadingFilter(true);
+    try {
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_API_URL +
+          "/api/web/masterdata/subdepartment?filter=" +
+          JSON.stringify({ department: departments[0].id }),
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const res = await response.json();
+
+      if (!response.ok) {
+        alert(res.message);
+      } else {
+        setSubDepartments(res.data);
+        setIsModalFilterOpen(true);
+      }
+    } catch (error) {
+      alert("something went wrong");
+    }
+    setIsLoadingFilter(false);
+  };
+
+  const closeModal = () => {
+    setIsModalCreateOpen(false);
+    setIsModalEditOpen(false);
+    setIsModalFilterOpen(false);
+    mutate(
+      process.env.NEXT_PUBLIC_API_URL +
+        "/api/web/masterdata/datakaryawan?page=" +
+        currentPage +
+        "&filter=" +
+        JSON.stringify(filter)
+    );
+  };
+
+  const handleFilterData = (
+    department: any,
+    subDepartment: any,
+    active: any
+  ) => {
+    setIsModalFilterOpen(false);
+    setFilter({
+      filter: true,
+      department: department,
+      subDepartment: subDepartment,
+      active: active,
+    });
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -252,22 +250,62 @@ const KaryawanData = ({
       },
     }).then((res) => res.json());
   };
-
   const { data, error, isLoading } = useSWR(
-    process.env.NEXT_PUBLIC_API_URL +
-      "/api/web/masterdata/datakaryawan?page=" +
-      currentPage +
-      "&filter=" +
-      JSON.stringify(filter),
+    search === ""
+      ? process.env.NEXT_PUBLIC_API_URL +
+          "/api/web/masterdata/datakaryawan?page=" +
+          currentPage +
+          "&filter=" +
+          JSON.stringify(filter)
+      : process.env.NEXT_PUBLIC_API_URL +
+          "/api/web/masterdata/datakaryawan?page=" +
+          1 +
+          "&filter=" +
+          JSON.stringify(filter) +
+          "&search=" +
+          search,
     fetcher
   );
 
   if (isLoading) {
-    return <></>;
+    return (
+      <div className="card-body">
+        <div className="row">
+          <div className="col-sm-12 d-flex justify-content-between align-items-center">
+            <div></div>
+            <input
+              type="text"
+              placeholder="Search..."
+              aria-label="Search"
+              onChange={(e) => handleSearch(e.target.value)}
+              className="form-control-sm ms-2"
+              style={{
+                width: "200px",
+                float: "right",
+                border: "1px solid #ced4da",
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="text-center">
+          <span
+            className="spinner-border spinner-border-sm me-2"
+            role="status"
+            aria-hidden="true"
+          />{" "}
+          Loading...
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <>something went wrong</>;
+    return (
+      <div className="card-body text-center">
+        something went wrong, please refresh the page
+      </div>
+    );
   }
 
   const employees = data?.data;
@@ -323,55 +361,58 @@ const KaryawanData = ({
     <>
       <div className="card-body">
         <div className="row">
-          <div className="col-sm-12">
-            {actions?.includes("insert") && (
-              <button
-                type="button"
-                className="btn btn-primary btn-sm fw-bold"
-                onClick={() => handleCreate()}
-              >
-                Add Data
-              </button>
-            )}
-            {isLoadingFilter ? (
-              <button
-                type="button"
-                className="btn btn-dark btn-sm fw-bold ms-2"
-                disabled
-              >
-                <span
-                  className="spinner-border spinner-border-sm me-2"
-                  role="status"
-                  aria-hidden="true"
-                />{" "}
-                Loading...
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="btn btn-dark btn-sm fw-bold ms-2"
-                onClick={() => handleFilter()}
-              >
-                Filter Data
-              </button>
-            )}
+          <div className="col-sm-12 d-flex justify-content-between align-items-center">
+            {/* button */}
+            <div>
+              {actions?.includes("insert") && (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm fw-bold"
+                  onClick={() => handleCreate()}
+                >
+                  Add Data
+                </button>
+              )}
+              {isLoadingFilter ? (
+                <button
+                  type="button"
+                  className="btn btn-dark btn-sm fw-bold ms-2"
+                  disabled
+                >
+                  <span
+                    className="spinner-border spinner-border-sm me-2"
+                    role="status"
+                    aria-hidden="true"
+                  />{" "}
+                  Loading...
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-dark btn-sm fw-bold ms-1"
+                  onClick={() => handleFilter()}
+                >
+                  Filter Data
+                </button>
+              )}
 
-            {filter.filter && (
-              <button
-                type="button"
-                className="btn btn-outline-dark btn-sm fw-bold ms-1"
-                onClick={() =>
-                  setFilter({
-                    filter: false,
-                    department: departments[0].id.toString(),
-                    subDepartment: "",
-                    search: "",
-                  })
-                }
-              >
-                Reset
-              </button>
-            )}
+              {filter.filter && (
+                <button
+                  type="button"
+                  className="btn btn-outline-dark btn-sm fw-bold ms-1"
+                  onClick={() => {
+                    setFilter({
+                      filter: false,
+                      department: departments[0].id.toString(),
+                      subDepartment: "",
+                      active: "1",
+                    });
+                  }}
+                >
+                  Reset
+                </button>
+              )}
+            </div>
 
             <input
               type="text"
@@ -379,6 +420,7 @@ const KaryawanData = ({
               aria-label="Search"
               onChange={(e) => handleSearch(e.target.value)}
               className="form-control-sm ms-2"
+              id="search"
               style={{
                 width: "200px",
                 float: "right",
@@ -514,7 +556,7 @@ const KaryawanData = ({
           isModalOpen={isModalCreateOpen}
           onClose={closeModal}
           accessToken={accessToken}
-          departments={departments}
+          dataDepartment={departments}
         />
       )}
 

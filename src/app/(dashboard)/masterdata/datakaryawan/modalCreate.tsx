@@ -8,7 +8,7 @@ type Props = {
   isModalOpen: any;
   onClose: any;
   accessToken?: string;
-  departments?: Department[];
+  dataDepartment?: Department[];
 };
 
 type Department = {
@@ -28,9 +28,12 @@ type SubDepartment = {
 };
 
 const ModalCreate = (props: Props) => {
-  const { isModalOpen, onClose, accessToken, departments } = props;
+  const { isModalOpen, onClose, accessToken, dataDepartment } = props;
+
+  // loading state
   const [isLoading, setIsLoading] = useState(false);
 
+  // sub department state
   const [subDepartments, setSubDepartments] = useState([] as SubDepartment[]);
 
   const [nama, setNama] = useState("");
@@ -227,7 +230,7 @@ const ModalCreate = (props: Props) => {
                           value={department}
                         >
                           <option value="">--PILIH--</option>
-                          {departments?.map(
+                          {dataDepartment?.map(
                             (item: Department, index: number) => (
                               <option value={item.id} key={index}>
                                 {item.nama_department.toUpperCase()}
