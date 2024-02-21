@@ -86,7 +86,11 @@ const KaryawanData = ({
     filter: false,
     department: departments[0].id.toString(),
     subDepartment: "",
+    search: "",
   });
+
+  //search
+  const [typingTimeout, setTypingTimeout] = useState<any>();
 
   const closeModal = () => {
     setModalCreateOpen(false);
@@ -107,6 +111,7 @@ const KaryawanData = ({
       filter: true,
       department: department,
       subDepartment: subDepartment,
+      search: "",
     });
   };
 
@@ -215,6 +220,26 @@ const KaryawanData = ({
       }
       setIsLoadingDelete((prev) => ({ ...prev, [id]: false }));
     }
+  };
+
+  const handleSearch = (search: any, e: React.FormEvent) => {
+    if (typingTimeout) clearTimeout(typingTimeout);
+
+    // Set a new timeout
+    const newTimeout = setTimeout(() => {
+      setFilter({ ...filter, search: search });
+
+      mutate(
+        process.env.NEXT_PUBLIC_API_URL +
+          "/api/web/masterdata/datakaryawan?page=" +
+          currentPage +
+          "&filter=" +
+          JSON.stringify(filter)
+      );
+    }, 1000);
+
+    // Update the timeout ID in state
+    setTypingTimeout(newTimeout);
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -340,12 +365,26 @@ const KaryawanData = ({
                     filter: false,
                     department: departments[0].id.toString(),
                     subDepartment: "",
+                    search: "",
                   })
                 }
               >
                 Reset
               </button>
             )}
+
+            <input
+              type="text"
+              placeholder="Search..."
+              aria-label="Search"
+              onChange={(e) => handleSearch(e.target.value)}
+              className="form-control-sm ms-2"
+              style={{
+                width: "200px",
+                float: "right",
+                border: "1px solid #ced4da",
+              }}
+            />
           </div>
         </div>
 
