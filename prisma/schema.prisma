@@ -88,6 +88,7 @@ model department {
   sub_department    sub_department[]
   access_department access_department[]
   pegawai           pegawai[]
+  shift             shift[]
 }
 
 model sub_department {
@@ -132,4 +133,15 @@ model pegawai {
   sub_department    sub_department? @relation(fields: [sub_department_id], references: [id])
   is_active         Boolean         @default(true)
   is_overtime       Boolean         @default(false)
+}
+
+model shift {
+  id            Int        @id @default(autoincrement())
+  jam_masuk     DateTime?  @db.Time
+  jam_pulang    DateTime?  @db.Time
+  different_day Boolean    @default(false)
+  department_id Int
+  department    department @relation(fields: [department_id], references: [id])
+  keterangan    String?
+  cond_friday   Int        @default(0)
 }

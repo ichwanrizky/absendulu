@@ -58,7 +58,7 @@ export async function GET(req: Request) {
     }
 
     const departmentAccess = await checkDepartments(roleId);
-    var data = await prisma.department.findMany({
+    const data = await prisma.department.findMany({
       where: {
         id: {
           in: departmentAccess.map((item) => item.department_id),
@@ -191,7 +191,7 @@ export async function POST(req: Request) {
     const longitude = body.get("longitude")?.toString();
     const radius = body.get("radius")?.toString();
 
-    var create = await prisma.department.create({
+    const create = await prisma.department.create({
       data: {
         nama_department: nama_department,
         lot: lot,

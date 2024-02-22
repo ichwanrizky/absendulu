@@ -55,7 +55,7 @@ export async function GET(req: Request) {
         }
       );
     }
-    var data = await prisma.menu_group.findMany({
+    const data = await prisma.menu_group.findMany({
       orderBy: {
         urut: "asc",
       },
@@ -182,7 +182,7 @@ export async function POST(req: Request) {
     const group = body.get("group")!.toString();
     const parent_id = body.get("parent_id")!.toString();
 
-    var create = await prisma.menu_group.create({
+    const create = await prisma.menu_group.create({
       data: {
         menu_group: menu_group,
         urut: Number(urut),

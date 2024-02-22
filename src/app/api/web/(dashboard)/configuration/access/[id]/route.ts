@@ -210,7 +210,7 @@ export async function POST(
       ? JSON.parse(akses_department as string)
       : [];
 
-    const create = await prisma.$transaction([
+    const update = await prisma.$transaction([
       prisma.access_menu.deleteMany({
         where: {
           role_id: Number(id),
@@ -239,7 +239,7 @@ export async function POST(
       }),
     ]);
 
-    if (!create) {
+    if (!update) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -258,7 +258,7 @@ export async function POST(
       JSON.stringify({
         status: true,
         message: "Success to update access",
-        data: create,
+        data: update,
       }),
       {
         status: 200,

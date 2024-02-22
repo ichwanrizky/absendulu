@@ -59,7 +59,7 @@ export async function GET(
       );
     }
 
-    var data = await prisma.menu.findFirst({
+    const data = await prisma.menu.findFirst({
       where: {
         id: Number(id),
       },
@@ -204,7 +204,7 @@ export async function POST(
     const urut = body.get("urut")!.toString();
     const path = body.get("path")!.toString();
 
-    var create = await prisma.menu.update({
+    const update = await prisma.menu.update({
       data: {
         menu_group: {
           connect: {
@@ -220,7 +220,7 @@ export async function POST(
       },
     });
 
-    if (!create) {
+    if (!update) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -239,7 +239,7 @@ export async function POST(
       JSON.stringify({
         status: true,
         message: "Success to update menu",
-        data: create,
+        data: update,
       }),
       {
         status: 200,
@@ -353,7 +353,7 @@ export async function DELETE(
       );
     }
 
-    var deletes = await prisma.menu.delete({
+    const deletes = await prisma.menu.delete({
       where: {
         id: Number(id),
       },

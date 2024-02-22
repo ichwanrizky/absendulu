@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { checkSession } from "@/libs/checkSession";
 import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
+import { checkDepartments } from "@/libs/checkDepartments";
 
 export async function GET(
   req: Request,
@@ -59,9 +60,14 @@ export async function GET(
       );
     }
 
-    var data = await prisma.sub_department.findFirst({
+    const departmentAccess = await checkDepartments(roleId);
+
+    const data = await prisma.sub_department.findFirst({
       where: {
         id: Number(id),
+        department_id: {
+          in: departmentAccess.map((item) => item.department_id),
+        },
       },
     });
 
@@ -202,7 +208,8 @@ export async function POST(
     const nama_sub_department = body.get("nama_sub_department")!.toString();
     const department = body.get("department")!.toString();
 
-    var create = await prisma.sub_department.update({
+    const departmentAccess = await checkDepartments(roleId);
+    const update = await prisma.sub_department.update({
       data: {
         nama_sub_department: nama_sub_department,
         department: {
@@ -213,10 +220,13 @@ export async function POST(
       },
       where: {
         id: Number(id),
+        department_id: {
+          in: departmentAccess.map((item) => item.department_id),
+        },
       },
     });
 
-    if (!create) {
+    if (!update) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -235,7 +245,7 @@ export async function POST(
       JSON.stringify({
         status: true,
         message: "Success to update sub department",
-        data: create,
+        data: update,
       }),
       {
         status: 200,
@@ -349,9 +359,13 @@ export async function DELETE(
       );
     }
 
-    var deletes = await prisma.sub_department.delete({
+    const departmentAccess = await checkDepartments(roleId);
+    const deletes = await prisma.sub_department.delete({
       where: {
         id: Number(id),
+        department_id: {
+          in: departmentAccess.map((item) => item.department_id),
+        },
       },
     });
 

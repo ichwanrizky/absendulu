@@ -57,60 +57,62 @@ export async function GET(req: Request) {
       );
     }
 
-    const departmentAccess = await checkDepartments(roleId);
-    departmentAccess[0];
-
     const searchParams = new URL(req.url).searchParams;
+    // filter
     const filter = searchParams.get("filter");
+    const parseFilter = filter ? JSON.parse(filter) : {};
 
-    if (filter === null) {
-      var data = await prisma.sub_department.findMany({
-        include: {
-          department: {
-            select: {
-              nama_department: true,
-            },
+    if (!filter) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
           },
-        },
-        where: {
-          department: {
-            id: {
-              in: departmentAccess.map((item) => item.department_id),
-            },
-          },
-        },
-        orderBy: [
-          {
-            department: {
-              id: "asc",
-            },
-          },
-          {
-            nama_sub_department: "asc",
-          },
-        ],
-      });
-    } else {
-      const parseFilter = JSON.parse(filter!.toString());
-
-      var data = await prisma.sub_department.findMany({
-        include: {
-          department: {
-            select: {
-              nama_department: true,
-            },
-          },
-        },
-        where: {
-          department: {
-            id: Number(parseFilter.department),
-          },
-        },
-        orderBy: {
-          nama_sub_department: "asc",
-        },
-      });
+        }
+      );
     }
+
+    const departmentAccess = await checkDepartments(roleId);
+    const checkDepartmentAccess = departmentAccess.find(
+      (item) => item.department_id === Number(parseFilter.department)
+    );
+    if (!checkDepartmentAccess) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const data = await prisma.sub_department.findMany({
+      include: {
+        department: {
+          select: {
+            nama_department: true,
+          },
+        },
+      },
+      where: {
+        department: {
+          id: Number(parseFilter.department),
+        },
+      },
+      orderBy: {
+        nama_sub_department: "asc",
+      },
+    });
 
     if (!data) {
       return new NextResponse(
@@ -231,7 +233,7 @@ export async function POST(req: Request) {
     const nama_sub_department = body.get("nama_sub_department")!.toString();
     const department = body.get("department")!.toString();
 
-    var create = await prisma.sub_department.create({
+    const create = await prisma.sub_department.create({
       data: {
         nama_sub_department: nama_sub_department,
         department: {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { checkSession } from "@/libs/checkSession";
 import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
+import { checkDepartments } from "@/libs/checkDepartments";
 
 export async function GET(
   req: Request,
@@ -59,7 +60,26 @@ export async function GET(
       );
     }
 
-    var data = await prisma.department.findFirst({
+    const departmentAccess = await checkDepartments(roleId);
+    const checkDepartmentAccess = departmentAccess.find(
+      (item) => item.department_id === Number(id)
+    );
+    if (!checkDepartmentAccess) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const data = await prisma.department.findFirst({
       where: {
         id: Number(id),
       },
@@ -198,6 +218,25 @@ export async function POST(
       );
     }
 
+    const departmentAccess = await checkDepartments(roleId);
+    const checkDepartmentAccess = departmentAccess.find(
+      (item) => item.department_id === Number(id)
+    );
+    if (!checkDepartmentAccess) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
     const body = await req.formData();
     const nama_department = body.get("nama_department")!.toString();
     const lot = body.get("lot")?.toString();
@@ -205,7 +244,7 @@ export async function POST(
     const longitude = body.get("longitude")?.toString();
     const radius = body.get("radius")?.toString();
 
-    var create = await prisma.department.update({
+    const update = await prisma.department.update({
       data: {
         nama_department: nama_department,
         lot: lot,
@@ -218,7 +257,7 @@ export async function POST(
       },
     });
 
-    if (!create) {
+    if (!update) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -237,7 +276,7 @@ export async function POST(
       JSON.stringify({
         status: true,
         message: "Success to update department",
-        data: create,
+        data: update,
       }),
       {
         status: 200,
@@ -351,7 +390,26 @@ export async function DELETE(
       );
     }
 
-    var deletes = await prisma.department.delete({
+    const departmentAccess = await checkDepartments(roleId);
+    const checkDepartmentAccess = departmentAccess.find(
+      (item) => item.department_id === Number(id)
+    );
+    if (!checkDepartmentAccess) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const deletes = await prisma.department.delete({
       where: {
         id: Number(id),
       },

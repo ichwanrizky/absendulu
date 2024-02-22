@@ -55,7 +55,8 @@ export async function GET(req: Request) {
         }
       );
     }
-    var data = await prisma.menu.findMany({
+
+    const data = await prisma.menu.findMany({
       include: {
         menu_group: {
           select: {
@@ -196,7 +197,7 @@ export async function POST(req: Request) {
     const urut = body.get("urut")!.toString();
     const path = body.get("path")!.toString();
 
-    var create = await prisma.menu.create({
+    const create = await prisma.menu.create({
       data: {
         menu_group: {
           connect: {

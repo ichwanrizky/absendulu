@@ -55,7 +55,8 @@ export async function GET(req: Request) {
         }
       );
     }
-    var data = await prisma.roles.findMany({
+
+    const data = await prisma.roles.findMany({
       orderBy: {
         role_name: "asc",
       },
@@ -179,7 +180,7 @@ export async function POST(req: Request) {
     const body = await req.formData();
     const role_name = body.get("role_name")!.toString();
 
-    var create = await prisma.roles.create({
+    const create = await prisma.roles.create({
       data: {
         role_name: role_name,
       },

@@ -63,6 +63,40 @@ export async function GET(req: Request) {
     const filter = searchParams.get("filter");
     const parseFilter = filter ? JSON.parse(filter) : {};
 
+    if (!filter) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const departmentAccess = await checkDepartments(roleId);
+    const checkDepartmentAccess = departmentAccess.find(
+      (item) => item.department_id === Number(parseFilter.department)
+    );
+    if (!checkDepartmentAccess) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
     // search
     const search = searchParams.get("search");
 
@@ -86,7 +120,7 @@ export async function GET(req: Request) {
       },
     });
 
-    var ITEMS_PER_PAGE = 10;
+    const ITEMS_PER_PAGE = 10;
     var data = await prisma.pegawai.findMany({
       include: {
         department: {
@@ -169,8 +203,6 @@ export async function GET(req: Request) {
     );
   } catch (error) {
     if (error instanceof Error) {
-      console.log(error.message);
-
       if (error?.name == "TokenExpiredError") {
         return new NextResponse(
           JSON.stringify({
@@ -284,7 +316,26 @@ export async function POST(req: Request) {
     const tanggalLahir = body.get("tanggal_lahir")!.toString();
     const tanggalJoin = body.get("tanggal_join")?.toString();
 
-    var create = await prisma.pegawai.create({
+    const departmentAccess = await checkDepartments(roleId);
+    const checkDepartmentAccess = departmentAccess.find(
+      (item) => item.department_id === Number(department)
+    );
+    if (!checkDepartmentAccess) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const create = await prisma.pegawai.create({
       data: {
         panji_id: idKaryawan.toUpperCase(),
         nama: nama.toUpperCase(),

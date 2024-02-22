@@ -99,8 +99,6 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
         setIsModalEditOpen(true);
       }
     } catch (error) {
-      console.log(error);
-
       alert("something went wrong");
     }
     setIsLoadingEdit((prev) => ({ ...prev, [id]: false }));

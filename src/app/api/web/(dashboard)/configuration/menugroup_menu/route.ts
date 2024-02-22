@@ -23,7 +23,7 @@ export async function GET(req: Request) {
       );
     }
 
-    var data = await prisma.menu_group.findMany({
+    const data = await prisma.menu_group.findMany({
       include: {
         menu: {
           select: {

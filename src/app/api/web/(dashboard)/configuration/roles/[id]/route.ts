@@ -59,7 +59,7 @@ export async function GET(
       );
     }
 
-    var data = await prisma.roles.findFirst({
+    const data = await prisma.roles.findFirst({
       where: {
         id: Number(id),
       },
@@ -201,7 +201,7 @@ export async function POST(
     const body = await req.formData();
     const role_name = body.get("role_name")!.toString();
 
-    var create = await prisma.roles.update({
+    const update = await prisma.roles.update({
       data: {
         role_name: role_name,
       },
@@ -210,7 +210,7 @@ export async function POST(
       },
     });
 
-    if (!create) {
+    if (!update) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -229,7 +229,7 @@ export async function POST(
       JSON.stringify({
         status: true,
         message: "Success to update roles",
-        data: create,
+        data: update,
       }),
       {
         status: 200,
@@ -343,7 +343,7 @@ export async function DELETE(
       );
     }
 
-    var deletes = await prisma.roles.delete({
+    const deletes = await prisma.roles.delete({
       where: {
         id: Number(id),
       },
