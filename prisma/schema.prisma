@@ -140,6 +140,8 @@ model pegawai {
   is_overtime       Boolean         @default(false)
   department        department?     @relation(fields: [department_id], references: [id])
   sub_department    sub_department? @relation(fields: [sub_department_id], references: [id])
+  shift_id          Int?
+  shift             shift?          @relation(fields: [shift_id], references: [id])
 
   @@index([department_id], map: "pegawai_department_id_fkey")
   @@index([sub_department_id], map: "pegawai_sub_department_id_fkey")
@@ -154,6 +156,5 @@ model shift {
   keterangan    String?
   cond_friday   Int        @default(0)
   department    department @relation(fields: [department_id], references: [id])
-
-  @@index([department_id], map: "shift_department_id_fkey")
+  pegawai       pegawai[]
 }
