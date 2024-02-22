@@ -5,12 +5,17 @@ import ModalCreate from "./modalCreate";
 import ModalEdit from "./modalEdit";
 import ModalFilter from "./modalFilter";
 
-type SubDepartment = {
+type Shift = {
   id: number;
-  nama_sub_department: string;
+  jam_masuk: Date;
+  jam_pulang: Date;
+  different_day: boolean;
   department_id: number;
+  keterangan: string;
+  cond_friday: number;
   department: Department;
 };
+
 type Department = {
   id: number;
   nama_department: string;
@@ -24,7 +29,7 @@ interface isLoadingProps {
   [key: number]: boolean;
 }
 
-const SubDepartmentData = ({
+const ShiftData = ({
   accessToken,
   departments,
 }: {
@@ -32,7 +37,6 @@ const SubDepartmentData = ({
   departments: Department[];
 }) => {
   // loading state
-  const [isLoadingFilter, setIsLoadingFilter] = useState(false);
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
 
@@ -42,7 +46,7 @@ const SubDepartmentData = ({
   const [isModalEditOpen, setIsModalEditOpen] = useState(false);
 
   // data state
-  const [dataEdit, setDataEdit] = useState({} as SubDepartment);
+  const [dataEdit, setDataEdit] = useState({} as Shift);
 
   // filter
   const [filter, setFilter] = useState<any>({
@@ -59,9 +63,7 @@ const SubDepartmentData = ({
     try {
       // get edit data
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/subdepartment/" +
-          id,
+        process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/shift/" + id,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -69,7 +71,6 @@ const SubDepartmentData = ({
         }
       );
       const res = await response.json();
-
       if (!response.ok) {
         alert(res.message);
       } else {
@@ -87,9 +88,7 @@ const SubDepartmentData = ({
       setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
       try {
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/masterdata/subdepartment/" +
-            id,
+          process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/shift/" + id,
           {
             method: "DELETE",
             headers: {
@@ -103,7 +102,7 @@ const SubDepartmentData = ({
         if (response.ok) {
           mutate(
             process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/masterdata/subdepartment?filter=" +
+              "/api/web/masterdata/shift?filter=" +
               JSON.stringify(filter)
           );
         }
@@ -120,7 +119,7 @@ const SubDepartmentData = ({
     setIsModalFilterOpen(false);
     mutate(
       process.env.NEXT_PUBLIC_API_URL +
-        "/api/web/masterdata/subdepartment?filter=" +
+        "/api/web/masterdata/shift?filter=" +
         JSON.stringify(filter)
     );
   };
@@ -147,7 +146,7 @@ const SubDepartmentData = ({
 
   const { data, error, isLoading } = useSWR(
     process.env.NEXT_PUBLIC_API_URL +
-      "/api/web/masterdata/subdepartment?filter=" +
+      "/api/web/masterdata/shift?filter=" +
       JSON.stringify(filter),
     fetcher
   );
@@ -175,7 +174,7 @@ const SubDepartmentData = ({
     );
   }
 
-  const subDepartments = data?.data;
+  const shifts = data?.data;
   const actions = data?.actions;
 
   return (
@@ -219,9 +218,15 @@ const SubDepartmentData = ({
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
                   No
                 </th>
-                <th className="fw-semibold fs-6">Sub Department</th>
-                <th className="fw-semibold fs-6" style={{ width: "30%" }}>
-                  Department
+                <th className="fw-semibold fs-6">Department</th>
+                <th className="fw-semibold fs-6" style={{ width: "20%" }}>
+                  Keterangan
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "20%" }}>
+                  Jam Masuk
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "20%" }}>
+                  Jam Pulang
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
                   Action
@@ -229,21 +234,31 @@ const SubDepartmentData = ({
               </tr>
             </thead>
             <tbody>
-              {subDepartments?.length === 0 ? (
+              {shifts?.length === 0 ? (
                 <tr>
                   <td colSpan={5}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
               ) : (
-                subDepartments?.map((item: SubDepartment, index: number) => (
+                shifts?.map((item: Shift, index: number) => (
                   <tr key={index}>
                     <td align="center">{index + 1}</td>
                     <td align="left">
-                      {item.nama_sub_department.toUpperCase()}
-                    </td>
-                    <td align="left">
                       {item.department.nama_department.toUpperCase()}
+                    </td>
+                    <td align="left">{item.keterangan?.toUpperCase()}</td>
+                    <td align="center">
+                      {new Date(item.jam_masuk).toLocaleString(
+                        "id-ID",
+                        optionsDate
+                      )}
+                    </td>
+                    <td align="center">
+                      {new Date(item.jam_pulang).toLocaleString(
+                        "id-ID",
+                        optionsDate
+                      )}
                     </td>
                     <td>
                       <div className="d-flex gap-2">
@@ -326,4 +341,11 @@ const SubDepartmentData = ({
     </>
   );
 };
-export default SubDepartmentData;
+export default ShiftData;
+
+const optionsDate: any = {
+  hour: "numeric",
+  minute: "numeric",
+  second: "numeric",
+  timeZone: "UTC",
+};

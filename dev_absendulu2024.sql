@@ -11,7 +11,7 @@
  Target Server Version : 100427 (10.4.27-MariaDB)
  File Encoding         : 65001
 
- Date: 21/02/2024 19:11:04
+ Date: 22/02/2024 17:00:06
 */
 
 SET NAMES utf8mb4;
@@ -51,7 +51,7 @@ CREATE TABLE `access_menu`  (
   INDEX `access_menu_role_id_fkey`(`role_id` ASC) USING BTREE,
   CONSTRAINT `access_menu_menu_id_fkey` FOREIGN KEY (`menu_id`) REFERENCES `menu` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `access_menu_role_id_fkey` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 13 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 14 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of access_menu
@@ -63,6 +63,7 @@ INSERT INTO `access_menu` VALUES (9, 4, 'delete,update,insert,view', 1);
 INSERT INTO `access_menu` VALUES (10, 5, 'view,insert,update,delete', 1);
 INSERT INTO `access_menu` VALUES (11, 6, 'view,insert,update,delete', 1);
 INSERT INTO `access_menu` VALUES (12, 7, 'view,insert,update,delete', 1);
+INSERT INTO `access_menu` VALUES (13, 8, 'view,insert,update,delete', 1);
 
 -- ----------------------------
 -- Table structure for department
@@ -104,18 +105,19 @@ CREATE TABLE `menu`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `menu_menu_group_id_fkey`(`menu_group_id` ASC) USING BTREE,
   CONSTRAINT `menu_menu_group_id_fkey` FOREIGN KEY (`menu_group_id`) REFERENCES `menu_group` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 8 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of menu
 -- ----------------------------
-INSERT INTO `menu` VALUES (1, 'access', '/configuration/access', 1, 1);
+INSERT INTO `menu` VALUES (1, 'access', '/configuration/access', 4, 1);
 INSERT INTO `menu` VALUES (2, 'menu', '/configuration/menu', 2, 1);
 INSERT INTO `menu` VALUES (3, 'menugroup', '/configuration/menugroup', 3, 1);
-INSERT INTO `menu` VALUES (4, 'roles', '/configuration/roles', 4, 1);
+INSERT INTO `menu` VALUES (4, 'roles', '/configuration/roles', 1, 1);
 INSERT INTO `menu` VALUES (5, 'department', '/masterdata/department', 1, 2);
-INSERT INTO `menu` VALUES (6, 'sub department', '/masterdata/subdepartment', 1, 2);
-INSERT INTO `menu` VALUES (7, 'data karyawan', '/masterdata/datakaryawan', 1, 2);
+INSERT INTO `menu` VALUES (6, 'sub department', '/masterdata/subdepartment', 2, 2);
+INSERT INTO `menu` VALUES (7, 'data karyawan', '/masterdata/datakaryawan', 3, 2);
+INSERT INTO `menu` VALUES (8, 'shift', '/masterdata/shift', 4, 2);
 
 -- ----------------------------
 -- Table structure for menu_group
@@ -337,13 +339,41 @@ CREATE TABLE `session`  (
   UNIQUE INDEX `session_token_key`(`token` ASC) USING BTREE,
   UNIQUE INDEX `session_user_id_token_key`(`user_id` ASC, `token` ASC) USING BTREE,
   CONSTRAINT `session_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 8 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of session
 -- ----------------------------
 INSERT INTO `session` VALUES (1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9jb25maWd1cmF0aW9uL2FjY2VzcyJ9LCJpYXQiOjE3MDg1MTIxNjksImV4cCI6MTcwODUxNTc2OX0.6SZeAMiMch7F8mvZL8WyBgtjEU_8hOv5aqu9yb80EAA', 1, '2024-02-21 17:42:49', '2024-02-21 18:42:49', 0);
 INSERT INTO `session` VALUES (2, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQifSwiaWF0IjoxNzA4NTE2MjU0LCJleHAiOjE3MDg1MTk4NTR9.hNVqoE6dJ6f9NPW2Ln_OCxBcBoFdZBEUoH-lOEZKGlI', 1, '2024-02-21 18:50:54', '2024-02-21 19:50:54', 0);
+INSERT INTO `session` VALUES (3, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQifSwiaWF0IjoxNzA4NTczMDkzLCJleHAiOjE3MDg1NzY2OTN9.riuwLT4sEX-DQ75OkMVSWwBGVnvVM-ex91j-hKFKGUs', 1, '2024-02-22 10:38:13', '2024-02-22 11:38:13', 0);
+INSERT INTO `session` VALUES (4, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQifSwiaWF0IjoxNzA4NTgwMjM3LCJleHAiOjE3MDg1ODM4Mzd9.dPffz0UAYOVzrcHcKJsgc_kv8aLXBxwETyB_YLum9Bc', 1, '2024-02-22 11:58:47', '2024-02-22 13:37:17', 0);
+INSERT INTO `session` VALUES (5, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQifSwiaWF0IjoxNzA4NTg1NzkzLCJleHAiOjE3MDg1ODkzOTN9.ZMowkop8VrPPlVa_vx_IOwueu3-Yox_NFMrgTpWA2Pk', 1, '2024-02-22 14:09:53', '2024-02-22 15:09:53', 0);
+INSERT INTO `session` VALUES (6, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQifSwiaWF0IjoxNzA4NTg5NDczLCJleHAiOjE3MDg1OTMwNzN9.a6tdyrGtLyXp9xxT1LamG09YpWniF3KpB5Op5wXTNj0', 1, '2024-02-22 15:11:13', '2024-02-22 16:11:13', 0);
+INSERT INTO `session` VALUES (7, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQifSwiaWF0IjoxNzA4NTkzNTg5LCJleHAiOjE3MDg1OTcxODl9.M_x-pI5aSZDi4bcxx3-k3M-1DXK3KUykkuTlW6VEqcA', 1, '2024-02-22 16:19:49', '2024-02-22 17:19:49', 0);
+
+-- ----------------------------
+-- Table structure for shift
+-- ----------------------------
+DROP TABLE IF EXISTS `shift`;
+CREATE TABLE `shift`  (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `jam_masuk` time NULL DEFAULT NULL,
+  `jam_pulang` time NULL DEFAULT NULL,
+  `different_day` tinyint(1) NOT NULL DEFAULT 0,
+  `department_id` int NOT NULL,
+  `keterangan` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `cond_friday` int NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `shift_department_id_fkey`(`department_id` ASC) USING BTREE,
+  CONSTRAINT `shift_department_id_fkey` FOREIGN KEY (`department_id`) REFERENCES `department` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of shift
+-- ----------------------------
+INSERT INTO `shift` VALUES (5, '07:50:00', '17:00:00', 0, 1, 'normal shift', 30);
+INSERT INTO `shift` VALUES (6, '06:50:00', '16:00:00', 0, 1, 'bulan ramadhan', 30);
 
 -- ----------------------------
 -- Table structure for sub_department

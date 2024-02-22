@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,9 +10,9 @@ datasource db {
 model roles {
   id                Int                 @id @default(autoincrement())
   role_name         String              @unique
-  user              user[]
-  access_menu       access_menu[]
   access_department access_department[]
+  access_menu       access_menu[]
+  user              user[]
 }
 
 model user {
@@ -23,9 +20,11 @@ model user {
   username  String    @unique
   password  String
   createdAt DateTime? @db.DateTime(0)
-  roles     roles?    @relation(fields: [rolesId], references: [id])
   rolesId   Int?
   session   session[]
+  roles     roles?    @relation(fields: [rolesId], references: [id])
+
+  @@index([rolesId], map: "user_rolesId_fkey")
 }
 
 model menu_group {
@@ -43,37 +42,43 @@ model menu {
   path          String?
   urut          Int?
   menu_group_id Int?
-  menu_group    menu_group?   @relation(fields: [menu_group_id], references: [id])
   access_menu   access_menu[]
+  menu_group    menu_group?   @relation(fields: [menu_group_id], references: [id])
+
+  @@index([menu_group_id], map: "menu_menu_group_id_fkey")
 }
 
 model access_menu {
   id      Int     @id @default(autoincrement())
   menu_id Int?
-  menu    menu?   @relation(fields: [menu_id], references: [id])
   action  String?
   role_id Int
+  menu    menu?   @relation(fields: [menu_id], references: [id])
   roles   roles   @relation(fields: [role_id], references: [id])
 
   @@unique([menu_id, role_id])
+  @@index([role_id], map: "access_menu_role_id_fkey")
 }
 
 model access_department {
   id            Int        @id @default(autoincrement())
   role_id       Int
-  roles         roles      @relation(fields: [role_id], references: [id])
   department_id Int
   department    department @relation(fields: [department_id], references: [id])
+  roles         roles      @relation(fields: [role_id], references: [id])
+
+  @@index([department_id], map: "access_department_department_id_fkey")
+  @@index([role_id], map: "access_department_role_id_fkey")
 }
 
 model session {
   id        Int       @id @default(autoincrement())
   token     String    @unique @db.VarChar(300)
   user_id   Int
-  user      user      @relation(fields: [user_id], references: [id])
   createdAt DateTime? @db.DateTime(0)
   expiredAt DateTime? @db.DateTime(0)
   expired   Boolean   @default(false)
+  user      user      @relation(fields: [user_id], references: [id])
 
   @@unique([user_id, token])
 }
@@ -85,18 +90,20 @@ model department {
   latitude          String?
   longitude         String?
   radius            String?
-  sub_department    sub_department[]
   access_department access_department[]
   pegawai           pegawai[]
   shift             shift[]
+  sub_department    sub_department[]
 }
 
 model sub_department {
-  id                  Int         @id @default(autoincrement())
+  id                  Int        @id @default(autoincrement())
   nama_sub_department String
   department_id       Int
-  department          department? @relation(fields: [department_id], references: [id])
   pegawai             pegawai[]
+  department          department @relation(fields: [department_id], references: [id])
+
+  @@index([department_id], map: "sub_department_department_id_fkey")
 }
 
 model pegawai {
@@ -128,20 +135,25 @@ model pegawai {
   bpjs_tk           String?
   bpjs_kes          String?
   department_id     Int?
-  department        department?     @relation(fields: [department_id], references: [id])
   sub_department_id Int?
-  sub_department    sub_department? @relation(fields: [sub_department_id], references: [id])
   is_active         Boolean         @default(true)
   is_overtime       Boolean         @default(false)
+  department        department?     @relation(fields: [department_id], references: [id])
+  sub_department    sub_department? @relation(fields: [sub_department_id], references: [id])
+
+  @@index([department_id], map: "pegawai_department_id_fkey")
+  @@index([sub_department_id], map: "pegawai_sub_department_id_fkey")
 }
 
 model shift {
   id            Int        @id @default(autoincrement())
-  jam_masuk     DateTime?  @db.Time
-  jam_pulang    DateTime?  @db.Time
+  jam_masuk     DateTime?  @db.Time(0)
+  jam_pulang    DateTime?  @db.Time(0)
   different_day Boolean    @default(false)
   department_id Int
-  department    department @relation(fields: [department_id], references: [id])
   keterangan    String?
   cond_friday   Int        @default(0)
+  department    department @relation(fields: [department_id], references: [id])
+
+  @@index([department_id], map: "shift_department_id_fkey")
 }
