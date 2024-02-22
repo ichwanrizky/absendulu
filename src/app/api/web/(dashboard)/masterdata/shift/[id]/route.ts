@@ -4,7 +4,10 @@ import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
 import { checkDepartments } from "@/libs/checkDepartments";
 
-export async function GET(req: Request) {
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const authorization = req.headers.get("Authorization");
 
@@ -25,7 +28,7 @@ export async function GET(req: Request) {
     }
 
     const roleId = session[1].roleId;
-    const roleAccess = await checkRoles(roleId, "/masterdata/subdepartment");
+    const roleAccess = await checkRoles(roleId, "/masterdata/shift");
     if (!roleAccess) {
       return new NextResponse(
         JSON.stringify({
@@ -41,35 +44,15 @@ export async function GET(req: Request) {
       );
     }
 
-    const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
-    if (!actions.includes("view")) {
+    const id = params.id;
+    if (!id) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Unauthorized",
+          message: "Data not found",
         }),
         {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
-
-    const searchParams = new URL(req.url).searchParams;
-    // filter
-    const filter = searchParams.get("filter");
-    const parseFilter = filter ? JSON.parse(filter) : {};
-
-    if (!filter) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Unauthorized",
-        }),
-        {
-          status: 401,
+          status: 404,
           headers: {
             "Content-Type": "application/json",
           },
@@ -78,39 +61,13 @@ export async function GET(req: Request) {
     }
 
     const departmentAccess = await checkDepartments(roleId);
-    const checkDepartmentAccess = departmentAccess.find(
-      (item) => item.department_id === Number(parseFilter.department)
-    );
-    if (!checkDepartmentAccess) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Unauthorized",
-        }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
 
-    const data = await prisma.sub_department.findMany({
-      include: {
-        department: {
-          select: {
-            nama_department: true,
-          },
-        },
-      },
+    const data = await prisma.shift.findFirst({
       where: {
-        department: {
-          id: Number(parseFilter.department),
+        id: Number(id),
+        department_id: {
+          in: departmentAccess.map((item) => item.department_id),
         },
-      },
-      orderBy: {
-        nama_sub_department: "asc",
       },
     });
 
@@ -134,7 +91,6 @@ export async function GET(req: Request) {
         status: true,
         message: "success",
         data: data,
-        actions: actions,
       }),
       {
         status: 200,
@@ -176,7 +132,10 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const authorization = req.headers.get("Authorization");
 
@@ -214,7 +173,7 @@ export async function POST(req: Request) {
     }
 
     const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
-    if (!actions.includes("insert")) {
+    if (!actions.includes("update")) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -222,6 +181,22 @@ export async function POST(req: Request) {
         }),
         {
           status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const id = params.id;
+    if (!id) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Data not found",
+        }),
+        {
+          status: 404,
           headers: {
             "Content-Type": "application/json",
           },
@@ -230,44 +205,46 @@ export async function POST(req: Request) {
     }
 
     const body = await req.formData();
-    const nama_sub_department = body.get("nama_sub_department")!.toString();
+    const jam_masuk = body.get("jam_masuk")!.toString();
+    const jam_pulang = body.get("jam_pulang")!.toString();
     const department = body.get("department")!.toString();
+    const keterangan = body.get("keterangan")?.toString();
+    const cond_friday = body.get("cond_friday")?.toString();
+
+    const today = new Date();
+    const dateString = today.toISOString().split("T")[0];
+
+    // Create Date objects for jam_masuk and jam_pulang
+    let jam_masukDateTime = new Date(`${dateString}T${jam_masuk}`);
+    let jam_pulangDateTime = new Date(`${dateString}T${jam_pulang}`);
+
+    // Add 7 hours to jam_masuk and jam_pulang
+    jam_masukDateTime = addHoursToDate(jam_masukDateTime, 7);
+    jam_pulangDateTime = addHoursToDate(jam_pulangDateTime, 7);
 
     const departmentAccess = await checkDepartments(roleId);
-    const checkDepartmentAccess = departmentAccess.find(
-      (item) => item.department_id === Number(department)
-    );
-    if (!checkDepartmentAccess) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Unauthorized",
-        }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
 
-    const create = await prisma.sub_department.create({
+    const update = await prisma.shift.update({
       data: {
-        nama_sub_department: nama_sub_department,
-        department: {
-          connect: {
-            id: Number(department),
-          },
+        jam_masuk: jam_masukDateTime,
+        jam_pulang: jam_pulangDateTime,
+        keterangan: keterangan,
+        department_id: Number(department),
+        cond_friday: Number(cond_friday),
+      },
+      where: {
+        id: Number(id),
+        department_id: {
+          in: departmentAccess.map((item) => item.department_id),
         },
       },
     });
 
-    if (!create) {
+    if (!update) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to create sub department",
+          message: "Failed to update shift",
         }),
         {
           status: 500,
@@ -281,8 +258,8 @@ export async function POST(req: Request) {
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to create sub department",
-        data: create,
+        message: "Success to update shift",
+        data: update,
       }),
       {
         status: 200,
@@ -322,4 +299,151 @@ export async function POST(req: Request) {
       );
     }
   }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const authorization = req.headers.get("Authorization");
+
+    const session = await checkSession(authorization);
+    if (!session[0]) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const roleId = session[1].roleId;
+    const roleAccess = await checkRoles(roleId, "/masterdata/shift");
+    if (!roleAccess) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
+    if (!actions.includes("delete")) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const id = params.id;
+    if (!id) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Data not found",
+        }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const departmentAccess = await checkDepartments(roleId);
+    const deletes = await prisma.shift.delete({
+      where: {
+        id: Number(id),
+        department_id: {
+          in: departmentAccess.map((item) => item.department_id),
+        },
+      },
+    });
+
+    if (!deletes) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Failed to delete shift",
+        }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    return new NextResponse(
+      JSON.stringify({
+        status: true,
+        message: "Success to delete shift",
+        data: deletes,
+      }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error?.name == "TokenExpiredError") {
+        return new NextResponse(
+          JSON.stringify({
+            status: false,
+            message: "Session Expired",
+          }),
+          {
+            status: 401,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: error.name,
+        }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+  }
+}
+
+function addHoursToDate(date: Date, hours: number) {
+  return new Date(date.getTime() + hours * 3600000);
 }

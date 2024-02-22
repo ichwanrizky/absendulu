@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { checkSession } from "@/libs/checkSession";
 import { checkRoles } from "@/libs/checkRoles";
-import prisma from "@/libs/db";
 import { checkDepartments } from "@/libs/checkDepartments";
+import prisma from "@/libs/db";
 
 export async function GET(req: Request) {
   try {
@@ -25,7 +25,7 @@ export async function GET(req: Request) {
     }
 
     const roleId = session[1].roleId;
-    const roleAccess = await checkRoles(roleId, "/masterdata/subdepartment");
+    const roleAccess = await checkRoles(roleId, "/masterdata/shift");
     if (!roleAccess) {
       return new NextResponse(
         JSON.stringify({
@@ -96,7 +96,7 @@ export async function GET(req: Request) {
       );
     }
 
-    const data = await prisma.sub_department.findMany({
+    const data = await prisma.shift.findMany({
       include: {
         department: {
           select: {
@@ -110,7 +110,7 @@ export async function GET(req: Request) {
         },
       },
       orderBy: {
-        nama_sub_department: "asc",
+        id: "asc",
       },
     });
 
@@ -197,7 +197,7 @@ export async function POST(req: Request) {
     }
 
     const roleId = session[1].roleId;
-    const roleAccess = await checkRoles(roleId, "/masterdata/subdepartment");
+    const roleAccess = await checkRoles(roleId, "/masterdata/shift");
     if (!roleAccess) {
       return new NextResponse(
         JSON.stringify({
@@ -230,8 +230,11 @@ export async function POST(req: Request) {
     }
 
     const body = await req.formData();
-    const nama_sub_department = body.get("nama_sub_department")!.toString();
+    const jam_masuk = body.get("jam_masuk")!.toString();
+    const jam_pulang = body.get("jam_pulang")!.toString();
     const department = body.get("department")!.toString();
+    const keterangan = body.get("keterangan")?.toString();
+    const cond_friday = body.get("cond_friday")?.toString();
 
     const departmentAccess = await checkDepartments(roleId);
     const checkDepartmentAccess = departmentAccess.find(
@@ -252,14 +255,24 @@ export async function POST(req: Request) {
       );
     }
 
-    const create = await prisma.sub_department.create({
+    const today = new Date();
+    const dateString = today.toISOString().split("T")[0];
+
+    // Create Date objects for jam_masuk and jam_pulang
+    let jam_masukDateTime = new Date(`${dateString}T${jam_masuk}`);
+    let jam_pulangDateTime = new Date(`${dateString}T${jam_pulang}`);
+
+    // Add 7 hours to jam_masuk and jam_pulang
+    jam_masukDateTime = addHoursToDate(jam_masukDateTime, 7);
+    jam_pulangDateTime = addHoursToDate(jam_pulangDateTime, 7);
+
+    const create = await prisma.shift.create({
       data: {
-        nama_sub_department: nama_sub_department,
-        department: {
-          connect: {
-            id: Number(department),
-          },
-        },
+        jam_masuk: jam_masukDateTime,
+        jam_pulang: jam_pulangDateTime,
+        keterangan: keterangan,
+        department_id: Number(department),
+        cond_friday: Number(cond_friday),
       },
     });
 
@@ -267,7 +280,7 @@ export async function POST(req: Request) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to create sub department",
+          message: "Failed to create shift",
         }),
         {
           status: 500,
@@ -281,7 +294,7 @@ export async function POST(req: Request) {
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to create sub department",
+        message: "Success to create shift",
         data: create,
       }),
       {
@@ -311,7 +324,7 @@ export async function POST(req: Request) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: error.name,
+          message: error.message,
         }),
         {
           status: 500,
@@ -322,4 +335,8 @@ export async function POST(req: Request) {
       );
     }
   }
+}
+
+function addHoursToDate(date: Date, hours: number) {
+  return new Date(date.getTime() + hours * 3600000);
 }
