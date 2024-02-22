@@ -8,7 +8,10 @@ type Props = {
 };
 const ModalCreate = (props: Props) => {
   const { isModalOpen, onClose, accessToken } = props;
+
+  // loading state
   const [isLoading, setIsLoading] = useState(false);
+
   const [roleName, setRoleName] = useState("");
 
   const handleSubmit = async (e: any) => {

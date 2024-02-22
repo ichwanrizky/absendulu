@@ -52,13 +52,16 @@ interface isLoadingProps {
 }
 
 const AccessData = ({ accessToken }: { accessToken: string }) => {
+  // loading state
+  const [isLoadingCreate, setIsLoadingCreate] = useState(false);
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
 
-  const [isLoadingCreate, setIsLoadingCreate] = useState(false);
-  const [isModalCreateOpen, setModalCreateOpen] = useState(false);
+  // modal state
+  const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState(false);
 
+  // data state
   const [dataRoles, setDataRoles] = useState({} as Roles[]);
   const [dataMenuGroup, setdataMenuGroup] = useState({} as MenuGroup[]);
   const [dataAccess, setDataAccess] = useState({} as Access[]);
@@ -66,12 +69,6 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
   const [dataAccessDepartment, setDataAccessDepartment] = useState(
     {} as AccessDepartment[]
   );
-
-  const closeModal = () => {
-    setModalCreateOpen(false);
-    setIsModalEditOpen(false);
-    mutate(process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/access");
-  };
 
   const handleCreate = async () => {
     setIsLoadingCreate(true);
@@ -122,7 +119,7 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
         setDataRoles(resRoles.data);
         setdataMenuGroup(resMenu.data);
         setDataDepartment(resDepartment.data);
-        setModalCreateOpen(true);
+        setIsModalCreateOpen(true);
       }
     } catch (error) {
       alert("something went wrong");
@@ -237,6 +234,12 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
     }
   };
 
+  const closeModal = () => {
+    setIsModalCreateOpen(false);
+    setIsModalEditOpen(false);
+    mutate(process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/access");
+  };
+
   const fetcher = (url: RequestInfo) => {
     return fetch(url, {
       headers: {
@@ -254,13 +257,27 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
   );
 
   if (isLoading) {
-    return <></>;
+    return (
+      <div className="card-body">
+        <div className="text-center">
+          <span
+            className="spinner-border spinner-border-sm me-2"
+            role="status"
+            aria-hidden="true"
+          />{" "}
+          Loading...
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <>something went wrong</>;
+    return (
+      <div className="card-body text-center">
+        something went wrong, please refresh the page
+      </div>
+    );
   }
-
   const access = data?.data;
   const actions = data?.actions;
 

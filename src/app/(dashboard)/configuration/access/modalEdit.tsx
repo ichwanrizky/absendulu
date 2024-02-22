@@ -66,7 +66,9 @@ const ModalEdit = (props: Props) => {
     dataAccessDepartment,
   } = props;
 
+  // loading state
   const [isLoading, setIsLoading] = useState(false);
+
   const [access, setAccess] = useState<any>(
     dataAccess.map((item: any) => ({
       menu: item.menu_id,

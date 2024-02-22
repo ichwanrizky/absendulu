@@ -50,7 +50,9 @@ const ModalCreate = (props: Props) => {
     dataDepartment,
   } = props;
 
+  // loading state
   const [isLoading, setIsLoading] = useState(false);
+
   const [roles, setRoles] = useState("");
   const [aksesDepartment, setAksesDepartment] = useState<any>([
     {
@@ -58,7 +60,6 @@ const ModalCreate = (props: Props) => {
       label: null,
     },
   ]);
-
   const [access, setAccess] = useState<any>([]);
 
   const handleChangeAccess = (

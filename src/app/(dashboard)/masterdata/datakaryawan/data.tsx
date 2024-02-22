@@ -174,15 +174,17 @@ const KaryawanData = ({
     }
   };
 
-  const handleSearch = (search: any) => {
-    if (typingTimeout) clearTimeout(typingTimeout);
-    const newTimeout = setTimeout(() => {
-      setSearch(search);
-      setCurrentPage(1);
-    }, 1000);
-
-    // Update the timeout ID in state
-    setTypingTimeout(newTimeout);
+  const closeModal = () => {
+    setIsModalCreateOpen(false);
+    setIsModalEditOpen(false);
+    setIsModalFilterOpen(false);
+    mutate(
+      process.env.NEXT_PUBLIC_API_URL +
+        "/api/web/masterdata/datakaryawan?page=" +
+        currentPage +
+        "&filter=" +
+        JSON.stringify(filter)
+    );
   };
 
   const handleFilter = async () => {
@@ -213,19 +215,6 @@ const KaryawanData = ({
     setIsLoadingFilter(false);
   };
 
-  const closeModal = () => {
-    setIsModalCreateOpen(false);
-    setIsModalEditOpen(false);
-    setIsModalFilterOpen(false);
-    mutate(
-      process.env.NEXT_PUBLIC_API_URL +
-        "/api/web/masterdata/datakaryawan?page=" +
-        currentPage +
-        "&filter=" +
-        JSON.stringify(filter)
-    );
-  };
-
   const handleFilterData = (
     department: any,
     subDepartment: any,
@@ -238,6 +227,17 @@ const KaryawanData = ({
       subDepartment: subDepartment,
       active: active,
     });
+  };
+
+  const handleSearch = (search: any) => {
+    if (typingTimeout) clearTimeout(typingTimeout);
+    const newTimeout = setTimeout(() => {
+      setSearch(search);
+      setCurrentPage(1);
+    }, 1000);
+
+    // Update the timeout ID in state
+    setTypingTimeout(newTimeout);
   };
 
   const fetcher = (url: RequestInfo) => {

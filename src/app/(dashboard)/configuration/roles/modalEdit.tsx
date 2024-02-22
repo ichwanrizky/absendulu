@@ -16,7 +16,9 @@ type Roles = {
 const ModalEdit = (props: Props) => {
   const { isModalOpen, onClose, accessToken, data } = props;
 
+  // loading state
   const [isLoading, setIsLoading] = useState(false);
+
   const [roleName, setRoleName] = useState(data.role_name);
 
   const handleSubmit = async (e: any) => {

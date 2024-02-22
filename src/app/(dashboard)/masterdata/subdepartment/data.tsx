@@ -31,36 +31,27 @@ const SubDepartmentData = ({
   accessToken: string;
   departments: Department[];
 }) => {
+  // loading state
+  const [isLoadingFilter, setIsLoadingFilter] = useState(false);
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
 
-  const [isLoadingCreate, setIsLoadingCreate] = useState(false);
-  const [isLoadingFilter, setIsLoadingFilter] = useState(false);
-  const [isModalCreateOpen, setModalCreateOpen] = useState(false);
+  // modal state
+  const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
   const [isModalFilterOpen, setIsModalFilterOpen] = useState(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState(false);
 
+  // data state
   const [dataEdit, setDataEdit] = useState({} as SubDepartment);
 
   // filter
-  const [filter, setFilter] = useState<any>("");
-
-  const closeModal = () => {
-    setModalCreateOpen(false);
-    setIsModalEditOpen(false);
-    setIsModalFilterOpen(false);
-    mutate(
-      process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/subdepartment"
-    );
-  };
-
-  const handleFilterData = (department: any) => {
-    setIsModalFilterOpen(false);
-    department ? setFilter({ department: department }) : setFilter("");
-  };
+  const [filter, setFilter] = useState<any>({
+    filter: false,
+    department: departments[0].id.toString(),
+  });
 
   const handleCreate = async () => {
-    setModalCreateOpen(true);
+    setIsModalCreateOpen(true);
   };
 
   const handleEdit = async (id: number) => {
@@ -126,8 +117,22 @@ const SubDepartmentData = ({
     }
   };
 
+  const closeModal = () => {
+    setIsModalCreateOpen(false);
+    setIsModalEditOpen(false);
+    setIsModalFilterOpen(false);
+    mutate(
+      process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/subdepartment"
+    );
+  };
+
   const handleFilter = async () => {
     setIsModalFilterOpen(true);
+  };
+
+  const handleFilterData = (department: any) => {
+    setIsModalFilterOpen(false);
+    setFilter({ filter: true, department: department });
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -142,20 +147,33 @@ const SubDepartmentData = ({
   };
 
   const { data, error, isLoading } = useSWR(
-    filter === ""
-      ? process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/subdepartment"
-      : process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/subdepartment?filter=" +
-          JSON.stringify(filter),
+    process.env.NEXT_PUBLIC_API_URL +
+      "/api/web/masterdata/subdepartment?filter=" +
+      JSON.stringify(filter),
     fetcher
   );
 
   if (isLoading) {
-    return <></>;
+    return (
+      <div className="card-body">
+        <div className="text-center">
+          <span
+            className="spinner-border spinner-border-sm me-2"
+            role="status"
+            aria-hidden="true"
+          />{" "}
+          Loading...
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <>something went wrong</>;
+    return (
+      <div className="card-body text-center">
+        something went wrong, please refresh the page
+      </div>
+    );
   }
 
   const subDepartments = data?.data;
@@ -183,7 +201,7 @@ const SubDepartmentData = ({
             >
               Filter Data
             </button>
-            {filter !== "" && (
+            {filter.filter && (
               <button
                 type="button"
                 className="btn btn-outline-dark btn-sm fw-bold ms-1"
@@ -301,7 +319,6 @@ const SubDepartmentData = ({
         <ModalFilter
           isModalOpen={isModalFilterOpen}
           onClose={closeModal}
-          accessToken={accessToken}
           dataDepartment={departments}
           onFilter={handleFilterData}
           filterData={filter}

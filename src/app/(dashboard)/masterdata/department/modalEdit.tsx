@@ -19,7 +19,10 @@ type Department = {
 
 const ModalEdit = (props: Props) => {
   const { isModalOpen, onClose, accessToken, data } = props;
+
+  // loading state
   const [isLoading, setIsLoading] = useState(false);
+
   const [namaDepartment, setNamaDepartment] = useState(data.nama_department);
   const [lot, setLot] = useState(data.lot);
   const [latitude, setLatitude] = useState(data.latitude);

@@ -27,6 +27,7 @@ type MenuGroups = {
 const ModalEdit = (props: Props) => {
   const { isModalOpen, onClose, accessToken, menuGroups, dataEdit } = props;
 
+  // loading state
   const [isLoading, setIsLoading] = useState(false);
 
   const [menuGroup, setMenuGroup] = useState(dataEdit.menu_group_id.toString());

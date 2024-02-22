@@ -7,7 +7,6 @@ type Props = {
   accessToken?: string;
   dataDepartment: Department[];
 };
-
 type Department = {
   id: number;
   nama_department: string;
@@ -16,9 +15,13 @@ type Department = {
   longitude: string;
   radius: string;
 };
+
 const ModalCreate = (props: Props) => {
   const { isModalOpen, onClose, accessToken, dataDepartment } = props;
+
+  // lodaing state
   const [isLoading, setIsLoading] = useState(false);
+
   const [department, setDepartment] = useState("");
   const [namaSubDepartment, setNamaSubDepartment] = useState("");
 

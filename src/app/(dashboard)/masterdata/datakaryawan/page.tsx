@@ -2,29 +2,44 @@ import { authOptions } from "@/libs/authOptions";
 import { getServerSession } from "next-auth";
 import KaryawanData from "./data";
 
+type Session = {
+  user: UserSession;
+};
+type UserSession = {
+  id: number;
+  username: string;
+  roleId: number;
+  roleName: string;
+  path: string;
+  accessToken: string;
+};
+
 const getDepartments = async (token: string) => {
-  const response = await fetch(
-    process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department",
-    {
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-      next: {
-        revalidate: 60,
-      },
+  try {
+    const response = await fetch(
+      process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department",
+      {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+        next: {
+          revalidate: 60,
+        },
+      }
+    );
+    const res = await response.json();
+
+    if (response.ok) {
+      return res.data;
     }
-  );
 
-  const res = await response.json();
-
-  if (response.ok) {
-    return res.data;
+    return [];
+  } catch (error) {
+    return [];
   }
-
-  return [];
 };
 const KaryawanPage = async () => {
-  const session: any = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions)) as Session | null;
 
   if (!session) {
     return null;

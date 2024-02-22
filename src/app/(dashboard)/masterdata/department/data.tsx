@@ -18,22 +18,19 @@ interface isLoadingProps {
 }
 
 const DepartmentData = ({ accessToken }: { accessToken: string }) => {
+  // loading state
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
 
-  const [isModalCreateOpen, setModalCreateOpen] = useState(false);
+  // modal state
+  const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState(false);
 
+  // data state
   const [dataEdit, setDataEdit] = useState({} as Department);
 
-  const closeModal = () => {
-    setModalCreateOpen(false);
-    setIsModalEditOpen(false);
-    mutate(process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department");
-  };
-
   const handleCreate = () => {
-    setModalCreateOpen(true);
+    setIsModalCreateOpen(true);
   };
 
   const handleEdit = async (id: number) => {
@@ -93,6 +90,12 @@ const DepartmentData = ({ accessToken }: { accessToken: string }) => {
     }
   };
 
+  const closeModal = () => {
+    setIsModalCreateOpen(false);
+    setIsModalEditOpen(false);
+    mutate(process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department");
+  };
+
   const fetcher = (url: RequestInfo) => {
     return fetch(url, {
       headers: {
@@ -110,11 +113,26 @@ const DepartmentData = ({ accessToken }: { accessToken: string }) => {
   );
 
   if (isLoading) {
-    return <></>;
+    return (
+      <div className="card-body">
+        <div className="text-center">
+          <span
+            className="spinner-border spinner-border-sm me-2"
+            role="status"
+            aria-hidden="true"
+          />{" "}
+          Loading...
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <>something went wrong</>;
+    return (
+      <div className="card-body text-center">
+        something went wrong, please refresh the page
+      </div>
+    );
   }
 
   const departments = data?.data;

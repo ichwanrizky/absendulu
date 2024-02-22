@@ -30,21 +30,18 @@ interface isLoadingProps {
 }
 
 const MenuData = ({ accessToken }: { accessToken: string }) => {
+  // loading state
   const [isLoadingCreate, setIsLoadingCreate] = useState(false);
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
 
-  const [isModalCreateOpen, setModalCreateOpen] = useState(false);
+  // modal state
+  const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState(false);
 
+  // data state
   const [menuGroups, setMenuGroups] = useState({} as MenuGroups[]);
   const [dataEdit, setDataEdit] = useState({} as Menu);
-
-  const closeModal = () => {
-    setModalCreateOpen(false);
-    setIsModalEditOpen(false);
-    mutate(process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menu");
-  };
 
   const handleCreate = async () => {
     setIsLoadingCreate(true);
@@ -63,7 +60,7 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
         alert(res.message);
       } else {
         setMenuGroups(res.data);
-        setModalCreateOpen(true);
+        setIsModalCreateOpen(true);
       }
     } catch (error) {
       alert("something went wrong");
@@ -137,6 +134,12 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
     }
   };
 
+  const closeModal = () => {
+    setIsModalCreateOpen(false);
+    setIsModalEditOpen(false);
+    mutate(process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menu");
+  };
+
   const fetcher = (url: RequestInfo) => {
     return fetch(url, {
       headers: {
@@ -154,11 +157,26 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
   );
 
   if (isLoading) {
-    return <></>;
+    return (
+      <div className="card-body">
+        <div className="text-center">
+          <span
+            className="spinner-border spinner-border-sm me-2"
+            role="status"
+            aria-hidden="true"
+          />{" "}
+          Loading...
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <>something went wrong</>;
+    return (
+      <div className="card-body text-center">
+        something went wrong, please refresh the page
+      </div>
+    );
   }
 
   const menus = data?.data;

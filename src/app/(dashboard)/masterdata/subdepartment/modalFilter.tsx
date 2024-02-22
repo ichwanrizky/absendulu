@@ -4,7 +4,6 @@ import { useState } from "react";
 type Props = {
   isModalOpen: any;
   onClose: any;
-  accessToken?: string;
   dataDepartment: Department[];
   onFilter: any;
   filterData: any;
@@ -20,16 +19,8 @@ type Department = {
 };
 
 const ModalFilter = (props: Props) => {
-  const {
-    isModalOpen,
-    onClose,
-    accessToken,
-    dataDepartment,
-    onFilter,
-    filterData,
-  } = props;
+  const { isModalOpen, onClose, dataDepartment, onFilter, filterData } = props;
 
-  const [isLoading, setIsLoading] = useState(false);
   const [department, setDepartment] = useState(
     filterData === "" ? "" : filterData.department
   );
@@ -56,7 +47,7 @@ const ModalFilter = (props: Props) => {
             <form onSubmit={handleSubmit}>
               <div className="modal-content">
                 <div className="modal-header">
-                  <h1 className="modal-title fs-5 fw-semibold   ">Filter</h1>
+                  <h1 className="modal-title fs-5 fw-semibold">Filter</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -72,7 +63,6 @@ const ModalFilter = (props: Props) => {
                       onChange={(e) => setDepartment(e.target.value)}
                       value={department}
                     >
-                      <option value="">--PILIH--</option>
                       {dataDepartment?.map(
                         (item: Department, index: number) => (
                           <option value={item.id} key={index}>
@@ -91,24 +81,10 @@ const ModalFilter = (props: Props) => {
                   >
                     Close
                   </button>
-                  {isLoading ? (
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-sm"
-                      disabled
-                    >
-                      <span
-                        className="spinner-border spinner-border-sm me-2"
-                        role="status"
-                        aria-hidden="true"
-                      ></span>
-                      Loading...
-                    </button>
-                  ) : (
-                    <button type="submit" className="btn btn-primary btn-sm">
-                      Filter Data
-                    </button>
-                  )}
+
+                  <button type="submit" className="btn btn-primary btn-sm">
+                    Filter Data
+                  </button>
                 </div>
               </div>
             </form>

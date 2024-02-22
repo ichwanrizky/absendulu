@@ -2,8 +2,20 @@ import { authOptions } from "@/libs/authOptions";
 import { getServerSession } from "next-auth";
 import AccessData from "./data";
 
+type Session = {
+  user: UserSession;
+};
+type UserSession = {
+  id: number;
+  username: string;
+  roleId: number;
+  roleName: string;
+  path: string;
+  accessToken: string;
+};
+
 const AccessPage = async () => {
-  const session: any = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions)) as Session | null;
 
   if (!session) {
     return null;

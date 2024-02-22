@@ -8,7 +8,10 @@ type Props = {
 };
 const ModalCreate = (props: Props) => {
   const { isModalOpen, onClose, accessToken } = props;
+
+  // loading state
   const [isLoading, setIsLoading] = useState(false);
+
   const [menuGroup, setMenuGroup] = useState("");
   const [urut, setUrut] = useState("");
   const [group, setGroup] = useState("1");

@@ -15,22 +15,19 @@ interface isLoadingProps {
 }
 
 const RolesData = ({ accessToken }: { accessToken: string }) => {
+  // loading state
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
 
-  const [isModalCreateOpen, setModalCreateOpen] = useState(false);
+  // modal state
+  const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState(false);
 
+  // data state
   const [dataEdit, setDataEdit] = useState({} as roles);
 
-  const closeModal = () => {
-    setModalCreateOpen(false);
-    setIsModalEditOpen(false);
-    mutate(process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/roles");
-  };
-
   const handleCreate = () => {
-    setModalCreateOpen(true);
+    setIsModalCreateOpen(true);
   };
 
   const handleEdit = async (id: number) => {
@@ -88,6 +85,12 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
     }
   };
 
+  const closeModal = () => {
+    setIsModalCreateOpen(false);
+    setIsModalEditOpen(false);
+    mutate(process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/roles");
+  };
+
   const fetcher = (url: RequestInfo) => {
     return fetch(url, {
       headers: {
@@ -108,8 +111,19 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
     return <></>;
   }
 
-  if (error) {
-    return <>something went wrong</>;
+  if (isLoading) {
+    return (
+      <div className="card-body">
+        <div className="text-center">
+          <span
+            className="spinner-border spinner-border-sm me-2"
+            role="status"
+            aria-hidden="true"
+          />{" "}
+          Loading...
+        </div>
+      </div>
+    );
   }
 
   const roles = data?.data;

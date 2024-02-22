@@ -19,7 +19,9 @@ type MenuGroup = {
 const ModalEdit = (props: Props) => {
   const { isModalOpen, onClose, accessToken, data } = props;
 
+  // loading state
   const [isLoading, setIsLoading] = useState(false);
+
   const [menuGroup, setMenuGroup] = useState(data.menu_group);
   const [urut, setUrut] = useState(data.urut.toString());
   const [group, setGroup] = useState(data.group.toString());

@@ -26,7 +26,10 @@ type Department = {
 };
 const ModalCreate = (props: Props) => {
   const { isModalOpen, onClose, accessToken, dataDepartment, data } = props;
+
+  // loading state
   const [isLoading, setIsLoading] = useState(false);
+
   const [department, setDepartment] = useState(data.department_id.toString());
   const [namaSubDepartment, setNamaSubDepartment] = useState(
     data.nama_sub_department

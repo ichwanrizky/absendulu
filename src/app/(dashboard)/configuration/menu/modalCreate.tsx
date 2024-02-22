@@ -18,6 +18,7 @@ type MenuGroups = {
 const ModalCreate = (props: Props) => {
   const { isModalOpen, onClose, accessToken, menuGroups } = props;
 
+  // lodaing state
   const [isLoading, setIsLoading] = useState(false);
 
   const [menuGroup, setMenuGroup] = useState("");
