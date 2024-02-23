@@ -13,7 +13,7 @@ const DashboardSidebar = ({ session }: { session: any }) => {
           <div className="sidenav-footer-content">
             <div className="sidenav-footer-subtitle">Logged in as:</div>
             <div className="sidenav-footer-title ">
-              {session.username.toUpperCase()}
+              {session.roleName.toUpperCase()}
             </div>
           </div>
         </div>

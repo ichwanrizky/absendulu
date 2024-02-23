@@ -54,6 +54,8 @@ export const authOptions: NextAuthOptions = {
         token.roleName = user.roleName;
         token.path = user.path;
         token.accessToken = user.accessToken;
+        token.pegawaiId = user.pegawaiId;
+        token.pegawaiName = user.pegawaiName;
       }
 
       return token;
@@ -86,6 +88,14 @@ export const authOptions: NextAuthOptions = {
 
       if ("accessToken" in token) {
         session.user.accessToken = token.accessToken;
+      }
+
+      if ("pegawaiName" in token) {
+        session.user.pegawaiName = token.pegawaiName;
+      }
+
+      if ("pegawaiId" in token) {
+        session.user.pegawaiId = token.pegawaiId;
       }
 
       return session;

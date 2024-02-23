@@ -16,15 +16,15 @@ model roles {
 }
 
 model user {
-  id        Int       @id @default(autoincrement())
-  username  String    @unique
-  password  String
-  createdAt DateTime? @db.DateTime(0)
-  rolesId   Int?
-  session   session[]
-  roles     roles?    @relation(fields: [rolesId], references: [id])
-
-  @@index([rolesId], map: "user_rolesId_fkey")
+  id         Int       @id @default(autoincrement())
+  username   String    @unique
+  password   String
+  createdAt  DateTime? @db.DateTime(0)
+  rolesId    Int?
+  session    session[]
+  roles      roles?    @relation(fields: [rolesId], references: [id])
+  pegawai_id Int?
+  pegawai    pegawai?  @relation(fields: [pegawai_id], references: [id])
 }
 
 model menu_group {
@@ -44,8 +44,6 @@ model menu {
   menu_group_id Int?
   access_menu   access_menu[]
   menu_group    menu_group?   @relation(fields: [menu_group_id], references: [id])
-
-  @@index([menu_group_id], map: "menu_menu_group_id_fkey")
 }
 
 model access_menu {
@@ -57,7 +55,6 @@ model access_menu {
   roles   roles   @relation(fields: [role_id], references: [id])
 
   @@unique([menu_id, role_id])
-  @@index([role_id], map: "access_menu_role_id_fkey")
 }
 
 model access_department {
@@ -66,9 +63,6 @@ model access_department {
   department_id Int
   department    department @relation(fields: [department_id], references: [id])
   roles         roles      @relation(fields: [role_id], references: [id])
-
-  @@index([department_id], map: "access_department_department_id_fkey")
-  @@index([role_id], map: "access_department_role_id_fkey")
 }
 
 model session {
@@ -102,8 +96,6 @@ model sub_department {
   department_id       Int
   pegawai             pegawai[]
   department          department @relation(fields: [department_id], references: [id])
-
-  @@index([department_id], map: "sub_department_department_id_fkey")
 }
 
 model pegawai {
@@ -142,9 +134,8 @@ model pegawai {
   sub_department    sub_department? @relation(fields: [sub_department_id], references: [id])
   shift_id          Int?
   shift             shift?          @relation(fields: [shift_id], references: [id])
-
-  @@index([department_id], map: "pegawai_department_id_fkey")
-  @@index([sub_department_id], map: "pegawai_sub_department_id_fkey")
+  absen             absen[]
+  user              user[]
 }
 
 model shift {
@@ -157,4 +148,25 @@ model shift {
   cond_friday   Int        @default(0)
   department    department @relation(fields: [department_id], references: [id])
   pegawai       pegawai[]
+  absen         absen[]
+}
+
+model absen {
+  id           Int       @id @default(autoincrement())
+  pegawai_id   Int
+  pengawai     pegawai   @relation(fields: [pegawai_id], references: [id])
+  tanggal      DateTime? @db.Date()
+  absen_masuk  DateTime? @db.Time(0)
+  absen_pulang DateTime? @db.Time(0)
+  shift_id     Int
+  shift        shift     @relation(fields: [shift_id], references: [id])
+  late         Int?      @default(0)
+  early        Int?      @default(0)
+  bulan        Int
+  tahun        Int
+  latitude     String?
+  longitude    String?
+  ket_masuk    String?
+  ket_pulang   String?
+  is_manual    Boolean   @default(false)
 }

@@ -60,6 +60,12 @@ export async function POST(req: Request) {
             },
           },
         },
+        pegawai: {
+          select: {
+            id: true,
+            nama: true,
+          },
+        },
       },
     });
 
@@ -121,6 +127,8 @@ export async function POST(req: Request) {
       roleId: getData.roles?.id,
       roleName: getData.roles?.role_name,
       path: path,
+      pegawaiId: getData.pegawai?.id,
+      pegawaiName: getData.pegawai?.nama,
     };
 
     // generate token

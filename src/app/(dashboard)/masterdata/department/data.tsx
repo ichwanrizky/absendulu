@@ -135,6 +135,14 @@ const DepartmentData = ({ accessToken }: { accessToken: string }) => {
     );
   }
 
+  if (!data.status) {
+    return (
+      <div className="card-body text-center">
+        something went wrong, please refresh the page
+      </div>
+    );
+  }
+
   const departments = data?.data;
   const actions = data?.actions;
 

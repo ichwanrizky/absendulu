@@ -1,4 +1,14 @@
-const DashboardHeader = () => {
+"use client";
+
+import { signOut } from "next-auth/react";
+
+const logout = () => {
+  if (confirm("Are you sure you want to logout?")) {
+    signOut();
+  }
+};
+
+const DashboardHeader = ({ session }: { session: any }) => {
   return (
     <nav
       className="topnav navbar navbar-expand shadow justify-content-between justify-content-sm-start navbar-dark bg-dark"
@@ -39,8 +49,12 @@ const DashboardHeader = () => {
                 src="/themes/assets/img/illustrations/profiles/profile-1.png"
               />
               <div className="dropdown-user-details">
-                <div className="dropdown-user-details-name">Valerie Luna</div>
-                <div className="dropdown-user-details-email">vluna@aol.com</div>
+                <div className="dropdown-user-details-name">
+                  {session.pegawaiName.toUpperCase()}
+                </div>
+                <div className="dropdown-user-details-email">
+                  {session.roleName.toUpperCase()}
+                </div>
               </div>
             </h6>
             <div className="dropdown-divider" />
@@ -50,7 +64,7 @@ const DashboardHeader = () => {
               </div>
               Account
             </a>
-            <button className="dropdown-item" type="button">
+            <button className="dropdown-item" type="button" onClick={logout}>
               <div className="dropdown-item-icon">
                 <i data-feather="log-out" />
               </div>

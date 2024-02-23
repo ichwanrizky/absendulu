@@ -27,7 +27,7 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
 
       <body className="nav-fixed bg-dark">
         {/* header */}
-        <DashboardHeader />
+        <DashboardHeader session={session.user} />
         <div id="layoutSidenav">
           {/* sidebar */}
           <DashboardSidebar session={session.user} />
