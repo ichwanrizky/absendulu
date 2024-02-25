@@ -7,6 +7,8 @@ type Props = {
   dataDepartment: Department[];
   onFilter: any;
   filterData: any;
+  accessToken?: string;
+  shifts?: Shift[];
 };
 
 type Department = {
@@ -18,16 +20,65 @@ type Department = {
   radius: string;
 };
 
+type Shift = {
+  id: number;
+  jam_masuk: Date;
+  jam_pulang: Date;
+  different_day: boolean;
+  department_id: number;
+  keterangan: string;
+  cond_friday: number;
+  department: Department;
+};
+
 const ModalFilter = (props: Props) => {
-  const { isModalOpen, onClose, dataDepartment, onFilter, filterData } = props;
+  const {
+    isModalOpen,
+    onClose,
+    dataDepartment,
+    onFilter,
+    filterData,
+    accessToken,
+    shifts,
+  } = props;
 
   const [department, setDepartment] = useState(
     filterData === "" ? "" : filterData.department
   );
 
+  const [dataShift, setDataShift] = useState(shifts as Shift[]);
+
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    onFilter(department);
+    onFilter(department, dataShift);
+  };
+
+  const getShift = async (department: string) => {
+    try {
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_API_URL +
+          "/api/web/masterdata/shift?filter=" +
+          JSON.stringify({ department: Number(department) }),
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+          next: {
+            revalidate: 60,
+          },
+        }
+      );
+
+      const res = await response.json();
+
+      if (response.ok) {
+        setDataShift(res.data);
+      } else {
+        alert(res.message);
+      }
+    } catch (error) {
+      alert("something went wrong");
+    }
   };
 
   return (
@@ -60,7 +111,10 @@ const ModalFilter = (props: Props) => {
                     <label className="mb-1 fw-semibold small">Department</label>
                     <select
                       className="form-select"
-                      onChange={(e) => setDepartment(e.target.value)}
+                      onChange={(e) => {
+                        setDepartment(e.target.value);
+                        getShift(e.target.value);
+                      }}
                       value={department}
                     >
                       {dataDepartment?.map(

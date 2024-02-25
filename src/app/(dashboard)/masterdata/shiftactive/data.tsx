@@ -46,6 +46,7 @@ const ShiftActiveData = ({
 
   // data state
   const [dataShiftKaryawan, setDataShiftKaryawan] = useState<any>([]);
+  const [dataShift, setDataShift] = useState<Shift[]>(shifts);
 
   // filter
   const [filter, setFilter] = useState<any>({
@@ -102,9 +103,10 @@ const ShiftActiveData = ({
     setIsModalFilterOpen(true);
   };
 
-  const handleFilterData = (department: any) => {
+  const handleFilterData = (department: any, dataShift: any) => {
     setIsModalFilterOpen(false);
     setFilter({ filter: true, department: department });
+    setDataShift(dataShift);
   };
 
   const toggleShiftActive = (karyawan: number, shift: number) => {
@@ -219,7 +221,13 @@ const ShiftActiveData = ({
               <button
                 type="button"
                 className="btn btn-outline-dark btn-sm fw-bold ms-1"
-                onClick={() => setFilter("")}
+                onClick={() => {
+                  setFilter({
+                    filter: false,
+                    department: departments[0].id.toString(),
+                  });
+                  setDataShift(shifts);
+                }}
               >
                 Reset
               </button>
@@ -238,7 +246,7 @@ const ShiftActiveData = ({
                   No
                 </th>
                 <th className="fw-semibold fs-6 align-middle">Nama</th>
-                {shifts?.map((item: Shift, index: number) => (
+                {dataShift?.map((item: Shift, index: number) => (
                   <th
                     className="fw-semibold fs-6 text-center"
                     key={index}
@@ -274,7 +282,7 @@ const ShiftActiveData = ({
                   <tr key={index}>
                     <td align="center">{index + 1}</td>
                     <td align="left">{item.nama.toUpperCase()}</td>
-                    {shifts?.map((item2: Shift, index: number) => (
+                    {dataShift?.map((item2: Shift, index: number) => (
                       <td align="center">
                         <input
                           key={index}
@@ -301,6 +309,8 @@ const ShiftActiveData = ({
           dataDepartment={departments}
           onFilter={handleFilterData}
           filterData={filter}
+          accessToken={accessToken}
+          shifts={shifts}
         />
       )}
     </>

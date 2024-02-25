@@ -203,7 +203,12 @@ const ShiftData = ({
               <button
                 type="button"
                 className="btn btn-outline-dark btn-sm fw-bold ms-1"
-                onClick={() => setFilter("")}
+                onClick={() =>
+                  setFilter({
+                    filter: false,
+                    department: departments[0].id.toString(),
+                  })
+                }
               >
                 Reset
               </button>

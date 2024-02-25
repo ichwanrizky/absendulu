@@ -32,7 +32,6 @@ const SubDepartmentData = ({
   departments: Department[];
 }) => {
   // loading state
-  const [isLoadingFilter, setIsLoadingFilter] = useState(false);
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
 
@@ -204,7 +203,12 @@ const SubDepartmentData = ({
               <button
                 type="button"
                 className="btn btn-outline-dark btn-sm fw-bold ms-1"
-                onClick={() => setFilter("")}
+                onClick={() =>
+                  setFilter({
+                    filter: false,
+                    department: departments[0].id.toString(),
+                  })
+                }
               >
                 Reset
               </button>
