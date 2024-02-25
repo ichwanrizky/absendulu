@@ -117,10 +117,15 @@ export async function GET(req: Request) {
         nama: {
           contains: search ? search : undefined,
         },
+        ...(parseFilter.is_user && {
+          user: {
+            none: {},
+          },
+        }),
       },
     });
 
-    const ITEMS_PER_PAGE = 10;
+    const ITEMS_PER_PAGE = page ? 10 : totalData;
     var data = await prisma.pegawai.findMany({
       include: {
         department: {
@@ -147,6 +152,11 @@ export async function GET(req: Request) {
         nama: {
           contains: search ? search : undefined,
         },
+        ...(parseFilter.is_user && {
+          user: {
+            none: {},
+          },
+        }),
       },
       orderBy: [
         {

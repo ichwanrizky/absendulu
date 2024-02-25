@@ -59,50 +59,27 @@ export async function GET(req: Request) {
     }
 
     const searchParams = new URL(req.url).searchParams;
-    // filter
-    const filter = searchParams.get("filter");
-    const parseFilter = filter ? JSON.parse(filter) : {};
 
-    if (!filter) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Unauthorized",
-        }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
+    // search
+    const search = searchParams.get("search");
 
-    const departmentAccess = await checkDepartments(roleId);
-    const checkDepartmentAccess = departmentAccess.find(
-      (item) => item.department_id === Number(parseFilter.department)
-    );
-    if (!checkDepartmentAccess) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Unauthorized",
-        }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
+    // page
+    const page = searchParams.get("page");
 
-    const data = await prisma.user.findMany({
+    const totalData = await prisma.user.count({
+      where: {
+        name: {
+          contains: search ? search : undefined,
+        },
+      },
+    });
+
+    const ITEMS_PER_PAGE = page ? 10 : totalData;
+    var data = await prisma.user.findMany({
       include: {
         pegawai: {
           select: {
             id: true,
-            nama: true,
           },
         },
         roles: {
@@ -112,10 +89,34 @@ export async function GET(req: Request) {
         },
       },
       where: {
-        pegawai: {
-          department_id: Number(parseFilter.department),
+        name: {
+          contains: search ? search : undefined,
         },
       },
+      orderBy: [
+        {
+          pegawai: {
+            sub_department: {
+              id: "asc",
+            },
+          },
+        },
+        {
+          pegawai: {
+            nama: "asc",
+          },
+        },
+      ],
+      skip: page ? (parseInt(page) - 1) * ITEMS_PER_PAGE : 0,
+      take: ITEMS_PER_PAGE,
+    });
+    data = data.map((data, index) => {
+      return {
+        number: page
+          ? (Number(page) - 1) * ITEMS_PER_PAGE + index + 1
+          : index + 1,
+        ...data,
+      };
     });
 
     if (!data) {
@@ -139,6 +140,8 @@ export async function GET(req: Request) {
         message: "success",
         data: data,
         actions: actions,
+        itemsPerPage: ITEMS_PER_PAGE,
+        total: totalData,
       }),
       {
         status: 200,
@@ -234,76 +237,47 @@ export async function POST(req: Request) {
     }
 
     const body = await req.formData();
-    const username = body.get("username")!.toString();
-    const password = body.get("password")!.toString();
     const pegawai = body.get("pegawai")!.toString();
-    const role = body.get("role")!.toString();
+    const parsePegawai = pegawai ? JSON.parse(pegawai) : {};
+
+    const dataPegawai = await prisma.pegawai.findMany({
+      select: {
+        id: true,
+        nama: true,
+        tgl_lahir: true,
+      },
+      where: {
+        id: {
+          in: parsePegawai?.map((item: any) => Number(item.value)),
+        },
+      },
+    });
 
     // format date
     const currendDate = new Date();
     const formattedDate = new Date(currendDate);
     formattedDate.setHours(formattedDate.getHours() + 7);
 
-    const hashPassword = await bcrypt.hash(password, 10);
-    if (!hashPassword) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Something went wrong",
-        }),
-        {
-          status: 500,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
+    const formattedPegawai = await Promise.all(
+      dataPegawai.map(async (item) => {
+        const username = item.nama?.toLowerCase().split(" ")[0] + item.id;
+        const rawPassword =
+          item.nama?.toLowerCase().split(" ")[0] +
+          (item.tgl_lahir?.getFullYear() || "");
+        const password = await bcrypt.hash(rawPassword, 10);
 
-    const departmentAccess = await checkDepartments(roleId);
-
-    const create = await prisma.$transaction(async (prisma) => {
-      const departmentPegawai = await prisma.pegawai.findFirst({
-        where: {
-          id: Number(pegawai),
-          department_id: {
-            in: departmentAccess.map((item) => item.department_id),
-          },
-        },
-      });
-
-      if (!departmentPegawai) {
-        return new NextResponse(
-          JSON.stringify({
-            status: false,
-            message: "Unauthorized",
-          }),
-          {
-            status: 401,
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-      }
-
-      return await prisma.user.create({
-        data: {
-          username: username,
-          password: hashPassword,
-          roles: {
-            connect: {
-              id: Number(role),
-            },
-          },
-          pegawai: {
-            connect: {
-              id: Number(pegawai),
-            },
-          },
+        return {
+          username,
+          password,
           createdAt: formattedDate,
-        },
-      });
+          pegawai_id: item.id,
+          name: item.nama.toUpperCase(),
+        };
+      })
+    );
+
+    const create = await prisma.user.createMany({
+      data: formattedPegawai,
     });
 
     if (!create) {

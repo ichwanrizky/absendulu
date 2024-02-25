@@ -78,11 +78,11 @@ export async function GET(
       },
       where: {
         id: Number(id),
-        pegawai: {
-          department_id: {
-            in: departmentAccess.map((item) => item.department_id),
-          },
-        },
+        // pegawai: {
+        //   department_id: {
+        //     in: departmentAccess.map((item) => item.department_id),
+        //   },
+        // },
       },
     });
 
@@ -220,50 +220,36 @@ export async function POST(
     }
 
     const body = await req.formData();
-    const username = body.get("username")!.toString();
-    const password = body.get("password")!.toString();
-    const pegawai = body.get("pegawai")!.toString();
-    const role = body.get("role")!.toString();
+    const name = body.get("name")!.toString();
+    const password = body.get("password")?.toString();
+    const roles = body.get("roles")?.toString();
 
-    const hashPassword = await bcrypt.hash(password, 10);
-    if (!hashPassword) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Something went wrong",
-        }),
-        {
-          status: 500,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+    if (password) {
+      var hashPassword = await bcrypt.hash(password, 10);
+      if (!hashPassword) {
+        return new NextResponse(
+          JSON.stringify({
+            status: false,
+            message: "Something went wrong",
+          }),
+          {
+            status: 500,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
     }
 
-    const departmentAccess = await checkDepartments(roleId);
     const update = await prisma.user.update({
       data: {
-        username: username,
-        password: hashPassword,
-        roles: {
-          connect: {
-            id: Number(role),
-          },
-        },
-        pegawai: {
-          connect: {
-            id: Number(pegawai),
-          },
-        },
+        name: name.toUpperCase(),
+        password: password ? hashPassword : undefined,
+        rolesId: roles ? Number(roles) : null,
       },
       where: {
         id: Number(id),
-        pegawai: {
-          department_id: {
-            in: departmentAccess.map((item) => item.department_id),
-          },
-        },
       },
     });
 
@@ -400,15 +386,9 @@ export async function DELETE(
       );
     }
 
-    const departmentAccess = await checkDepartments(roleId);
     const deletes = await prisma.user.delete({
       where: {
         id: Number(id),
-        pegawai: {
-          department_id: {
-            in: departmentAccess.map((item) => item.department_id),
-          },
-        },
       },
     });
 

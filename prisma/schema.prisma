@@ -19,6 +19,7 @@ model user {
   id         Int       @id @default(autoincrement())
   username   String    @unique
   password   String
+  name       String?
   createdAt  DateTime? @db.DateTime(0)
   rolesId    Int?
   session    session[]
@@ -67,7 +68,7 @@ model access_department {
 
 model session {
   id        Int       @id @default(autoincrement())
-  token     String    @unique @db.VarChar(300)
+  token     String    @unique @db.VarChar(500)
   user_id   Int
   createdAt DateTime? @db.DateTime(0)
   expiredAt DateTime? @db.DateTime(0)
