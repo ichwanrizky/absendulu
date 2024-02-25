@@ -11,11 +11,43 @@
  Target Server Version : 100427 (10.4.27-MariaDB)
  File Encoding         : 65001
 
- Date: 22/02/2024 21:30:14
+ Date: 25/02/2024 20:48:02
 */
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for absen
+-- ----------------------------
+DROP TABLE IF EXISTS `absen`;
+CREATE TABLE `absen`  (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `pegawai_id` int NOT NULL,
+  `tanggal` date NULL DEFAULT NULL,
+  `absen_masuk` time NULL DEFAULT NULL,
+  `absen_pulang` time NULL DEFAULT NULL,
+  `shift_id` int NOT NULL,
+  `late` int NULL DEFAULT 0,
+  `early` int NULL DEFAULT 0,
+  `bulan` int NOT NULL,
+  `tahun` int NOT NULL,
+  `latitude` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `longitude` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `ket_masuk` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `ket_pulang` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `is_manual` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `absen_pegawai_id_fkey`(`pegawai_id` ASC) USING BTREE,
+  INDEX `absen_shift_id_fkey`(`shift_id` ASC) USING BTREE,
+  CONSTRAINT `absen_pegawai_id_fkey` FOREIGN KEY (`pegawai_id`) REFERENCES `pegawai` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `absen_shift_id_fkey` FOREIGN KEY (`shift_id`) REFERENCES `shift` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of absen
+-- ----------------------------
+INSERT INTO `absen` VALUES (1, 2, '2024-02-25', '18:47:52', NULL, 5, 0, 0, 0, 0, NULL, NULL, NULL, NULL, 0);
 
 -- ----------------------------
 -- Table structure for access_department
@@ -30,12 +62,20 @@ CREATE TABLE `access_department`  (
   INDEX `access_department_department_id_fkey`(`department_id` ASC) USING BTREE,
   CONSTRAINT `access_department_department_id_fkey` FOREIGN KEY (`department_id`) REFERENCES `department` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `access_department_role_id_fkey` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 14 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of access_department
 -- ----------------------------
-INSERT INTO `access_department` VALUES (3, 1, 1);
+INSERT INTO `access_department` VALUES (5, 1, 1);
+INSERT INTO `access_department` VALUES (6, 1, 2);
+INSERT INTO `access_department` VALUES (7, 1, 4);
+INSERT INTO `access_department` VALUES (8, 1, 3);
+INSERT INTO `access_department` VALUES (9, 1, 5);
+INSERT INTO `access_department` VALUES (10, 1, 6);
+INSERT INTO `access_department` VALUES (11, 1, 7);
+INSERT INTO `access_department` VALUES (12, 1, 9);
+INSERT INTO `access_department` VALUES (13, 1, 10);
 
 -- ----------------------------
 -- Table structure for access_menu
@@ -51,20 +91,21 @@ CREATE TABLE `access_menu`  (
   INDEX `access_menu_role_id_fkey`(`role_id` ASC) USING BTREE,
   CONSTRAINT `access_menu_menu_id_fkey` FOREIGN KEY (`menu_id`) REFERENCES `menu` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `access_menu_role_id_fkey` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 23 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 43 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of access_menu
 -- ----------------------------
-INSERT INTO `access_menu` VALUES (14, 1, 'view,insert,update,delete', 1);
-INSERT INTO `access_menu` VALUES (15, 2, 'view,insert,update,delete', 1);
-INSERT INTO `access_menu` VALUES (16, 3, 'delete,update,insert,view', 1);
-INSERT INTO `access_menu` VALUES (17, 4, 'delete,update,insert,view', 1);
-INSERT INTO `access_menu` VALUES (18, 5, 'view,insert,update,delete', 1);
-INSERT INTO `access_menu` VALUES (19, 6, 'view,insert,update,delete', 1);
-INSERT INTO `access_menu` VALUES (20, 7, 'view,insert,update,delete', 1);
-INSERT INTO `access_menu` VALUES (21, 8, 'view,insert,update,delete', 1);
-INSERT INTO `access_menu` VALUES (22, 9, 'view,delete,insert', 1);
+INSERT INTO `access_menu` VALUES (33, 1, 'view,insert,update,delete', 1);
+INSERT INTO `access_menu` VALUES (34, 2, 'view,insert,update,delete', 1);
+INSERT INTO `access_menu` VALUES (35, 3, 'delete,update,insert,view', 1);
+INSERT INTO `access_menu` VALUES (36, 4, 'delete,update,insert,view', 1);
+INSERT INTO `access_menu` VALUES (37, 5, 'view,insert,update,delete', 1);
+INSERT INTO `access_menu` VALUES (38, 6, 'view,insert,update,delete', 1);
+INSERT INTO `access_menu` VALUES (39, 7, 'view,insert,update,delete', 1);
+INSERT INTO `access_menu` VALUES (40, 8, 'view,insert,update,delete', 1);
+INSERT INTO `access_menu` VALUES (41, 9, 'view,insert', 1);
+INSERT INTO `access_menu` VALUES (42, 10, 'view,insert,update,delete', 1);
 
 -- ----------------------------
 -- Table structure for department
@@ -106,7 +147,7 @@ CREATE TABLE `menu`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `menu_menu_group_id_fkey`(`menu_group_id` ASC) USING BTREE,
   CONSTRAINT `menu_menu_group_id_fkey` FOREIGN KEY (`menu_group_id`) REFERENCES `menu_group` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of menu
@@ -120,6 +161,7 @@ INSERT INTO `menu` VALUES (6, 'sub department', '/masterdata/subdepartment', 2, 
 INSERT INTO `menu` VALUES (7, 'data karyawan', '/masterdata/datakaryawan', 3, 2);
 INSERT INTO `menu` VALUES (8, 'shift', '/masterdata/shift', 4, 2);
 INSERT INTO `menu` VALUES (9, 'shift active', '/masterdata/shiftactive', 5, 2);
+INSERT INTO `menu` VALUES (10, 'data user', '/masterdata/datauser', 6, 2);
 
 -- ----------------------------
 -- Table structure for menu_group
@@ -335,7 +377,7 @@ INSERT INTO `roles` VALUES (1, 'administrator');
 DROP TABLE IF EXISTS `session`;
 CREATE TABLE `session`  (
   `id` int NOT NULL AUTO_INCREMENT,
-  `token` varchar(300) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `token` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `user_id` int NOT NULL,
   `createdAt` datetime NULL DEFAULT NULL,
   `expiredAt` datetime NULL DEFAULT NULL,
@@ -344,20 +386,37 @@ CREATE TABLE `session`  (
   UNIQUE INDEX `session_token_key`(`token` ASC) USING BTREE,
   UNIQUE INDEX `session_user_id_token_key`(`user_id` ASC, `token` ASC) USING BTREE,
   CONSTRAINT `session_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 19 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of session
 -- ----------------------------
-INSERT INTO `session` VALUES (1, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9jb25maWd1cmF0aW9uL2FjY2VzcyJ9LCJpYXQiOjE3MDg1MTIxNjksImV4cCI6MTcwODUxNTc2OX0.6SZeAMiMch7F8mvZL8WyBgtjEU_8hOv5aqu9yb80EAA', 1, '2024-02-21 17:42:49', '2024-02-21 18:42:49', 0);
-INSERT INTO `session` VALUES (2, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQifSwiaWF0IjoxNzA4NTE2MjU0LCJleHAiOjE3MDg1MTk4NTR9.hNVqoE6dJ6f9NPW2Ln_OCxBcBoFdZBEUoH-lOEZKGlI', 1, '2024-02-21 18:50:54', '2024-02-21 19:50:54', 0);
-INSERT INTO `session` VALUES (3, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQifSwiaWF0IjoxNzA4NTczMDkzLCJleHAiOjE3MDg1NzY2OTN9.riuwLT4sEX-DQ75OkMVSWwBGVnvVM-ex91j-hKFKGUs', 1, '2024-02-22 10:38:13', '2024-02-22 11:38:13', 0);
-INSERT INTO `session` VALUES (4, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQifSwiaWF0IjoxNzA4NTgwMjM3LCJleHAiOjE3MDg1ODM4Mzd9.dPffz0UAYOVzrcHcKJsgc_kv8aLXBxwETyB_YLum9Bc', 1, '2024-02-22 11:58:47', '2024-02-22 13:37:17', 0);
-INSERT INTO `session` VALUES (5, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQifSwiaWF0IjoxNzA4NTg1NzkzLCJleHAiOjE3MDg1ODkzOTN9.ZMowkop8VrPPlVa_vx_IOwueu3-Yox_NFMrgTpWA2Pk', 1, '2024-02-22 14:09:53', '2024-02-22 15:09:53', 0);
-INSERT INTO `session` VALUES (6, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQifSwiaWF0IjoxNzA4NTg5NDczLCJleHAiOjE3MDg1OTMwNzN9.a6tdyrGtLyXp9xxT1LamG09YpWniF3KpB5Op5wXTNj0', 1, '2024-02-22 15:11:13', '2024-02-22 16:11:13', 0);
-INSERT INTO `session` VALUES (7, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQifSwiaWF0IjoxNzA4NTkzNTg5LCJleHAiOjE3MDg1OTcxODl9.M_x-pI5aSZDi4bcxx3-k3M-1DXK3KUykkuTlW6VEqcA', 1, '2024-02-22 16:19:49', '2024-02-22 17:19:49', 0);
-INSERT INTO `session` VALUES (8, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQifSwiaWF0IjoxNzA4NjA2MjU4LCJleHAiOjE3MDg2MDk4NTh9.b0Jt9g2Hd_O-yqXMiHfslVKIffo0vENn1iynSGOLQRI', 1, '2024-02-22 19:50:58', '2024-02-22 20:50:58', 0);
-INSERT INTO `session` VALUES (9, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQifSwiaWF0IjoxNzA4NjA5OTA4LCJleHAiOjE3MDg2MTM1MDh9.PGcw05OBgBODlaJCqF8TaHR8R-silapRbRMmEMSAekA', 1, '2024-02-22 20:51:48', '2024-02-22 21:51:48', 0);
+INSERT INTO `session` VALUES (14, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQiLCJwZWdhd2FpSWQiOjIsInBlZ2F3YWlOYW1lIjoiSUNIV0FOIFJJWktZIn0sImlhdCI6MTcwODc2MDI3NiwiZXhwIjoxNzA4NzYzODc2fQ.3V2-UX3emDEjqwXHjUMFSbn0UmRPWkjPYOHlmFyFMY0', 1, '2024-02-24 14:37:56', '2024-02-24 15:37:56', 0);
+INSERT INTO `session` VALUES (15, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQiLCJwZWdhd2FpSWQiOjIsInBlZ2F3YWlOYW1lIjoiSUNIV0FOIFJJWktZIn0sImlhdCI6MTcwODc2NDE2NywiZXhwIjoxNzA4NzY3NzY3fQ.jqewQNXP5fKr-Q1RvXBR0_i9di4hSl4bV5cfqTIgfOY', 1, '2024-02-24 15:42:47', '2024-02-24 16:42:47', 0);
+INSERT INTO `session` VALUES (16, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQiLCJwZWdhd2FpSWQiOjIsInBlZ2F3YWlOYW1lIjoiSUNIV0FOIFJJWktZIn0sImlhdCI6MTcwODgzOTM3NiwiZXhwIjoxNzA4ODQyOTc2fQ.EbGuR1A29RuJVZ5ojZRrhhfkZkMgRrGT4qP9faFyepA', 1, '2024-02-25 12:36:16', '2024-02-25 13:36:16', 0);
+INSERT INTO `session` VALUES (17, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQiLCJwZWdhd2FpSWQiOjIsInBlZ2F3YWlOYW1lIjoiSUNIV0FOIFJJWktZIn0sImlhdCI6MTcwODg0MzE0NywiZXhwIjoxNzA4ODQ2NzQ3fQ.8cxHycVUC6j03FRwAq0hfiBX_-XPtgEDJ9iMq5THbjc', 1, '2024-02-25 13:39:07', '2024-02-25 14:39:07', 0);
+INSERT INTO `session` VALUES (18, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInJvbGVJZCI6MSwicm9sZU5hbWUiOiJhZG1pbmlzdHJhdG9yIiwicGF0aCI6Ii9tYXN0ZXJkYXRhL2RlcGFydG1lbnQiLCJwZWdhd2FpSWQiOjIsInBlZ2F3YWlOYW1lIjoiSUNIV0FOIFJJWktZIn0sImlhdCI6MTcwODg0OTgzMiwiZXhwIjoxNzA4ODUzNDMyfQ.qnPjseeKhVeDOEstkD1e8BcRYVneSdhuUnL6F7qzi74', 1, '2024-02-25 15:30:32', '2024-02-25 16:30:32', 0);
+
+-- ----------------------------
+-- Table structure for session_mobile
+-- ----------------------------
+DROP TABLE IF EXISTS `session_mobile`;
+CREATE TABLE `session_mobile`  (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `token` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_id` int NOT NULL,
+  `createdAt` datetime NULL DEFAULT NULL,
+  `expired` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `session_mobile_token_key`(`token` ASC) USING BTREE,
+  UNIQUE INDEX `session_mobile_user_id_token_key`(`user_id` ASC, `token` ASC) USING BTREE,
+  CONSTRAINT `session_mobile_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 28 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of session_mobile
+-- ----------------------------
+INSERT INTO `session_mobile` VALUES (27, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoxLCJ1c2VybmFtZSI6ImljaHdhbiIsInBlZ2F3YWlJZCI6MiwicGVnYXdhaU5hbWUiOiJJQ0hXQU4gUklaS1kifSwiaWF0IjoxNzA4ODY1NjY0fQ.w3WqiRDQURJ9MpcvSwYrRqNc0z9mjmmxp6C3Yht4DvU', 1, '2024-02-25 19:54:24', 0);
 
 -- ----------------------------
 -- Table structure for shift
@@ -416,15 +475,98 @@ CREATE TABLE `user`  (
   `password` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `createdAt` datetime NULL DEFAULT NULL,
   `rolesId` int NULL DEFAULT NULL,
+  `pegawai_id` int NULL DEFAULT NULL,
+  `name` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `user_username_key`(`username` ASC) USING BTREE,
   INDEX `user_rolesId_fkey`(`rolesId` ASC) USING BTREE,
+  INDEX `user_pegawai_id_fkey`(`pegawai_id` ASC) USING BTREE,
+  CONSTRAINT `user_pegawai_id_fkey` FOREIGN KEY (`pegawai_id`) REFERENCES `pegawai` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `user_rolesId_fkey` FOREIGN KEY (`rolesId`) REFERENCES `roles` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 241 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of user
 -- ----------------------------
-INSERT INTO `user` VALUES (1, 'ichwan', '$2b$10$kdyHTskI3NebY9gWawI1r.rhkJs/VwEGeR.G.v8GWdGn6HTASDHIq', '2024-02-21 17:38:42', 1);
+INSERT INTO `user` VALUES (1, 'ichwan', '$2b$10$kdyHTskI3NebY9gWawI1r.rhkJs/VwEGeR.G.v8GWdGn6HTASDHIq', '2024-02-21 17:38:42', 1, 2, 'ICHWAN RIZKY');
+INSERT INTO `user` VALUES (162, 'riri71', '$2b$10$Go0SBSMPEaQqo5sUxwiF4eZESh2KZuw1c33nF1wMRHZRemtcFqj72', '2024-02-25 12:41:31', NULL, 71, 'RIRI ARIANTO');
+INSERT INTO `user` VALUES (163, 'hendri72', '$2b$10$8dAvVWrMSLFeJuAH0ViCfON1aXJoIuYewfdBiDc14vde.4gIFaxLG', '2024-02-25 12:41:31', NULL, 72, 'HENDRI');
+INSERT INTO `user` VALUES (164, 'lelyana73', '$2b$10$lotxa6bm0OdT2eksDR2fu.nYXDgddlKpl7UZZG7FJeee9.ExVFJAm', '2024-02-25 12:41:31', NULL, 73, 'LELYANA OKTAVIA');
+INSERT INTO `user` VALUES (165, 'indra74', '$2b$10$0OMd05LP5bXTZ/OM8FPtH.ZBj9BKAwPcUUWKr/zcQ1LiKsmf4Wq5i', '2024-02-25 12:41:31', NULL, 74, 'INDRA NURMALA CHANDRA');
+INSERT INTO `user` VALUES (166, 'wendri75', '$2b$10$304OAHrZzuoNnSoNV3UZ8OQJg8H4u114eTW.iyaqHw3K1dAsqNCDS', '2024-02-25 12:41:31', NULL, 75, 'WENDRI ');
+INSERT INTO `user` VALUES (167, 'nelpita77', '$2b$10$yxwYnYLz1jq.A8tJCChJB.9DTs1P6PxvqQBAXxxTpHgZSRb3BrH6m', '2024-02-25 12:41:31', NULL, 77, 'NELPITA SARI');
+INSERT INTO `user` VALUES (168, 'riko78', '$2b$10$svv1.rgCV3LheyQdv4Ive.wu7onzcYgRnmfW93aXeA0Aaio84QEoO', '2024-02-25 12:41:31', NULL, 78, 'RIKO HENDRA ');
+INSERT INTO `user` VALUES (169, 'viola80', '$2b$10$xwPF615GgXCM00qRRRRIoO9QQdqPMgaTe5BmCMIB3p0JC.p760Q/m', '2024-02-25 12:41:31', NULL, 80, 'VIOLA RAHMADHIAN');
+INSERT INTO `user` VALUES (170, 'romy81', '$2b$10$w3Cxeuv5aJdxxtuBFAVcvOIChfmM/c9Sx037zqoX0xO/x4OT/yxN6', '2024-02-25 12:41:31', NULL, 81, 'ROMY ARDIAN');
+INSERT INTO `user` VALUES (171, 'zulbahrizal82', '$2b$10$HWwUbnOXbLy86ZJwUvgkBeTSxo6l9zwyCnIjzd/SsBiT9nI1ZUD1a', '2024-02-25 12:41:31', NULL, 82, 'ZULBAHRIZAL');
+INSERT INTO `user` VALUES (172, 'erni84', '$2b$10$SNV4.c9zQ.6YoXE4NnTiueEaIGx5ysIIcL2QcU4gUnaCe1jlrKwHq', '2024-02-25 12:41:31', NULL, 84, 'ERNI MAINISA');
+INSERT INTO `user` VALUES (173, 'dedi85', '$2b$10$rdz89K/.fhN3NOIy3aavZOndTjbgjJ/egr/8zxzyxxqk8AZIM43H2', '2024-02-25 12:41:31', NULL, 85, 'DEDI CANDRA TANJUNG');
+INSERT INTO `user` VALUES (174, 'dosmaida123', '$2b$10$hug6NACNiiQYPg6wy0coBu4XM537/H/.NTcKmXtPOvRwmEC.umDEK', '2024-02-25 12:41:31', NULL, 123, 'DOSMAIDA TAMPUBOLON');
+INSERT INTO `user` VALUES (175, 'mariati135', '$2b$10$8FErTV3.aMK.BR6rkBUpTOWkN62Y.iVQkf0EHs0I.lvMYMGjI8yc6', '2024-02-25 12:41:31', NULL, 135, 'MARIATI YUSTINA SAMOSIR');
+INSERT INTO `user` VALUES (176, 'gusnela139', '$2b$10$7btW1WpP5SLwd43/XvXNJuzv9cyPLD0PiIBTPbl2lSkQZbbIr.5Hu', '2024-02-25 12:41:31', NULL, 139, 'GUSNELA');
+INSERT INTO `user` VALUES (177, 'desy259', '$2b$10$zVsfp19nwzrX3qWeTB.hOOjDWaj84SW3M93OO5zl1NLk5dc/ma30S', '2024-02-25 12:41:31', NULL, 259, 'DESY NILAWATI');
+INSERT INTO `user` VALUES (178, 'emi260', '$2b$10$c9CrLap14bhVLedqlZ/nKe4HTcGSujg6HuAKkq01mS8oCCzhJxUYW', '2024-02-25 12:41:31', NULL, 260, 'EMI SUSANTI');
+INSERT INTO `user` VALUES (179, 'sri261', '$2b$10$Dvmj1F74yzEwyK/OirUnL.726AgHLCKwuE3Gl2xhnn//IgBF9g7ve', '2024-02-25 12:41:31', NULL, 261, 'SRI INDRAYANTI');
+INSERT INTO `user` VALUES (180, 'jannariah262', '$2b$10$tvFb/l1OFuspcVUNn2Xpa.pVMIZnhqs2QRogHAeieOJVXGS4EBOf2', '2024-02-25 12:41:31', NULL, 262, 'JANNARIAH');
+INSERT INTO `user` VALUES (181, 'hariyanti266', '$2b$10$5wy2NxPSzY6hjG0tpMNK7ewUCkpY2Hk12zlEQI8qHG0Ytwjpr.cm.', '2024-02-25 12:41:31', NULL, 266, 'HARIYANTI');
+INSERT INTO `user` VALUES (182, 'dea267', '$2b$10$mw/ZxC3R6RRQnCjx7TprtuDsYhN65moTncIopBmB22BYyViHS0Nf6', '2024-02-25 12:41:31', NULL, 267, 'DEA APRIYELDA');
+INSERT INTO `user` VALUES (183, 'tri269', '$2b$10$IAHiEJYp/WF6I07F4Pl6VeTGF2lfMwppxlh/.pMfrHnZXTlOJlNv2', '2024-02-25 12:41:31', NULL, 269, 'TRI SUMARSIH');
+INSERT INTO `user` VALUES (184, 'jurefni273', '$2b$10$t/1Ya6r0yE8nUcjRigR2aehO36IHMib4xBPhWAOUWKBAV2JiDl0zC', '2024-02-25 12:41:31', NULL, 273, 'JUREFNI');
+INSERT INTO `user` VALUES (185, 'kasmalina276', '$2b$10$WTH/BqACK6ORhOvz27ivcO1rDLRHaQcwmBp4WkRSsZqGil//VgqbG', '2024-02-25 12:41:31', NULL, 276, 'KASMALINA');
+INSERT INTO `user` VALUES (186, 'dila297', '$2b$10$SZzLG7SsiP0NErBOS4jo9u5nBt20gQmWq6vMzmIzcaJHZlVC8XOKi', '2024-02-25 12:41:31', NULL, 297, 'DILA KARLINA');
+INSERT INTO `user` VALUES (187, 'deuis301', '$2b$10$tq.qN/.O1Ki5iFTWpqEdYO7oHmQmoqbrhz4YvgCnHuJn0CwzHxGHi', '2024-02-25 12:41:31', NULL, 301, 'DEUIS SARTIKA');
+INSERT INTO `user` VALUES (188, 'ferawaty303', '$2b$10$LgIHikwMZb/0Zm3FY4WbguK/3U1gxQbYuSnO72HkNVJuHoxdEukR.', '2024-02-25 12:41:31', NULL, 303, 'FERAWATY NAPITUPULU');
+INSERT INTO `user` VALUES (189, 'susmiati307', '$2b$10$2TgG6u79GWkyaglM9TWT8uJoVV20MEZw7yFd2l8x8Q9qqh7GA78QO', '2024-02-25 12:41:31', NULL, 307, 'SUSMIATI ');
+INSERT INTO `user` VALUES (190, 'rina308', '$2b$10$mQLpKNdbaQ2ma6B0Qeq1Eus8vCToL2Q3S9Ap8NDIi0n2tdkeeg25m', '2024-02-25 12:41:31', NULL, 308, 'RINA OKTARYANA');
+INSERT INTO `user` VALUES (191, 'linceria356', '$2b$10$S0kJ88jc0l8n5sb/Twre8uNI4CfdOn6hGxYebYIZv3zIMD9MqkIui', '2024-02-25 12:41:31', NULL, 356, 'LINCERIA SIANIPAR');
+INSERT INTO `user` VALUES (192, 'puti358', '$2b$10$GixGLhoMB5hM.fbqZ7Qc7eSWim.nW9mlmcqEj2SP9nSF5HBHnuQ/K', '2024-02-25 12:41:31', NULL, 358, 'PUTI HATI LATURE');
+INSERT INTO `user` VALUES (193, 'rico364', '$2b$10$lWrECG.JA3bAEhuqSPn9NeIfL52X/ABM8YMGQV1qKFpKoZZOxaMMC', '2024-02-25 12:41:31', NULL, 364, 'RICO PRADITO');
+INSERT INTO `user` VALUES (194, 'sri399', '$2b$10$mo8GouayxMYkTErIY.S2iu9QVBWpa6SYWUVCLB8u7W3JdSF16Yoxy', '2024-02-25 12:41:31', NULL, 399, 'SRI RAHAYU');
+INSERT INTO `user` VALUES (195, 'defi400', '$2b$10$BG.uA5jH1dXcqB454ZryQenNY6dFHcze/4yPESnCLJ7LmJZVoS9Gi', '2024-02-25 12:41:31', NULL, 400, 'DEFI MELIA ');
+INSERT INTO `user` VALUES (196, 'mira401', '$2b$10$BTvPMD5obKUW9/MAPz9CM.Fldswf9cljBLZtIOmL7PUMOnimVTwwq', '2024-02-25 12:41:31', NULL, 401, 'MIRA KRISTANTI');
+INSERT INTO `user` VALUES (197, 'dedy402', '$2b$10$xMEERNuZN0lhwfS3mgFxl.DfZBPMLNJkW/VInMNc5jnijYNtxvDiS', '2024-02-25 12:41:31', NULL, 402, 'DEDY CHANDRA');
+INSERT INTO `user` VALUES (198, 'vinaria404', '$2b$10$zCTuMcstuLKjQm2Jc9T1mOIGKL82H6tPQ76dOVtZyRUS8G9M1N2hm', '2024-02-25 12:41:31', NULL, 404, 'VINARIA');
+INSERT INTO `user` VALUES (199, 'desrina405', '$2b$10$v5PaLmT0tkZ.FEafs0bj5OEzAsl9DNJHYMaNE/xCBzSgz3ide7RWO', '2024-02-25 12:41:31', NULL, 405, 'DESRINA SARTIKA');
+INSERT INTO `user` VALUES (200, 'tessa406', '$2b$10$AxOvYNJ5qT32pPwVXJH9MuFmJzKb.6dFk2mOTmGsuhYbxIbZ/goAe', '2024-02-25 12:41:31', NULL, 406, 'TESSA SINTYA SARI');
+INSERT INTO `user` VALUES (201, 'zulfikar453', '$2b$10$9UyuCUK004.N37FAa6oO.OVmgH3DsCrbOxuEH5taqLPV/b7W8CZOe', '2024-02-25 12:41:31', NULL, 453, 'ZULFIKAR');
+INSERT INTO `user` VALUES (202, 'anova456', '$2b$10$dG6Ku/rl4b0zsArM9Iyu/ubRANcEucxGNiyZ6OpBLYTlAz5A9zye2', '2024-02-25 12:41:31', NULL, 456, 'ANOVA RUMATE');
+INSERT INTO `user` VALUES (203, 'riyah457', '$2b$10$dWQ3/.6dK5AmKy45Ls1ZhO90HnUPt5psUUMENnVfAZgDuIDvHT5Py', '2024-02-25 12:41:31', NULL, 457, 'RIYAH');
+INSERT INTO `user` VALUES (204, 'rahma458', '$2b$10$GCXKtKY0tlgjxufLOa7cOuk75PcuohRC9WVmO40nV6zByrOe1I9mi', '2024-02-25 12:41:31', NULL, 458, 'RAHMA YATI');
+INSERT INTO `user` VALUES (205, 'suci459', '$2b$10$.JvQdyvmjTV08IN7kwDokO8DOmW7vu08.9624mCvyh7ZZioZrxiaK', '2024-02-25 12:41:31', NULL, 459, 'SUCI LESTARY');
+INSERT INTO `user` VALUES (206, 'putri460', '$2b$10$MWbZ.5dwKgwM/kBnGrVhSe7mEiSoyk00cEuZh9bWrvVSFSCTWsMjq', '2024-02-25 12:41:31', NULL, 460, 'PUTRI YOSEPHINE SITUMEANG');
+INSERT INTO `user` VALUES (207, 'winarni461', '$2b$10$xt34L1G406OZLvi9/3xBUeSmdjOK5hy0wo7loQH7zcUYTjy6sCsPy', '2024-02-25 12:41:31', NULL, 461, 'WINARNI');
+INSERT INTO `user` VALUES (208, 'denada462', '$2b$10$UjqIOn4yd0T/iPJR02oY3eNdeb9wl/clmGf5JbmuIe3HcpGIdt68O', '2024-02-25 12:41:31', NULL, 462, 'DENADA ANTONIKA');
+INSERT INTO `user` VALUES (209, 'voni465', '$2b$10$sD5e9QFIDJGWdZ09.uD7..l9p.GnrI3ft2QWg6jBfyzr9I14bi/cG', '2024-02-25 12:41:31', NULL, 465, 'VONI JULIANTI ');
+INSERT INTO `user` VALUES (210, 'mahanani466', '$2b$10$Y44ztt2LmgWC6oTWjY0nWO38gb7DnNJhwbo9yhQLYx4r906FBrtTS', '2024-02-25 12:41:31', NULL, 466, 'MAHANANI NALENDRA');
+INSERT INTO `user` VALUES (211, 'friskayana467', '$2b$10$kEKTF2roccnQaxKbN1u5Te51e2SXqHMQ9qOu9p//pgR8ttM4DJdwC', '2024-02-25 12:41:31', NULL, 467, 'FRISKAYANA PURBA');
+INSERT INTO `user` VALUES (212, 'herlina470', '$2b$10$Jj3glgcw0QAlYhYnFWNEsu6oJa8Ge6XAd9ddIG1m17461QsWi2Qdi', '2024-02-25 12:41:31', NULL, 470, 'HERLINA NOVITA S');
+INSERT INTO `user` VALUES (213, 'hamidah471', '$2b$10$D53mMSragshjVwDEHFsHfe1MadBy6Yo.4VaRPKTzn1zFSNuSynNr6', '2024-02-25 12:41:31', NULL, 471, 'HAMIDAH FITRIANI');
+INSERT INTO `user` VALUES (214, 'khayza483', '$2b$10$yPtu26p2gWe6lKqGcAYWU./u81fkb/LrsdKXDlKHtNjvO1WZJqptG', '2024-02-25 12:41:31', NULL, 483, 'KHAYZA AULIA NATHANIA');
+INSERT INTO `user` VALUES (215, 'wisnora486', '$2b$10$GbB1jYU8mNDByrXo.TkluO4/G1TQzaP5rEnACj6RV.qUiFW..g9g.', '2024-02-25 12:41:31', NULL, 486, 'WISNORA');
+INSERT INTO `user` VALUES (216, 'claudine488', '$2b$10$IOaHnUW.tq71B3YBcemzVekowxvGO/SDBUEK7c7XIkbI58tiHL2Yq', '2024-02-25 12:41:31', NULL, 488, 'CLAUDINE IVANE SITOMPUL');
+INSERT INTO `user` VALUES (217, 'reni491', '$2b$10$D3xR5NgUCXQZ8G91CQvyX.MWMyCg0ZdNKrAznt85Lh.Qj8Z9Co2SW', '2024-02-25 12:41:31', NULL, 491, 'RENI YUSNIBAR');
+INSERT INTO `user` VALUES (218, 'windi492', '$2b$10$F/s.IXZZjhlfew7d4Y9pHuXKEDkWKqCxUqAbb9FFe8TI.rH1Sh3S6', '2024-02-25 12:41:31', NULL, 492, 'WINDI PARWATI');
+INSERT INTO `user` VALUES (219, 'nur493', '$2b$10$LCEk7Wn92tIUT.6NTHfEg.mHBrhc9F5k5spTxc3Ja3oSmQnql5..G', '2024-02-25 12:41:31', NULL, 493, 'NUR IPMAWATI');
+INSERT INTO `user` VALUES (220, 'aldo495', '$2b$10$qPpx/mAlaAa5vE7YpWOBMOhs2WCnUzo1ER7QOsEh2n/qXyurpnZPK', '2024-02-25 12:41:31', NULL, 495, 'ALDO PRABOWO');
+INSERT INTO `user` VALUES (221, 'ratna496', '$2b$10$l.eD.qe4qCP/Yp7GdYZCI.wU9B0yfSzapeneQQrL2bHS2e265qDGS', '2024-02-25 12:41:31', NULL, 496, 'RATNA ALFIYANI');
+INSERT INTO `user` VALUES (222, 'hafsah497', '$2b$10$o67KIPiiDg81UM5Rf6Jo7.6IA/qSgxnnsz3FniwIykzXShZs.bpkG', '2024-02-25 12:41:31', NULL, 497, 'HAFSAH NURUL QURAINI');
+INSERT INTO `user` VALUES (223, 'pipit498', '$2b$10$MxYyP/e.j6bayZ6leHQB2eNCPE/Bg73z3dYt4dLDWXy73T42abU5i', '2024-02-25 12:41:31', NULL, 498, 'PIPIT AYU LESTARI');
+INSERT INTO `user` VALUES (224, 'rani500', '$2b$10$Cd90E92qGKFwtO.TCOFqT.cvTs72Dd4yMxbXoyjgyUcysY8DUvapC', '2024-02-25 12:41:31', NULL, 500, 'RANI ANISA');
+INSERT INTO `user` VALUES (225, 'novita501', '$2b$10$HQHCouHY5uPGtRQm3wNvd.cUpRGSKO4dCtHLvI.1CRrCwx.XpDfAK', '2024-02-25 12:41:31', NULL, 501, 'NOVITA DEWI SOFIANTI');
+INSERT INTO `user` VALUES (226, 'nurcahyanti502', '$2b$10$m7E3WYeRDFcWMwUQ4.ZqTunHK9tFfXMO7g8w9betuMHkiU/0g7sD.', '2024-02-25 12:41:31', NULL, 502, 'NURCAHYANTI');
+INSERT INTO `user` VALUES (227, 'sutriani503', '$2b$10$Uj5z0S3ZXrpXKiBoN6VohepMDEaTUH2HbgbRsbjhLXuq1SxhBaAgu', '2024-02-25 12:41:31', NULL, 503, 'SUTRIANI');
+INSERT INTO `user` VALUES (228, 'dewita504', '$2b$10$QtOqR5gdD6d8GruTtOT3DO8qTfpJyAGCOomj9XjChVijRDKdGyPb2', '2024-02-25 12:41:31', NULL, 504, 'DEWITA OKTAVIANTI');
+INSERT INTO `user` VALUES (229, 'diah505', '$2b$10$MUcgzgnXz1jBowK.bFQ76uX.BKldazJPqMYKGIvPYOSI/R4R81Zvq', '2024-02-25 12:41:31', NULL, 505, 'DIAH PERMATA NITA');
+INSERT INTO `user` VALUES (230, 'fitri507', '$2b$10$41eU4grrPTzukNo7.XojnOc0GE5l.O6Q/XFU9BsK5C.sI2IsAGMfK', '2024-02-25 12:41:31', NULL, 507, 'FITRI AULYA');
+INSERT INTO `user` VALUES (231, 'zalfa508', '$2b$10$AE9ylgr4RitOb706KNfLtO0P2VL5OLeOF.vAMmrc6SOstP7i.XrT.', '2024-02-25 12:41:31', NULL, 508, 'ZALFA ATHIFAH PUTRI SANDY');
+INSERT INTO `user` VALUES (232, 'ririn510', '$2b$10$5gK1KAIuoalvIVgQ3A3gM.ur.M3bTKfuuLZvjfCNtvP2R2FjGTQYO', '2024-02-25 12:41:31', NULL, 510, 'RIRIN YULI VALENTIN');
+INSERT INTO `user` VALUES (233, 'sintia513', '$2b$10$0y302v09FR.4DjACEkp8kOQd0IbnUWI8nzUo/eoMWVMvqxjf1RkBi', '2024-02-25 12:41:31', NULL, 513, 'SINTIA PRISTIKA');
+INSERT INTO `user` VALUES (234, 'rahmi514', '$2b$10$EG2JuxeLEx39MXueh5uSE.stTvLzF32O22tdDNNJYptcr2efTPJWW', '2024-02-25 12:41:31', NULL, 514, 'RAHMI NEDRA YULAILA');
+INSERT INTO `user` VALUES (235, 'dewi515', '$2b$10$x7cNksQkxEA2kD1plpeKU.xRu1Zmz8o1GgWKaMPZzLPsE40FB8i3i', '2024-02-25 12:41:31', NULL, 515, 'DEWI RIDA SRI DUMA RR');
+INSERT INTO `user` VALUES (236, 'elisa516', '$2b$10$dk3kEn/Cg/ur.zK/H2C9uePiv8SF5uZfmUK9fZSmO4BHEsle3j2LC', '2024-02-25 12:41:31', NULL, 516, 'ELISA KRISMON');
+INSERT INTO `user` VALUES (237, 'm.517', '$2b$10$Wjp2cUiXqgFNpGA6HC0g7Ou6Lr.jYsqLBDS916BFqLayG7j0yQuBS', '2024-02-25 12:41:31', NULL, 517, 'M. SARI WANI ');
+INSERT INTO `user` VALUES (238, 'firman519', '$2b$10$iiJGD87tDkO0YYU4QEMD.uTUk1vkWAipktgnyKHirpWxxEuo7CDEW', '2024-02-25 12:41:31', NULL, 519, 'FIRMAN PANGERAN LUBIS ');
+INSERT INTO `user` VALUES (239, 'aolanda521', '$2b$10$hJDRS0VrXRzqVehdYIAUAusctKx0PNKktEF8ZFEpAw0gDU28wg7JK', '2024-02-25 12:41:31', NULL, 521, 'AOLANDA PERDANA PUTRI');
+INSERT INTO `user` VALUES (240, 'edi70', '$2b$10$dPq2/aawF3iuYKpV1zY5cO.A0SHSWsfeCdmjGdqfk.Ooaav7WQ0sS', '2024-02-25 14:07:05', NULL, 70, 'EDI WARMAN');
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -16,16 +16,17 @@ model roles {
 }
 
 model user {
-  id         Int       @id @default(autoincrement())
-  username   String    @unique
-  password   String
-  name       String?
-  createdAt  DateTime? @db.DateTime(0)
-  rolesId    Int?
-  session    session[]
-  roles      roles?    @relation(fields: [rolesId], references: [id])
-  pegawai_id Int?
-  pegawai    pegawai?  @relation(fields: [pegawai_id], references: [id])
+  id             Int              @id @default(autoincrement())
+  username       String           @unique
+  password       String
+  name           String?
+  createdAt      DateTime?        @db.DateTime(0)
+  rolesId        Int?
+  session        session[]
+  roles          roles?           @relation(fields: [rolesId], references: [id])
+  pegawai_id     Int?
+  pegawai        pegawai?         @relation(fields: [pegawai_id], references: [id])
+  session_mobile session_mobile[]
 }
 
 model menu_group {
@@ -74,6 +75,17 @@ model session {
   expiredAt DateTime? @db.DateTime(0)
   expired   Boolean   @default(false)
   user      user      @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, token])
+}
+
+model session_mobile {
+  id        Int       @id @default(autoincrement())
+  token     String    @unique @db.VarChar(500)
+  user_id   Int
+  user      user      @relation(fields: [user_id], references: [id])
+  createdAt DateTime? @db.DateTime(0)
+  expired   Boolean   @default(false)
 
   @@unique([user_id, token])
 }
