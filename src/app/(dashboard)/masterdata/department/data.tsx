@@ -108,7 +108,7 @@ const DepartmentData = ({ accessToken }: { accessToken: string }) => {
   };
 
   const { data, error, isLoading } = useSWR(
-    process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department",
+    process.env.API_URL + "/api/web/masterdata/department",
     fetcher
   );
 
