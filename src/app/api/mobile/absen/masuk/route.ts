@@ -1,0 +1,259 @@
+import { NextResponse } from "next/server";
+import prisma from "@/libs/db";
+import { checkSessionMobile } from "@/libs/checkSessionMobile";
+
+export async function POST(req: Request) {
+  try {
+    const authorization = req.headers.get("Authorization");
+
+    const session = await checkSessionMobile(authorization);
+    if (!session[0]) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const body = await req.formData();
+    const latitude = body.get("latitude")?.toString();
+    const longitude = body.get("longitude")?.toString();
+
+    const dataDepartment = await prisma.department.findFirst({
+      include: {
+        pegawai: {
+          where: {
+            id: session[1].pegawaiId,
+          },
+          select: {
+            shift: true,
+          },
+        },
+      },
+      where: {
+        pegawai: {
+          some: {
+            id: session[1].pegawaiId,
+          },
+        },
+      },
+    });
+
+    if (!dataDepartment || !dataDepartment.pegawai[0].shift) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const distance = calculateDistance(
+      dataDepartment.latitude,
+      dataDepartment.longitude,
+      latitude,
+      longitude
+    );
+
+    if (distance > Number(dataDepartment.radius)) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Gagal, Anda belum berada di dalam zona absen",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    // format date
+    const currendDate = new Date();
+    const formattedDate = new Date(currendDate);
+    formattedDate.setHours(formattedDate.getHours() + 7);
+    formattedDate.setUTCHours(0, 0, 0, 0);
+    const year = formattedDate.getUTCFullYear();
+    const month = formattedDate.getUTCMonth() + 1;
+
+    const getAbsen = await prisma.absen.findFirst({
+      where: {
+        pegawai_id: session[1].pegawaiId,
+        tanggal: formattedDate,
+      },
+    });
+
+    if (getAbsen) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Gagal, absen sudah dilakukan",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    // time format
+    const currendDate2 = new Date();
+    const formattedDate2 = new Date(currendDate2);
+    formattedDate2.setHours(formattedDate2.getHours() + 7);
+
+    // late
+    const jam_masuk_department = dataDepartment.pegawai[0].shift
+      .jam_masuk as Date;
+
+    const jam_masuk = new Date(formattedDate2 as Date);
+    jam_masuk.setHours(
+      jam_masuk_department.getHours(),
+      jam_masuk_department.getMinutes(),
+      jam_masuk_department.getSeconds()
+    );
+
+    const difference = (formattedDate2 as any) - (jam_masuk as any);
+    const differenceInMinutes = Math.round(difference / 60000);
+
+    if (differenceInMinutes >= 300) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Gagal, anda melewati batas jam absensi masuk",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    if (differenceInMinutes < -120) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Gagal, anda belum dapat melakukan absensi masuk",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    var late = 0;
+    if (differenceInMinutes > 0) late = differenceInMinutes;
+
+    const createAbsen = await prisma.absen.create({
+      data: {
+        pegawai_id: session[1].pegawaiId,
+        tanggal: formattedDate,
+        absen_masuk: formattedDate2,
+        shift_id: dataDepartment.pegawai[0]?.shift?.id
+          ? dataDepartment.pegawai[0]?.shift?.id
+          : 0,
+        bulan: month,
+        tahun: year,
+        latitude: latitude,
+        longitude: longitude,
+        late: late,
+      },
+    });
+
+    if (!createAbsen) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Gagal melakukan absen",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    return new NextResponse(
+      JSON.stringify({
+        status: true,
+        message: "Berhasil absen masuk",
+      }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error) {
+    if (error instanceof Error) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: error.message,
+        }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    return new NextResponse(
+      JSON.stringify({
+        status: false,
+        message: "Internal Server Error",
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  }
+}
+
+function calculateDistance(lat1: any, lon1: any, lat2: any, lon2: any) {
+  function toRad(x: any) {
+    return (x * Math.PI) / 180;
+  }
+
+  const R = 6371; // Earth radius in km
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c;
+  return distance * 1000;
+}
