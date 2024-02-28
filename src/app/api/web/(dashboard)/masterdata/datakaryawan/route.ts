@@ -171,6 +171,7 @@ export async function GET(req: Request) {
       skip: page ? (parseInt(page) - 1) * ITEMS_PER_PAGE : 0,
       take: ITEMS_PER_PAGE,
     });
+
     data = data.map((data, index) => {
       return {
         number: page

@@ -25,6 +25,7 @@ export const checkSession = async (authorization: any) => {
   formattedDate.setHours(formattedDate.getHours() + 7);
 
   // check to session is active
+
   const session = await prisma.session.findFirst({
     where: {
       token: token.toString(),
