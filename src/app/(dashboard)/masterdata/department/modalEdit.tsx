@@ -24,7 +24,7 @@ const ModalEdit = (props: Props) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const [namaDepartment, setNamaDepartment] = useState(data.nama_department);
-  const [lot, setLot] = useState(data.lot);
+  const [lot, setLot] = useState(data.lot ? data.lot : "");
   const [latitude, setLatitude] = useState(data.latitude);
   const [longitude, setLongitude] = useState(data.longitude);
   const [radius, setRadius] = useState(data.radius);
@@ -142,10 +142,9 @@ const ModalEdit = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Radius</label>
+                    <label className="mb-1 fw-semibold small">Radius(m)</label>
                     <input
                       type="number"
-                      step={"any"}
                       className="form-control"
                       onChange={(e) => setRadius(e.target.value)}
                       value={radius}

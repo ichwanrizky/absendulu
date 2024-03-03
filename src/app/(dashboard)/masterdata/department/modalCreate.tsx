@@ -125,10 +125,9 @@ const ModalCreate = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Radius</label>
+                    <label className="mb-1 fw-semibold small">Radius (m)</label>
                     <input
                       type="number"
-                      step={"any"}
                       className="form-control"
                       onChange={(e) => setRadius(e.target.value)}
                     />

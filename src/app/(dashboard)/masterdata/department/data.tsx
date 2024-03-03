@@ -178,7 +178,7 @@ const DepartmentData = ({ accessToken }: { accessToken: string }) => {
                 </th>
                 <th className="fw-semibold fs-6">Latitude</th>
                 <th className="fw-semibold fs-6">Longitude</th>
-                <th className="fw-semibold fs-6">Radius</th>
+                <th className="fw-semibold fs-6">Radius(m)</th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
                   Action
                 </th>
