@@ -62,7 +62,8 @@ const ShiftActiveData = ({
         body.append("shift_active", JSON.stringify(dataShiftKaryawan));
 
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/shiftactive",
+          process.env.NEXT_PUBLIC_API_URL +
+            "/api/web/humanresource/shiftactive",
           {
             method: "POST",
             headers: {
@@ -79,7 +80,7 @@ const ShiftActiveData = ({
           alert(res.message);
           mutate(
             process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/masterdata/shiftactive?filter=" +
+              "/api/web/humanresource/shiftactive?filter=" +
               JSON.stringify(filter)
           );
         }
@@ -94,7 +95,7 @@ const ShiftActiveData = ({
     setIsModalFilterOpen(false);
     mutate(
       process.env.NEXT_PUBLIC_API_URL +
-        "/api/web/masterdata/shiftactive?filter=" +
+        "/api/web/humanresource/shiftactive?filter=" +
         JSON.stringify(filter)
     );
   };
@@ -138,7 +139,7 @@ const ShiftActiveData = ({
 
   const { data, error, isLoading } = useSWR(
     process.env.NEXT_PUBLIC_API_URL +
-      "/api/web/masterdata/shiftactive?filter=" +
+      "/api/web/humanresource/shiftactive?filter=" +
       JSON.stringify(filter),
     fetcher
   );

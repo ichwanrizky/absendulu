@@ -64,7 +64,9 @@ const TokenData = ({
       try {
         // get edit data
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/token/" + id,
+          process.env.NEXT_PUBLIC_API_URL +
+            "/api/web/humanresource/token/" +
+            id,
           {
             headers: {
               authorization: `Bearer ${accessToken}`,
@@ -78,7 +80,7 @@ const TokenData = ({
           alert(res.message);
           mutate(
             process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/masterdata/token?page=" +
+              "/api/web/humanresource/token?page=" +
               currentPage +
               "&filter=" +
               JSON.stringify(filter)
@@ -95,7 +97,7 @@ const TokenData = ({
     setIsModalFilterOpen(false);
     mutate(
       process.env.NEXT_PUBLIC_API_URL +
-        "/api/web/masterdata/token?page=" +
+        "/api/web/humanresource/token?page=" +
         currentPage +
         "&filter=" +
         JSON.stringify(filter)
@@ -136,12 +138,12 @@ const TokenData = ({
   const { data, error, isLoading } = useSWR(
     search === ""
       ? process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/token?page=" +
+          "/api/web/humanresource/token?page=" +
           currentPage +
           "&filter=" +
           JSON.stringify(filter)
       : process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/token?page=" +
+          "/api/web/humanresource/token?page=" +
           1 +
           "&filter=" +
           JSON.stringify(filter) +

@@ -105,7 +105,7 @@ const KaryawanData = ({
       // data edit
       const response = await fetch(
         process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/datakaryawan/" +
+          "/api/web/humanresource/datakaryawan/" +
           id,
         {
           headers: {
@@ -147,7 +147,7 @@ const KaryawanData = ({
       try {
         const response = await fetch(
           process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/masterdata/datakaryawan/" +
+            "/api/web/humanresource/datakaryawan/" +
             id,
           {
             method: "DELETE",
@@ -161,7 +161,7 @@ const KaryawanData = ({
         if (response.ok) {
           mutate(
             process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/masterdata/datakaryawan?page=" +
+              "/api/web/humanresource/datakaryawan?page=" +
               currentPage +
               "&filter=" +
               JSON.stringify(filter)
@@ -180,7 +180,7 @@ const KaryawanData = ({
     setIsModalFilterOpen(false);
     mutate(
       process.env.NEXT_PUBLIC_API_URL +
-        "/api/web/masterdata/datakaryawan?page=" +
+        "/api/web/humanresource/datakaryawan?page=" +
         currentPage +
         "&filter=" +
         JSON.stringify(filter)
@@ -253,12 +253,12 @@ const KaryawanData = ({
   const { data, error, isLoading } = useSWR(
     search === ""
       ? process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/datakaryawan?page=" +
+          "/api/web/humanresource/datakaryawan?page=" +
           currentPage +
           "&filter=" +
           JSON.stringify(filter)
       : process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/datakaryawan?page=" +
+          "/api/web/humanresource/datakaryawan?page=" +
           1 +
           "&filter=" +
           JSON.stringify(filter) +
