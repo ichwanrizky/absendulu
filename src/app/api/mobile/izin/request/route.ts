@@ -63,14 +63,14 @@ export async function GET(req: Request) {
     const existSession = await prisma.request_session_izin.findFirst({
       where: {
         pegawai_id: session[1].pegawaiId,
-        OR: [
+        AND: [
           {
             expired_at: {
               gte: formattedDate,
             },
           },
           {
-            expired: true,
+            expired: false,
           },
         ],
       },
