@@ -56,8 +56,29 @@ export async function GET(req: Request) {
       );
     }
 
+    const searchParams = new URL(req.url).searchParams;
+
+    // filter
+    const filter = searchParams.get("filter");
+    const parseFilter = filter ? JSON.parse(filter) : {};
+
+    if (!filter) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
     // format date
-    const currentDate = new Date("2024-01-02");
+    const currentDate = new Date(parseFilter.tanngalAbsen);
     currentDate.setHours(0, 0, 0, 0);
     currentDate.setHours(currentDate.getHours() + 7);
 
@@ -67,6 +88,7 @@ export async function GET(req: Request) {
         nama: true,
         absen: {
           select: {
+            id: true,
             tanggal: true,
             absen_masuk: true,
             absen_pulang: true,
@@ -80,6 +102,10 @@ export async function GET(req: Request) {
       },
       where: {
         is_active: true,
+        sub_department_id: {
+          not: 1,
+        },
+        department_id: Number(parseFilter.department),
       },
       orderBy: {
         nama: "asc",
@@ -102,7 +128,8 @@ export async function GET(req: Request) {
     }
 
     const newData = data.map((item) => ({
-      id: item.id,
+      id: item.absen.length === 0 ? "" : item.absen[0].id,
+      pegawaiId: item.id,
       nama: item.nama?.toUpperCase(),
       tanggal: new Date(currentDate as Date).toLocaleString(
         "id-ID",

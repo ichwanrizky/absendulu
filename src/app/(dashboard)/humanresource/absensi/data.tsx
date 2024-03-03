@@ -1,16 +1,19 @@
 "use client";
 import { useState } from "react";
 import useSWR, { mutate } from "swr";
-import ModalCreate from "./modalCreate";
-import ModalEdit from "./modalEdit";
 import ModalFilter from "./modalFilter";
 
-type SubDepartment = {
-  id: number;
-  nama_sub_department: string;
-  department_id: number;
-  department: Department;
+type Absensi = {
+  id: string | number;
+  pegawaiId: number;
+  nama: string;
+  tanggal: string;
+  absenMasuk: string;
+  absenPulang: string;
+  late: number;
+  early: number;
 };
+
 type Department = {
   id: number;
   nama_department: string;
@@ -31,106 +34,36 @@ const AttendanceData = ({
   accessToken: string;
   departments: Department[];
 }) => {
-  // loading state
-  const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
-  const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0);
+  currentDate.setHours(currentDate.getHours() + 7);
 
   // modal state
-  const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
   const [isModalFilterOpen, setIsModalFilterOpen] = useState(false);
-  const [isModalEditOpen, setIsModalEditOpen] = useState(false);
-
-  // data state
-  const [dataEdit, setDataEdit] = useState({} as SubDepartment);
 
   // filter
   const [filter, setFilter] = useState<any>({
     filter: false,
     department: departments[0].id.toString(),
+    tanngalAbsen: currentDate,
   });
 
-  const handleCreate = async () => {
-    setIsModalCreateOpen(true);
-  };
-
-  const handleEdit = async (id: number) => {
-    setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
-    try {
-      // get edit data
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/subdepartment/" +
-          id,
-        {
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-      const res = await response.json();
-
-      if (!response.ok) {
-        alert(res.message);
-      } else {
-        setDataEdit(res.data);
-        setIsModalEditOpen(true);
-      }
-    } catch (error) {
-      alert("something went wrong");
-    }
-    setIsLoadingEdit((prev) => ({ ...prev, [id]: false }));
-  };
-
-  const handleDelete = async (id: number) => {
-    if (confirm("Delete this data?")) {
-      setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
-      try {
-        const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/masterdata/subdepartment/" +
-            id,
-          {
-            method: "DELETE",
-            headers: {
-              authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-
-        const res = await response.json();
-        alert(res.message);
-        if (response.ok) {
-          mutate(
-            process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/masterdata/subdepartment?filter=" +
-              JSON.stringify(filter)
-          );
-        }
-      } catch (error) {
-        alert("something went wrong");
-      }
-      setIsLoadingDelete((prev) => ({ ...prev, [id]: false }));
-    }
-  };
-
   const closeModal = () => {
-    setIsModalCreateOpen(false);
-    setIsModalEditOpen(false);
     setIsModalFilterOpen(false);
-    mutate(
-      process.env.NEXT_PUBLIC_API_URL +
-        "/api/web/masterdata/subdepartment?filter=" +
-        JSON.stringify(filter)
-    );
+    mutate(process.env.NEXT_PUBLIC_API_URL + "/api/web/humanresource/absensi");
   };
 
   const handleFilter = async () => {
     setIsModalFilterOpen(true);
   };
 
-  const handleFilterData = (department: any) => {
+  const handleFilterData = (department: any, tanggalAbsen: Date) => {
     setIsModalFilterOpen(false);
-    setFilter({ filter: true, department: department });
+    setFilter({
+      filter: true,
+      department: department,
+      tanngalAbsen: tanggalAbsen,
+    });
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -146,7 +79,7 @@ const AttendanceData = ({
 
   const { data, error, isLoading } = useSWR(
     process.env.NEXT_PUBLIC_API_URL +
-      "/api/web/masterdata/subdepartment?filter=" +
+      "/api/web/humanresource/absensi?filter=" +
       JSON.stringify(filter),
     fetcher
   );
@@ -174,27 +107,16 @@ const AttendanceData = ({
     );
   }
 
-  const subDepartments = data?.data;
-  const actions = data?.actions;
+  const attendance = data?.data;
 
   return (
     <>
       <div className="card-body">
         <div className="row">
           <div className="col-sm-12">
-            {actions?.includes("insert") && (
-              <button
-                type="button"
-                className="btn btn-primary btn-sm fw-bold"
-                onClick={() => handleCreate()}
-              >
-                Add Data
-              </button>
-            )}
-
             <button
               type="button"
-              className="btn btn-dark btn-sm fw-bold ms-2"
+              className="btn btn-dark btn-sm fw-bold "
               onClick={() => handleFilter()}
             >
               Filter Data
@@ -207,6 +129,7 @@ const AttendanceData = ({
                   setFilter({
                     filter: false,
                     department: departments[0].id.toString(),
+                    tanngalAbsen: currentDate,
                   })
                 }
               >
@@ -223,71 +146,40 @@ const AttendanceData = ({
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
                   No
                 </th>
-                <th className="fw-semibold fs-6">Sub Department</th>
-                <th className="fw-semibold fs-6" style={{ width: "30%" }}>
-                  Department
+                <th className="fw-semibold fs-6">Nama</th>
+                <th className="fw-semibold fs-6" style={{ width: "20%" }}>
+                  Tanggal
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  Action
+                  Absen Masuk
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "10%" }}>
+                  Absen Pulang
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "1%" }}>
+                  Terlambat
                 </th>
               </tr>
             </thead>
             <tbody>
-              {subDepartments?.length === 0 ? (
+              {attendance?.length === 0 ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
               ) : (
-                subDepartments?.map((item: SubDepartment, index: number) => (
-                  <tr key={index}>
+                attendance?.map((item: Absensi, index: number) => (
+                  <tr
+                    key={index}
+                    style={item.id ? {} : { backgroundColor: "yellow" }}
+                  >
                     <td align="center">{index + 1}</td>
-                    <td align="left">
-                      {item.nama_sub_department.toUpperCase()}
-                    </td>
-                    <td align="left">
-                      {item.department.nama_department.toUpperCase()}
-                    </td>
-                    <td>
-                      <div className="d-flex gap-2">
-                        {actions?.includes("update") &&
-                          (isLoadingEdit[item.id] ? (
-                            <button className="btn btn-success btn-sm" disabled>
-                              <span
-                                className="spinner-border spinner-border-sm"
-                                role="status"
-                                aria-hidden="true"
-                              />
-                            </button>
-                          ) : (
-                            <button
-                              className="btn btn-success btn-sm"
-                              onClick={() => handleEdit(item.id)}
-                            >
-                              Edit
-                            </button>
-                          ))}
-
-                        {actions?.includes("delete") &&
-                          (isLoadingDelete[item.id] ? (
-                            <button className="btn btn-danger btn-sm" disabled>
-                              <span
-                                className="spinner-border spinner-border-sm"
-                                role="status"
-                                aria-hidden="true"
-                              />
-                            </button>
-                          ) : (
-                            <button
-                              className="btn btn-danger btn-sm"
-                              onClick={() => handleDelete(item.id)}
-                            >
-                              Delete
-                            </button>
-                          ))}
-                      </div>
-                    </td>
+                    <td align="left">{item.nama}</td>
+                    <td align="center">{item.tanggal}</td>
+                    <td align="center">{item.absenMasuk}</td>
+                    <td align="center">{item.absenPulang}</td>
+                    <td align="center">{item.late}</td>
                   </tr>
                 ))
               )}
@@ -295,27 +187,6 @@ const AttendanceData = ({
           </table>
         </div>
       </div>
-
-      {/* modal create */}
-      {isModalCreateOpen && (
-        <ModalCreate
-          isModalOpen={isModalCreateOpen}
-          onClose={closeModal}
-          accessToken={accessToken}
-          dataDepartment={departments}
-        />
-      )}
-
-      {/* modal edit */}
-      {isModalEditOpen && (
-        <ModalEdit
-          isModalOpen={isModalEditOpen}
-          onClose={closeModal}
-          accessToken={accessToken}
-          dataDepartment={departments}
-          data={dataEdit}
-        />
-      )}
 
       {/* modal filter */}
       {isModalFilterOpen && (

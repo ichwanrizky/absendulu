@@ -1,6 +1,10 @@
 "use client";
 import { useState } from "react";
 
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import styles from "./styles.module.css";
+
 type Props = {
   isModalOpen: any;
   onClose: any;
@@ -24,10 +28,13 @@ const ModalFilter = (props: Props) => {
   const [department, setDepartment] = useState(
     filterData === "" ? "" : filterData.department
   );
+  const [tanggalAbsen, setTanggalAbsen] = useState<Date>(
+    filterData.tanngalAbsen
+  );
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    onFilter(department);
+    onFilter(department, tanggalAbsen);
   };
 
   return (
@@ -71,6 +78,25 @@ const ModalFilter = (props: Props) => {
                         )
                       )}
                     </select>
+                  </div>
+
+                  <div className="form-group mb-3">
+                    <label className="mb-1 fw-semibold small">
+                      Tanggal Absensi
+                    </label>
+                    <br />
+                    <DatePicker
+                      wrapperClassName={styles.datePicker}
+                      className="form-select"
+                      selected={tanggalAbsen}
+                      onChange={(e: Date) => setTanggalAbsen(e)}
+                      dateFormat={"yyyy-MM-dd"}
+                      showMonthDropdown
+                      showYearDropdown
+                      scrollableYearDropdown
+                      dropdownMode="select"
+                      required
+                    />
                   </div>
                 </div>
                 <div className="modal-footer">
