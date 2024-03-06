@@ -45,6 +45,7 @@ const LoginPage = ({
           message: "login success",
           color: "success",
         });
+
         window.location.href = callbackUrl;
       }
     } catch (error) {
