@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Datepicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import styles from "./styles.module.css";
 
 type SessionIzin = {
   id: number;
@@ -31,20 +34,101 @@ type SubDepartment = {
 };
 
 const PengajuanIzinPegawaiData = ({ session }: { session: SessionIzin }) => {
-  console.log(session);
-
-  const [pegawai, setPegawai] = useState(session.pegawai?.nama?.toUpperCase());
-  const [idPegawai, setIdPegawai] = useState(session.pegawai_id);
+  const [pegawai, setPegawai] = useState(session?.pegawai?.nama?.toUpperCase());
   const [department, setDepartment] = useState(
-    session.pegawai?.department?.nama_department.toUpperCase()
+    session?.pegawai?.department?.nama_department.toUpperCase()
   );
+  const [jenisIzin, setJenisIzin] = useState("");
+  const [tanggalIzin, setTanggalIzin] = useState<Date | null>(null);
+  const [jumlahHari, setJumlahHari] = useState("");
+  const [jumlahJam, setJumlahJam] = useState("");
+  const [keterangan, setKeterangan] = useState("");
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+    if (confirm("Apakan anda yakin ingin mengajukan izin ini?")) {
+      setIsLoading(true);
+      try {
+        const body = new FormData();
+        body.append("jenis_izin", jenisIzin);
+        body.append("tanggal", tanggalIzin?.toISOString() || "");
+        body.append("jumlah_hari", jumlahHari);
+        body.append("jumlah_jam", jumlahJam);
+        body.append("keterangan", keterangan);
+
+        const response = await fetch(
+          `/api/web/pengajuan-izin/${session.uuid}`,
+          {
+            method: "POST",
+            body: body,
+          }
+        );
+        const res = await response.json();
+        if (!response.ok) {
+          alert(res.message);
+        } else {
+          alert(res.message);
+          setSuccess(true);
+        }
+      } catch (error) {
+        alert("something went wrong");
+      }
+      setIsLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="col-lg-5">
+        <div className="card shadow-lg border-0 rounded-lg mt-5">
+          <div
+            className={`alert alert-success alert-solid mx-4 mt-4`}
+            role="alert"
+          >
+            <strong>Success</strong>
+            <p className="mb-0">
+              Pengajuan berhasil dilakukan silahkan lihat status di dalam
+              aplikasi .
+            </p>
+          </div>
+          <div className="card-header justify-content-center text-center">
+            <h3 className="fw-semibold my-4">FORM PENGAJUAN IZIN</h3>
+          </div>
+          <div className="card-body"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (session === null) {
+    return (
+      <div className="col-lg-5">
+        <div className="card shadow-lg border-0 rounded-lg mt-5">
+          <div
+            className={`alert alert-danger alert-solid mx-4 mt-4`}
+            role="alert"
+          >
+            <strong>Unauthorized</strong>
+            <p className="mb-0">You are not authorized to access this page.</p>
+          </div>
+          <div className="card-header justify-content-center text-center">
+            <h3 className="fw-semibold my-4">FORM PENGAJUAN IZIN</h3>
+          </div>
+          <div className="card-body"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="col-lg-5">
-      <form>
+      <form onSubmit={handleSubmit}>
         <div className="card shadow-lg border-0 rounded-lg mt-5">
           <div className="card-header justify-content-center text-center">
-            <h3 className="fw-semibold my-4">FORM PENGAJUAN IZINN</h3>
+            <h3 className="fw-semibold my-4">FORM PENGAJUAN IZIN</h3>
           </div>
           <div className="card-body">
             <div className="mb-3">
@@ -69,22 +153,146 @@ const PengajuanIzinPegawaiData = ({ session }: { session: SessionIzin }) => {
                 readOnly
               />
             </div>
+            <hr />
             <div className="mb-3">
               <label className="mb-1 fw-semibold small" htmlFor="inputUsername">
-                JENIS
+                JENIS PENGAJUAN
               </label>
-              <input
-                className="form-control"
-                type="text"
-                value={pegawai}
-                readOnly
+              <select
+                className="form-select"
+                onChange={(e) => setJenisIzin(e.target.value)}
+                required
+              >
+                <option value="">--PILIH--</option>
+                {session?.pegawai?.sub_department?.akses_izin
+                  .split(",")
+                  .map((item: any, index: any) => (
+                    <option value={item} key={index}>
+                      {jenisPengajuan(item)}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div className="mb-3">
+              <label className="mb-1 fw-semibold small" htmlFor="inputUsername">
+                TANGGAL IZIN
+              </label>
+              <Datepicker
+                wrapperClassName={styles.datePicker}
+                className="form-select"
+                selected={tanggalIzin}
+                onChange={(e: Date) => setTanggalIzin(e)}
+                dateFormat={"yyyy-MM-dd"}
+                showMonthDropdown
+                showYearDropdown
+                scrollableYearDropdown
+                dropdownMode="select"
+                required
               />
             </div>
+
+            {(jenisIzin == "C" || jenisIzin == "I" || jenisIzin == "S") && (
+              <div className="mb-3">
+                <label
+                  className="mb-1 fw-semibold small"
+                  htmlFor="inputUsername"
+                >
+                  JUMLAH HARI
+                </label>
+                <input
+                  type="number"
+                  step={1}
+                  className="form-control"
+                  required
+                  onChange={(e) => setJumlahHari(e.target.value)}
+                />
+              </div>
+            )}
+
+            {(jenisIzin == "G1" || jenisIzin == "G2" || jenisIzin == "G3") && (
+              <div className="mb-3">
+                <label
+                  className="mb-1 fw-semibold small"
+                  htmlFor="inputUsername"
+                >
+                  JUMLAH JAM IZIN
+                </label>
+                <select
+                  className="form-select"
+                  required
+                  onChange={(e) => setJumlahJam(e.target.value)}
+                >
+                  <option key={0} value="">
+                    --PILIH--
+                  </option>
+                  <option key={1} value="0.5">
+                    Setengah Jam
+                  </option>
+                  <option key={2} value="1">
+                    1 Jam
+                  </option>
+                  <option key={3} value="1.5">
+                    1.5 Jam
+                  </option>
+                  <option key={4} value="2">
+                    2 Jam
+                  </option>
+                  <option key={5} value="2.5">
+                    2.5 Jam
+                  </option>
+                  <option key={6} value="3">
+                    3 Jam
+                  </option>
+                  <option key={7} value="3.5">
+                    3.5 Jam
+                  </option>
+                </select>
+              </div>
+            )}
+
+            <div className="mb-3">
+              <label className="mb-1 fw-semibold small" htmlFor="inputUsername">
+                KETERANGAN
+              </label>
+              <textarea
+                className="form-control"
+                rows={3}
+                required
+                onChange={(e) => setKeterangan(e.target.value)}
+              ></textarea>
+            </div>
+
+            {jenisIzin == "S" && (
+              <div className="mb-3">
+                <label
+                  className="mb-1 fw-semibold small"
+                  htmlFor="inputUsername"
+                >
+                  MC/SURAT KETERANGAN SAKIT
+                </label>
+                <input type="file" className="form-control" required />
+              </div>
+            )}
           </div>
           <div className="card-footer">
-            <button type="submit" className="btn btn-primary px-5">
-              Login
-            </button>
+            {isLoading ? (
+              <button
+                type="submit"
+                className="btn btn-primary float-end"
+                disabled
+              >
+                <span
+                  className="spinner-border spinner-border-sm me-2"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                Loading...
+              </button>
+            ) : (
+              <button type="submit" className="btn btn-primary float-end">
+                Submit Data
+              </button>
+            )}
           </div>
         </div>
       </form>
@@ -93,3 +301,34 @@ const PengajuanIzinPegawaiData = ({ session }: { session: SessionIzin }) => {
 };
 
 export default PengajuanIzinPegawaiData;
+
+const jenisPengajuan = (jenis: string) => {
+  switch (jenis) {
+    case "C":
+      return "Cuti";
+
+    case "CS":
+      return "Cuti Setengah Hari";
+
+    case "I":
+      return "Izin";
+
+    case "IS":
+      return "Izin Setengah Hari";
+
+    case "S":
+      return "Sakit";
+
+    case "G1":
+      return "Gatepass";
+
+    case "G2":
+      return "Datang Terlambat";
+
+    case "G3":
+      return "Pulang Awal";
+
+    case "P/M":
+      return "Lupa Absen";
+  }
+};

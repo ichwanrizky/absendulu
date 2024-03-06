@@ -10,9 +10,9 @@ const checkSession = async (uuid: string) => {
       {
         method: "POST",
         body,
+        cache: "no-store",
       }
     );
-
     if (!response.ok) {
       return null;
     }
