@@ -146,44 +146,20 @@ export async function POST(req: Request) {
     expiredDate.setHours(expiredDate.getHours() + 1);
 
     // insert session
-    const session = await prisma.$transaction(async (prisma) => {
-      const existSession = await prisma.session.findFirst({
-        where: {
-          user_id: getData.id,
-          expiredAt: {
-            gte: formattedDate,
-          },
-          expired: false,
-        },
-      });
-
-      if (!existSession) {
-        return await prisma.session.create({
-          data: {
-            user_id: getData.id,
-            token: token,
-            createdAt: formattedDate,
-            expiredAt: expiredDate,
-          },
-        });
-      } else {
-        return await prisma.session.update({
-          data: {
-            token: token,
-            expiredAt: expiredDate,
-          },
-          where: {
-            id: existSession.id,
-          },
-        });
-      }
+    const session = await prisma.session.create({
+      data: {
+        user_id: getData.id,
+        token: token,
+        createdAt: formattedDate,
+        expiredAt: expiredDate,
+      },
     });
 
     if (!session) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Something went wrong",
+          message: "Login failed (session failed)",
         }),
         {
           status: 500,
