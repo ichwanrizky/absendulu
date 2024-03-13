@@ -102,6 +102,7 @@ model department {
   pegawai           pegawai[]
   shift             shift[]
   sub_department    sub_department[]
+  tanggal_merah     tanggal_merah[]
 }
 
 model sub_department {
@@ -233,4 +234,20 @@ model request_session_izin {
   expired    Boolean   @default(false)
 
   @@unique([uuid])
+}
+
+model tanggal_merah {
+  id                 Int                  @id @default(autoincrement())
+  bulan              Int
+  tahun              Int
+  department_id      Int
+  department         department           @relation(fields: [department_id], references: [id])
+  tanggal_merah_list tanggal_merah_list[]
+}
+
+model tanggal_merah_list {
+  id               Int           @id @default(autoincrement())
+  tanggal          DateTime?     @db.Date
+  tanggal_merah_id Int
+  tanggal_merah    tanggal_merah @relation(fields: [tanggal_merah_id], references: [id])
 }
