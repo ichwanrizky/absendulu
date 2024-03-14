@@ -3,12 +3,7 @@ import { useState } from "react";
 import useSWR, { mutate } from "swr";
 import ModalCreate from "./modalCreate";
 import ModalEdit from "./modalEdit";
-import { roles } from "@prisma/client";
-
-type Roles = {
-  id: number;
-  role_name: string;
-};
+import ModalFilter from "./modalFilter";
 
 type Department = {
   id: number;
@@ -19,55 +14,61 @@ type Department = {
   radius: string;
 };
 
+type TanggalMerah = {
+  id: number;
+  bulan: number;
+  tahun: number;
+  department_id: number;
+  tanggal_merah_list: TanggalMerahList[];
+  department: Department;
+};
+
+type TanggalMerahList = {
+  tanggal: Date;
+  tanggal_nomor: string;
+};
+
 interface isLoadingProps {
   [key: number]: boolean;
 }
 
-const TanggalMerahData = ({ accessToken }: { accessToken: string }) => {
+const TanggalMerahData = ({
+  accessToken,
+  departments,
+}: {
+  accessToken: string;
+  departments: Department[];
+}) => {
   // loading state
-  const [isLoadingCreate, setIsLoadingCreate] = useState(false);
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
 
   // modal state
   const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState(false);
+  const [isModalFilterOpen, setIsModalFilterOpen] = useState(false);
 
   // data state
-  const [dataEdit, setDataEdit] = useState({} as roles);
-  const [dataDepartment, setDataDepartment] = useState({} as Department[]);
+  const [dataEdit, setDataEdit] = useState({} as TanggalMerah);
+
+  // filter
+  const [filter, setFilter] = useState<any>({
+    filter: false,
+    department: departments[0].id.toString(),
+    tahun: new Date().getFullYear(),
+  });
 
   const handleCreate = async () => {
-    setIsLoadingCreate(true);
-    try {
-      // get department
-      const responseDepartment = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/getalldepartment",
-        {
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-      const resDepartment = await responseDepartment.json();
-
-      if (!responseDepartment.ok) {
-        alert(resDepartment.message);
-      } else {
-        setDataDepartment(resDepartment.data);
-        setIsModalCreateOpen(true);
-      }
-    } catch (error) {
-      alert("something went wrong");
-    }
-    setIsLoadingCreate(false);
+    setIsModalCreateOpen(true);
   };
 
   const handleEdit = async (id: number) => {
     setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
     try {
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/roles/" + id,
+        process.env.NEXT_PUBLIC_API_URL +
+          "/api/web/configuration/tanggalmerah/" +
+          id,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -94,7 +95,7 @@ const TanggalMerahData = ({ accessToken }: { accessToken: string }) => {
       try {
         const response = await fetch(
           process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/configuration/roles/" +
+            "/api/web/configuration/tanggalmerah/" +
             id,
           {
             method: "DELETE",
@@ -108,7 +109,9 @@ const TanggalMerahData = ({ accessToken }: { accessToken: string }) => {
         alert(res.message);
         if (response.ok) {
           mutate(
-            process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/roles"
+            process.env.NEXT_PUBLIC_API_URL +
+              "/api/web/configuration/tanggalmerah?filter=" +
+              JSON.stringify(filter)
           );
         }
       } catch (error) {
@@ -121,7 +124,21 @@ const TanggalMerahData = ({ accessToken }: { accessToken: string }) => {
   const closeModal = () => {
     setIsModalCreateOpen(false);
     setIsModalEditOpen(false);
-    mutate(process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/roles");
+    setIsModalFilterOpen(false);
+    mutate(
+      process.env.NEXT_PUBLIC_API_URL +
+        "/api/web/configuration/tanggalmerah?filter=" +
+        JSON.stringify(filter)
+    );
+  };
+
+  const handleFilter = async () => {
+    setIsModalFilterOpen(true);
+  };
+
+  const handleFilterData = (department: any, tahun: any) => {
+    setIsModalFilterOpen(false);
+    setFilter({ filter: true, department: department, tahun: tahun });
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -136,13 +153,11 @@ const TanggalMerahData = ({ accessToken }: { accessToken: string }) => {
   };
 
   const { data, error, isLoading } = useSWR(
-    process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/roles",
+    process.env.NEXT_PUBLIC_API_URL +
+      "/api/web/configuration/tanggalmerah?filter=" +
+      JSON.stringify(filter),
     fetcher
   );
-
-  if (isLoading) {
-    return <></>;
-  }
 
   if (isLoading) {
     return (
@@ -159,7 +174,15 @@ const TanggalMerahData = ({ accessToken }: { accessToken: string }) => {
     );
   }
 
-  const roles = data?.data;
+  if (error) {
+    return (
+      <div className="card-body text-center">
+        something went wrong, please refresh the page
+      </div>
+    );
+  }
+
+  const holidays = data?.data;
   const actions = data?.actions;
 
   return (
@@ -167,29 +190,38 @@ const TanggalMerahData = ({ accessToken }: { accessToken: string }) => {
       <div className="card-body">
         <div className="row">
           <div className="col-sm-12">
-            {actions?.includes("insert") &&
-              (isLoadingCreate ? (
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm fw-bold"
-                  disabled
-                >
-                  <span
-                    className="spinner-border spinner-border-sm me-2"
-                    role="status"
-                    aria-hidden="true"
-                  />{" "}
-                  Loading...
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm fw-bold"
-                  onClick={() => handleCreate()}
-                >
-                  Add Data
-                </button>
-              ))}
+            {actions?.includes("insert") && (
+              <button
+                type="button"
+                className="btn btn-primary btn-sm fw-bold"
+                onClick={() => handleCreate()}
+              >
+                Add Data
+              </button>
+            )}
+
+            <button
+              type="button"
+              className="btn btn-dark btn-sm fw-bold ms-2"
+              onClick={() => handleFilter()}
+            >
+              Filter Data
+            </button>
+            {filter.filter && (
+              <button
+                type="button"
+                className="btn btn-outline-dark btn-sm fw-bold ms-1"
+                onClick={() =>
+                  setFilter({
+                    filter: false,
+                    department: departments[0].id.toString(),
+                    tahun: new Date().getFullYear(),
+                  })
+                }
+              >
+                Reset
+              </button>
+            )}
           </div>
         </div>
 
@@ -200,24 +232,55 @@ const TanggalMerahData = ({ accessToken }: { accessToken: string }) => {
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
                   No
                 </th>
-                <th className="fw-semibold fs-6">Role Name</th>
+                <th className="fw-semibold fs-6" style={{ width: "20%" }}>
+                  Department
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "10%" }}>
+                  Tahun
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
+                  Bulan
+                </th>
+                <th className="fw-semibold fs-6">Tanggal Merah</th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
                   Action
                 </th>
               </tr>
             </thead>
             <tbody>
-              {roles?.length === 0 ? (
+              {holidays?.length === 0 ? (
                 <tr>
-                  <td colSpan={3}>
+                  <td colSpan={6}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
               ) : (
-                roles?.map((item: Roles, index: number) => (
+                holidays?.map((item: TanggalMerah, index: number) => (
                   <tr key={index}>
                     <td align="center">{index + 1}</td>
-                    <td>{item.role_name}</td>
+                    <td align="left">
+                      {item.department?.nama_department?.toUpperCase()}
+                    </td>
+                    <td align="center">{item.tahun}</td>
+                    <td>{monthNames(item.bulan)}</td>
+                    <td
+                      style={{
+                        maxWidth: "100px",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        textAlign: "left",
+                      }}
+                    >
+                      {item.tanggal_merah_list
+                        ?.map((item: TanggalMerahList) =>
+                          new Date(item.tanggal as Date)
+                            .toLocaleString("id-ID", optionsDate)
+                            .replace(/\//g, "-")
+                        )
+                        .join(", ")}
+                    </td>
+
                     <td>
                       <div className="d-flex gap-2">
                         {actions?.includes("update") &&
@@ -271,7 +334,7 @@ const TanggalMerahData = ({ accessToken }: { accessToken: string }) => {
           isModalOpen={isModalCreateOpen}
           onClose={closeModal}
           accessToken={accessToken}
-          dataDepartment={dataDepartment}
+          dataDepartment={departments}
         />
       )}
 
@@ -281,10 +344,47 @@ const TanggalMerahData = ({ accessToken }: { accessToken: string }) => {
           isModalOpen={isModalEditOpen}
           onClose={closeModal}
           accessToken={accessToken}
-          data={dataEdit}
+          dataEdit={dataEdit}
+        />
+      )}
+
+      {/* modal filter */}
+      {isModalFilterOpen && (
+        <ModalFilter
+          isModalOpen={isModalFilterOpen}
+          onClose={closeModal}
+          dataDepartment={departments}
+          onFilter={handleFilterData}
+          filterData={filter}
         />
       )}
     </>
   );
 };
 export default TanggalMerahData;
+
+const optionsDate: any = {
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  timeZone: "UTC",
+};
+
+const monthNames = (month: number) => {
+  const monthNames = [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Augustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ];
+
+  return monthNames[month - 1];
+};

@@ -3,7 +3,10 @@ import { checkSession } from "@/libs/checkSession";
 import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
 
-export async function GET(req: Request) {
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const authorization = req.headers.get("Authorization");
 
@@ -40,15 +43,15 @@ export async function GET(req: Request) {
       );
     }
 
-    const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
-    if (!actions.includes("view")) {
+    const id = params.id;
+    if (!id) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Unauthorized",
+          message: "Data not found",
         }),
         {
-          status: 401,
+          status: 404,
           headers: {
             "Content-Type": "application/json",
           },
@@ -56,27 +59,7 @@ export async function GET(req: Request) {
       );
     }
 
-    const searchParams = new URL(req.url).searchParams;
-    // filter
-    const filter = searchParams.get("filter");
-    const parseFilter = filter ? JSON.parse(filter) : {};
-
-    if (!filter) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Unauthorized",
-        }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
-
-    const data = await prisma.tanggal_merah.findMany({
+    const data = await prisma.tanggal_merah.findFirst({
       include: {
         tanggal_merah_list: {
           select: {
@@ -91,17 +74,8 @@ export async function GET(req: Request) {
         },
       },
       where: {
-        department_id: Number(parseFilter.department),
-        tahun: Number(parseFilter.tahun),
+        id: Number(id),
       },
-      orderBy: [
-        {
-          tahun: "desc",
-        },
-        {
-          bulan: "asc",
-        },
-      ],
     });
 
     if (!data) {
@@ -124,7 +98,6 @@ export async function GET(req: Request) {
         status: true,
         message: "success",
         data: data,
-        actions: actions,
       }),
       {
         status: 200,
@@ -166,7 +139,10 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const authorization = req.headers.get("Authorization");
 
@@ -204,7 +180,7 @@ export async function POST(req: Request) {
     }
 
     const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
-    if (!actions.includes("insert")) {
+    if (!actions.includes("update")) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -219,8 +195,23 @@ export async function POST(req: Request) {
       );
     }
 
+    const id = params.id;
+    if (!id) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Data not found",
+        }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
     const body = await req.formData();
-    const department = body.get("department")!.toString();
     const bulan = body.get("bulan")!.toString();
     const tahun = body.get("tahun")!.toString();
     const tanggal_merah = body.get("tanggal_merah");
@@ -229,12 +220,12 @@ export async function POST(req: Request) {
       ? JSON.parse(tanggal_merah as string)
       : [];
 
-    const create = await prisma.tanggal_merah.create({
+    const update = await prisma.tanggal_merah.update({
       data: {
-        department_id: Number(department),
         tahun: Number(tahun),
         bulan: Number(bulan),
         tanggal_merah_list: {
+          deleteMany: {},
           create: parseTanggalMerah.map((item: any) => ({
             tanggal: new Date(
               `${tahun}-${bulan.padStart(2, "0")}-${item.value
@@ -245,13 +236,16 @@ export async function POST(req: Request) {
           })),
         },
       },
+      where: {
+        id: Number(id),
+      },
     });
 
-    if (!create) {
+    if (!update) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to create tanggal merah",
+          message: "Failed to update tanggal merah",
         }),
         {
           status: 500,
@@ -265,8 +259,154 @@ export async function POST(req: Request) {
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to create tanggal merah",
-        data: create,
+        message: "Success to update tanggal merah",
+        data: update,
+      }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error?.name == "TokenExpiredError") {
+        return new NextResponse(
+          JSON.stringify({
+            status: false,
+            message: "Session Expired",
+          }),
+          {
+            status: 401,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: error.name,
+        }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const authorization = req.headers.get("Authorization");
+
+    const session = await checkSession(authorization);
+    if (!session[0]) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const roleId = session[1].roleId;
+    const roleAccess = await checkRoles(roleId, "/configuration/tanggalmerah");
+    if (!roleAccess) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
+    if (!actions.includes("delete")) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const id = params.id;
+    if (!id) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Data not found",
+        }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const deletes = await prisma.$transaction([
+      prisma.tanggal_merah_list.deleteMany({
+        where: {
+          tanggal_merah_id: Number(id),
+        },
+      }),
+      prisma.tanggal_merah.delete({
+        where: {
+          id: Number(id),
+        },
+      }),
+    ]);
+
+    if (!deletes) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Failed to delete tanggal merah",
+        }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    return new NextResponse(
+      JSON.stringify({
+        status: true,
+        message: "Success to delete tanggal merah",
+        data: deletes,
       }),
       {
         status: 200,

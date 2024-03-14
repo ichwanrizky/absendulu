@@ -14,12 +14,39 @@ type UserSession = {
   accessToken: string;
 };
 
+const getDepartments = async (token: string) => {
+  try {
+    const response = await fetch(
+      process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department",
+      {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+        next: {
+          revalidate: 60,
+        },
+      }
+    );
+
+    const res = await response.json();
+
+    if (response.ok) {
+      return res.data;
+    }
+    return [];
+  } catch (error) {
+    return [];
+  }
+};
+
 const TanggalMerahPage = async () => {
   const session = (await getServerSession(authOptions)) as Session | null;
 
   if (!session) {
     return null;
   }
+
+  const departments = await getDepartments(session.user.accessToken);
 
   return (
     <main>
@@ -41,7 +68,10 @@ const TanggalMerahPage = async () => {
       <div className="container-xl px-4 mt-n10">
         <div className="card mb-4">
           <div className="card-header">Data Tanggal Merah</div>
-          <TanggalMerahData accessToken={session.user.accessToken} />
+          <TanggalMerahData
+            accessToken={session.user.accessToken}
+            departments={departments}
+          />
         </div>
       </div>
     </main>

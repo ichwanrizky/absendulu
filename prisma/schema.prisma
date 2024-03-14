@@ -226,14 +226,12 @@ model izin {
 
 model request_session_izin {
   id         Int       @id @default(autoincrement())
-  uuid       String    @default(uuid())
+  uuid       String    @unique @default(uuid())
   pegawai_id Int
   pegawai    pegawai   @relation(fields: [pegawai_id], references: [id])
   created_at DateTime? @db.DateTime(0)
   expired_at DateTime? @db.DateTime(0)
   expired    Boolean   @default(false)
-
-  @@unique([uuid])
 }
 
 model tanggal_merah {
@@ -243,11 +241,14 @@ model tanggal_merah {
   department_id      Int
   department         department           @relation(fields: [department_id], references: [id])
   tanggal_merah_list tanggal_merah_list[]
+
+  @@unique([department_id, bulan, tahun])
 }
 
 model tanggal_merah_list {
   id               Int           @id @default(autoincrement())
   tanggal          DateTime?     @db.Date
   tanggal_merah_id Int
+  tanggal_nomor    String
   tanggal_merah    tanggal_merah @relation(fields: [tanggal_merah_id], references: [id])
 }
