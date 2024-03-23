@@ -32,8 +32,20 @@ type SubDepartment = {
   nama_sub_department: string;
   akses_izin: string;
 };
+type TanggalMerah = {
+  id: number;
+  tanggal: Date;
+  tanggal_merah_id: number;
+  tanggal_nomor: string;
+};
 
-const PengajuanIzinPegawaiData = ({ session }: { session: SessionIzin }) => {
+const PengajuanIzinPegawaiData = ({
+  session,
+  tanggalMerah,
+}: {
+  session: SessionIzin;
+  tanggalMerah: TanggalMerah[];
+}) => {
   const [pegawai, setPegawai] = useState(session?.pegawai?.nama?.toUpperCase());
   const [department, setDepartment] = useState(
     session?.pegawai?.department?.nama_department.toUpperCase()
@@ -188,6 +200,9 @@ const PengajuanIzinPegawaiData = ({ session }: { session: SessionIzin }) => {
                 scrollableYearDropdown
                 dropdownMode="select"
                 required
+                excludeDates={tanggalMerah?.map(
+                  (item) => new Date(item.tanggal)
+                )}
               />
             </div>
 
