@@ -232,6 +232,7 @@ export async function POST(req: Request) {
     const body = await req.formData();
     const nama_sub_department = body.get("nama_sub_department")!.toString();
     const department = body.get("department")!.toString();
+    const akses_izin = body.get("akses_izin")?.toString();
 
     const departmentAccess = await checkDepartments(roleId);
     const checkDepartmentAccess = departmentAccess.find(
@@ -260,6 +261,7 @@ export async function POST(req: Request) {
             id: Number(department),
           },
         },
+        akses_izin: akses_izin ? akses_izin : null,
       },
     });
 

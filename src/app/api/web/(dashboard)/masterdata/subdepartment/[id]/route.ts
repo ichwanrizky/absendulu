@@ -207,6 +207,7 @@ export async function POST(
     const body = await req.formData();
     const nama_sub_department = body.get("nama_sub_department")!.toString();
     const department = body.get("department")!.toString();
+    const akses_izin = body.get("akses_izin")?.toString();
 
     const departmentAccess = await checkDepartments(roleId);
     const update = await prisma.sub_department.update({
@@ -217,6 +218,7 @@ export async function POST(
             id: Number(department),
           },
         },
+        akses_izin: akses_izin ? akses_izin : null,
       },
       where: {
         id: Number(id),

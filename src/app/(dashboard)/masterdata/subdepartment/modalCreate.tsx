@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Select from "react-select";
 
 type Props = {
   isModalOpen: any;
@@ -24,6 +25,12 @@ const ModalCreate = (props: Props) => {
 
   const [department, setDepartment] = useState("");
   const [namaSubDepartment, setNamaSubDepartment] = useState("");
+  const [aksesIzin, setAksesIzin] = useState([
+    {
+      value: null,
+      label: null,
+    },
+  ]);
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -33,6 +40,10 @@ const ModalCreate = (props: Props) => {
         const body = new FormData();
         body.append("department", department);
         body.append("nama_sub_department", namaSubDepartment);
+        body.append(
+          "akses_izin",
+          aksesIzin.map((item) => item.value).join(",")
+        );
 
         const response = await fetch(
           process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/subdepartment",
@@ -114,6 +125,27 @@ const ModalCreate = (props: Props) => {
                       className="form-control"
                       required
                       onChange={(e) => setNamaSubDepartment(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-group mb-3">
+                    <label className="mb-1 fw-semibold small">Akses Izin</label>
+                    <Select
+                      options={[
+                        { value: "C", label: "Cuti" },
+                        { value: "CS", label: "Cuti Setengah Hari" },
+                        { value: "I", label: "Izin" },
+                        { value: "IS", label: "Izin Setengah Hari" },
+                        { value: "S", label: "Sakit" },
+                        { value: "G1", label: "Gatepass" },
+                        { value: "G2", label: "Datang Terlambat" },
+                        { value: "G3", label: "Pulang Awal" },
+                        { value: "P/M", label: "Lupa Absen" },
+                      ]}
+                      onChange={(e: any) => setAksesIzin(e)}
+                      isMulti
+                      isClearable
+                      closeMenuOnSelect={false}
                     />
                   </div>
                 </div>

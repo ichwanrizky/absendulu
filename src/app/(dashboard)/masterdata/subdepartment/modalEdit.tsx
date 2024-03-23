@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Select from "react-select";
 
 type Props = {
   isModalOpen: any;
@@ -14,6 +15,7 @@ type SubDepartment = {
   nama_sub_department: string;
   department_id: number;
   department: Department;
+  akses_izin: string;
 };
 
 type Department = {
@@ -34,6 +36,11 @@ const ModalEdit = (props: Props) => {
   const [namaSubDepartment, setNamaSubDepartment] = useState(
     data.nama_sub_department
   );
+  const [aksesIzin, setAksesIzin] = useState(
+    data.akses_izin
+      ?.split(",")
+      .map((item) => ({ value: item, label: jenisPengajuan(item) }))
+  );
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -43,6 +50,10 @@ const ModalEdit = (props: Props) => {
         const body = new FormData();
         body.append("department", department);
         body.append("nama_sub_department", namaSubDepartment);
+        body.append(
+          "akses_izin",
+          aksesIzin.map((item) => item.value).join(",")
+        );
 
         const response = await fetch(
           process.env.NEXT_PUBLIC_API_URL +
@@ -130,6 +141,28 @@ const ModalEdit = (props: Props) => {
                       value={namaSubDepartment}
                     />
                   </div>
+
+                  <div className="form-group mb-3">
+                    <label className="mb-1 fw-semibold small">Akses Izin</label>
+                    <Select
+                      options={[
+                        { value: "C", label: "Cuti" },
+                        { value: "CS", label: "Cuti Setengah Hari" },
+                        { value: "I", label: "Izin" },
+                        { value: "IS", label: "Izin Setengah Hari" },
+                        { value: "S", label: "Sakit" },
+                        { value: "G1", label: "Gatepass" },
+                        { value: "G2", label: "Datang Terlambat" },
+                        { value: "G3", label: "Pulang Awal" },
+                        { value: "P/M", label: "Lupa Absen" },
+                      ]}
+                      value={aksesIzin}
+                      onChange={(e: any) => setAksesIzin(e)}
+                      isMulti
+                      isClearable
+                      closeMenuOnSelect={false}
+                    />
+                  </div>
                 </div>
                 <div className="modal-footer">
                   <button
@@ -165,6 +198,37 @@ const ModalEdit = (props: Props) => {
       </>
     )
   );
+};
+
+const jenisPengajuan = (jenis: string) => {
+  switch (jenis) {
+    case "C":
+      return "Cuti";
+
+    case "CS":
+      return "Cuti Setengah Hari";
+
+    case "I":
+      return "Izin";
+
+    case "IS":
+      return "Izin Setengah Hari";
+
+    case "S":
+      return "Sakit";
+
+    case "G1":
+      return "Gatepass";
+
+    case "G2":
+      return "Datang Terlambat";
+
+    case "G3":
+      return "Pulang Awal";
+
+    case "P/M":
+      return "Lupa Absen";
+  }
 };
 
 export default ModalEdit;

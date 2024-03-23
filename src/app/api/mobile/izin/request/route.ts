@@ -81,7 +81,10 @@ export async function GET(req: Request) {
         JSON.stringify({
           status: true,
           message: "Request Success",
-          data: existSession,
+          data: {
+            ...existSession,
+            url: "http://localhost:3000/pengajuan-izin/" + existSession.uuid,
+          },
         }),
         {
           status: 200,
@@ -119,7 +122,10 @@ export async function GET(req: Request) {
       JSON.stringify({
         status: true,
         message: "Request Success",
-        data: createSession,
+        data: {
+          ...createSession,
+          url: "http://localhost:3000/pengajuan-izin/" + createSession.uuid,
+        },
       }),
       {
         status: 200,

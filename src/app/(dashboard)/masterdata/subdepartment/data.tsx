@@ -10,6 +10,7 @@ type SubDepartment = {
   nama_sub_department: string;
   department_id: number;
   department: Department;
+  akses_izin: string;
 };
 type Department = {
   id: number;
