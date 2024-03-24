@@ -79,11 +79,26 @@ export async function POST(req: Request) {
       );
     }
 
+    const currentYear = new Date().getFullYear();
+    const nextYear = currentYear + 1;
+
     const data = await prisma.tanggal_merah_list.findMany({
       where: {
         tanggal_merah: {
           department_id: Number(department),
         },
+        OR: [
+          {
+            tanggal_merah: {
+              tahun: currentYear,
+            },
+          },
+          {
+            tanggal_merah: {
+              tahun: nextYear,
+            },
+          },
+        ],
       },
     });
 

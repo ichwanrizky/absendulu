@@ -24,6 +24,13 @@ export async function POST(
     }
 
     const checkPegawai = await prisma.request_session_izin.findFirst({
+      include: {
+        pegawai: {
+          select: {
+            department_id: true,
+          },
+        },
+      },
       where: {
         uuid: uuid,
       },
@@ -62,7 +69,14 @@ export async function POST(
       jumlah_jam = "";
     }
 
-    if (jenis_izin == "G1" || jenis_izin == "G2" || jenis_izin == "G3") {
+    if (
+      jenis_izin == "G1" ||
+      jenis_izin == "G2" ||
+      jenis_izin == "G3" ||
+      jenis_izin == "CS" ||
+      jenis_izin == "IS" ||
+      jenis_izin == "P/M"
+    ) {
       jumlah_hari = "1";
     }
 
@@ -79,6 +93,7 @@ export async function POST(
         bulan: formattedDate.getMonth(),
         tahun: formattedDate.getFullYear(),
         pegawai_id: checkPegawai.pegawai_id,
+        department_id: checkPegawai.pegawai.department_id,
       },
     });
 

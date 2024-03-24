@@ -103,6 +103,8 @@ model department {
   shift             shift[]
   sub_department    sub_department[]
   tanggal_merah     tanggal_merah[]
+  pengajuan_izin    pengajuan_izin[]
+  izin              izin[]
 }
 
 model sub_department {
@@ -142,12 +144,12 @@ model pegawai {
   no_rek               String?
   bpjs_tk              String?
   bpjs_kes             String?
-  department_id        Int?
-  sub_department_id    Int?
+  department_id        Int
+  sub_department_id    Int
   is_active            Boolean                @default(true)
   is_overtime          Boolean                @default(false)
-  department           department?            @relation(fields: [department_id], references: [id])
-  sub_department       sub_department?        @relation(fields: [sub_department_id], references: [id])
+  department           department             @relation(fields: [department_id], references: [id])
+  sub_department       sub_department         @relation(fields: [sub_department_id], references: [id])
   shift_id             Int?
   shift                shift?                 @relation(fields: [shift_id], references: [id])
   absen                absen[]
@@ -191,28 +193,30 @@ model absen {
 }
 
 model pengajuan_izin {
-  id           Int       @id @default(autoincrement())
-  jenis_izin   String
-  tanggal      DateTime? @db.Date
-  pegawai_id   Int
-  pegawai      pegawai   @relation(fields: [pegawai_id], references: [id])
-  status       Int       @default(0)
-  bulan        Int
-  tahun        Int
-  keterangan   String?
-  jumlah_hari  String?
-  jumlah_jam   String?
-  mc           String?
-  approve_by   Int?
-  user         user?     @relation(fields: [approve_by], references: [id])
-  approve_date DateTime? @db.DateTime(0)
-  izin         izin[]
+  id            Int        @id @default(autoincrement())
+  jenis_izin    String
+  tanggal       DateTime?  @db.Date
+  pegawai_id    Int
+  pegawai       pegawai    @relation(fields: [pegawai_id], references: [id])
+  status        Int        @default(0)
+  bulan         Int
+  tahun         Int
+  keterangan    String?
+  jumlah_hari   String?
+  jumlah_jam    String?
+  mc            String?
+  approve_by    Int?
+  user          user?      @relation(fields: [approve_by], references: [id])
+  approve_date  DateTime?  @db.DateTime(0)
+  izin          izin[]
+  department_id Int
+  department    department @relation(fields: [department_id], references: [id])
 }
 
 model izin {
   id                Int            @id @default(autoincrement())
   jenis_izin        String
-  tanggal           DateTime?      @db.Date
+  tanggal           DateTime       @db.Date
   pegawai_id        Int
   pegawai           pegawai        @relation(fields: [pegawai_id], references: [id])
   bulan             Int
@@ -222,6 +226,8 @@ model izin {
   jumlah_jam        String?
   pengajuan_izin_id Int
   pengajuan_izin    pengajuan_izin @relation(fields: [pengajuan_izin_id], references: [id])
+  department_id     Int
+  department        department     @relation(fields: [department_id], references: [id])
 }
 
 model request_session_izin {

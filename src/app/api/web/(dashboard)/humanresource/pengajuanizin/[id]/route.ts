@@ -117,6 +117,86 @@ export async function POST(
       );
     }
 
+    if (status === "1") {
+      const currentYear = new Date().getFullYear();
+      const nextYear = currentYear + 1;
+
+      const tanggalMerah = await prisma.tanggal_merah_list.findMany({
+        where: {
+          tanggal_merah: {
+            department_id: Number(update.department_id),
+          },
+          OR: [
+            {
+              tanggal_merah: {
+                tahun: currentYear,
+              },
+            },
+            {
+              tanggal_merah: {
+                tahun: nextYear,
+              },
+            },
+          ],
+        },
+      });
+
+      const tanggalMerahSet = new Set(
+        tanggalMerah.map(
+          (item: any) => item.tanggal.toISOString().split("T")[0]
+        )
+      );
+
+      const jumlahHari =
+        update.jumlah_hari === "" ? 1 : Number(update.jumlah_hari);
+
+      const izinData = [];
+      let tanggalIzin = new Date(update.tanggal as Date);
+      let i = 0;
+
+      while (izinData.length < jumlahHari) {
+        if (i > 0) {
+          tanggalIzin.setDate(tanggalIzin.getDate() + 1);
+        }
+
+        if (!tanggalMerahSet.has(tanggalIzin.toISOString().split("T")[0])) {
+          const izinEntry = {
+            jenis_izin: update.jenis_izin,
+            tanggal: new Date(tanggalIzin),
+            pegawai_id: update.pegawai_id,
+            bulan: update.bulan,
+            tahun: update.tahun,
+            keterangan: update.keterangan,
+            pengajuan_izin_id: update.id,
+            department_id: update.department_id,
+          };
+
+          izinData.push(izinEntry);
+        }
+
+        i++;
+      }
+
+      const insertIzin = await prisma.izin.createMany({
+        data: izinData,
+      });
+
+      if (!insertIzin) {
+        return new NextResponse(
+          JSON.stringify({
+            status: false,
+            message: "Failed to update pengajuan izin",
+          }),
+          {
+            status: 500,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+    }
+
     return new NextResponse(
       JSON.stringify({
         status: true,

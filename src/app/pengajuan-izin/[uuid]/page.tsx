@@ -64,8 +64,6 @@ const PengajuanIzinPegawaiPage = async ({ params }: any) => {
     );
   }
 
-  console.log(tanggalmerah);
-
   return (
     <div className="container-xl px-4">
       <div className="row justify-content-center">
