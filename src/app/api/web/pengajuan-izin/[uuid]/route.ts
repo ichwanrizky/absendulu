@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/libs/db";
+const path = require("path");
+const fs = require("fs");
 
 export async function POST(
   req: Request,
@@ -57,6 +59,7 @@ export async function POST(
     let jumlah_hari = body.get("jumlah_hari")!.toString();
     let jumlah_jam = body.get("jumlah_jam")!.toString();
     const keterangan = body.get("keterangan")!.toString();
+    const mc = body.get("mc")?.toString();
 
     if (
       jenis_izin == "C" ||
@@ -110,6 +113,19 @@ export async function POST(
           },
         }
       );
+    }
+
+    if (create.jenis_izin === "S") {
+      // save mc base64 to public folder
+
+      const base64Data: any = mc?.replace(/^data:image\/\w+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+      const imagePath = path.join(
+        process.cwd(),
+        "public/izin",
+        create.uuid?.toString() + ".png"
+      );
+      fs.writeFileSync(imagePath, buffer);
     }
 
     const expiredSession = await prisma.request_session_izin.update({

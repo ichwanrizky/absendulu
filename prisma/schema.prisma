@@ -194,6 +194,7 @@ model absen {
 
 model pengajuan_izin {
   id            Int        @id @default(autoincrement())
+  uuid          String     @unique @default(uuid())
   jenis_izin    String
   tanggal       DateTime?  @db.Date
   pegawai_id    Int
@@ -204,7 +205,6 @@ model pengajuan_izin {
   keterangan    String?
   jumlah_hari   String?
   jumlah_jam    String?
-  mc            String?
   approve_by    Int?
   user          user?      @relation(fields: [approve_by], references: [id])
   approve_date  DateTime?  @db.DateTime(0)

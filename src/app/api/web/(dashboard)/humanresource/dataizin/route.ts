@@ -25,7 +25,7 @@ export async function GET(req: Request) {
     }
 
     const roleId = session[1].roleId;
-    const roleAccess = await checkRoles(roleId, "/humanresource/pengajuanizin");
+    const roleAccess = await checkRoles(roleId, "/humanresource/dataizin");
     if (!roleAccess) {
       return new NextResponse(
         JSON.stringify({
@@ -92,10 +92,17 @@ export async function GET(req: Request) {
             nama: true,
           },
         },
+        user: {
+          select: {
+            name: true,
+          },
+        },
       },
       where: {
         department_id: Number(parseFilter.department),
-        status: 0,
+        status: {
+          not: 0,
+        },
         pegawai: {
           nama: {
             contains: search ? search : undefined,

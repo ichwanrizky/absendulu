@@ -5,7 +5,6 @@ import ModalFilter from "./modalFilter";
 
 type PengajuanIzin = {
   id: number;
-  uuid: string;
   jenis_izin: string;
   tanggal: Date;
   pegawai_id: number;
@@ -15,13 +14,19 @@ type PengajuanIzin = {
   keterangan: string;
   jumlah_hari: string;
   jumlah_jam: string;
+  mc: null;
   approve_by: null;
   approve_date: null;
   pegawai: Pegawai;
+  user: User;
 };
 
 type Pegawai = {
   nama: string;
+};
+
+type User = {
+  name: string;
 };
 
 type Department = {
@@ -42,7 +47,7 @@ interface isLoadingProps {
   [key: number]: boolean;
 }
 
-const PengajuanIzinData = ({
+const IzinData = ({
   accessToken,
   departments,
 }: {
@@ -52,7 +57,6 @@ const PengajuanIzinData = ({
   // loading state
   const [isLoadingFilter, setIsLoadingFilter] = useState(false);
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
-  const [isLoadingApprove, setIsLoadingApprove] = useState<isLoadingProps>({});
 
   // modal state
   const [isModalFilterOpen, setIsModalFilterOpen] = useState(false);
@@ -77,7 +81,7 @@ const PengajuanIzinData = ({
       try {
         const response = await fetch(
           process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/humanresource/pengajuanizin/" +
+            "/api/web/humanresource/dataizin/" +
             id,
           {
             method: "DELETE",
@@ -91,7 +95,7 @@ const PengajuanIzinData = ({
         if (response.ok) {
           mutate(
             process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/humanresource/pengajuanizin?&filter=" +
+              "/api/web/humanresource/dataizin?&filter=" +
               JSON.stringify(filter)
           );
         }
@@ -102,85 +106,11 @@ const PengajuanIzinData = ({
     }
   };
 
-  const handleApprove = async (id: number) => {
-    if (confirm("Approve this data?")) {
-      setIsLoadingApprove((prev) => ({ ...prev, [id]: true }));
-      try {
-        const body = new FormData();
-        body.append("status", "1");
-
-        const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/humanresource/pengajuanizin/" +
-            id,
-          {
-            method: "POST",
-            body: body,
-            headers: {
-              authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        const res = await response.json();
-        if (!response.ok) {
-          alert(res.message);
-        } else {
-          alert(res.message);
-          mutate(
-            process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/humanresource/pengajuanizin?&filter=" +
-              JSON.stringify(filter)
-          );
-        }
-      } catch (error) {
-        alert("something went wrong");
-      }
-      setIsLoadingApprove((prev) => ({ ...prev, [id]: false }));
-    }
-  };
-
-  const handleReject = async (id: number) => {
-    if (confirm("Reject this data?")) {
-      setIsLoadingApprove((prev) => ({ ...prev, [id]: true }));
-      try {
-        const body = new FormData();
-        body.append("status", "2");
-
-        const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/humanresource/pengajuanizin/" +
-            id,
-          {
-            method: "POST",
-            body: body,
-            headers: {
-              authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        const res = await response.json();
-        if (!response.ok) {
-          alert(res.message);
-        } else {
-          alert(res.message);
-          mutate(
-            process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/humanresource/pengajuanizin?&filter=" +
-              JSON.stringify(filter)
-          );
-        }
-      } catch (error) {
-        alert("something went wrong");
-      }
-      setIsLoadingApprove((prev) => ({ ...prev, [id]: false }));
-    }
-  };
-
   const closeModal = () => {
     setIsModalFilterOpen(false);
     mutate(
       process.env.NEXT_PUBLIC_API_URL +
-        "/api/web/humanresource/pengajuanizin?filter=" +
+        "/api/web/humanresource/dataizin?filter=" +
         JSON.stringify(filter)
     );
   };
@@ -245,10 +175,10 @@ const PengajuanIzinData = ({
   const { data, error, isLoading } = useSWR(
     search === ""
       ? process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/humanresource/pengajuanizin?&filter=" +
+          "/api/web/humanresource/dataizin?&filter=" +
           JSON.stringify(filter)
       : process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/humanresource/pengajuanizin?&filter=" +
+          "/api/web/humanresource/dataizin?&filter=" +
           JSON.stringify(filter) +
           "&search=" +
           search,
@@ -391,7 +321,7 @@ const PengajuanIzinData = ({
                   Keterangan
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  Persetujuan
+                  Status
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "5%" }}>
                   Action
@@ -407,7 +337,7 @@ const PengajuanIzinData = ({
                 </tr>
               ) : (
                 permits?.map((item: PengajuanIzin, index: number) => (
-                  <tr key={index}>
+                  <tr key={index} style={{ verticalAlign: "middle" }}>
                     <td align="center">{index + 1}</td>
                     <td align="left">{item.pegawai.nama}</td>
                     <td align="left">{jenisPengajuan(item.jenis_izin)}</td>
@@ -419,62 +349,20 @@ const PengajuanIzinData = ({
                     </td>
                     <td align="center">{item.jumlah_hari}</td>
                     <td align="center">{item.jumlah_jam}</td>
-                    <td align="center">
-                      {item.jenis_izin === "S" && (
-                        <a href={`/izin/${item.uuid}.png`} target="_blank">
-                          MC
-                        </a>
-                      )}
-                    </td>
+                    <td align="center"></td>
                     <td align="left">{item.keterangan}</td>
-                    <td>
-                      <div className="d-flex gap-2 justify-content-center">
-                        {actions?.includes("update") && (
-                          <>
-                            {isLoadingApprove[item.id] ? (
-                              <button
-                                className="btn btn-danger btn-sm"
-                                disabled
-                                type="button"
-                              >
-                                <span
-                                  className="spinner-border spinner-border-sm"
-                                  role="status"
-                                  aria-hidden="true"
-                                />
-                              </button>
-                            ) : (
-                              <button
-                                className="btn btn-danger btn-sm"
-                                type="button"
-                                onClick={() => handleReject(item.id)}
-                              >
-                                TIDAK
-                              </button>
-                            )}
-
-                            {isLoadingApprove[item.id] ? (
-                              <button
-                                className="btn btn-success btn-sm"
-                                disabled
-                              >
-                                <span
-                                  className="spinner-border spinner-border-sm"
-                                  role="status"
-                                  aria-hidden="true"
-                                />
-                              </button>
-                            ) : (
-                              <button
-                                className="btn btn-success btn-sm"
-                                onClick={() => handleApprove(item.id)}
-                              >
-                                YA
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
+                    <td align="center">
+                      {item.status === 1 ? (
+                        <>
+                          <span className="badge bg-success">Approved By</span>
+                          <strong>{item.user.name}</strong>
+                        </>
+                      ) : (
+                        <>
+                          <span className="badge bg-danger">Rejected By</span>
+                          <strong>{item.user.name}</strong>
+                        </>
+                      )}
                     </td>
                     <td align="center">
                       {actions?.includes("delete") &&
@@ -518,7 +406,7 @@ const PengajuanIzinData = ({
     </>
   );
 };
-export default PengajuanIzinData;
+export default IzinData;
 
 const jenisPengajuan = (jenis: string) => {
   switch (jenis) {

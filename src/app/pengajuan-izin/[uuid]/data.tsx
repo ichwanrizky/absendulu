@@ -55,6 +55,7 @@ const PengajuanIzinPegawaiData = ({
   const [jumlahHari, setJumlahHari] = useState("");
   const [jumlahJam, setJumlahJam] = useState("");
   const [keterangan, setKeterangan] = useState("");
+  const [base64, setBase64] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -70,6 +71,7 @@ const PengajuanIzinPegawaiData = ({
         body.append("jumlah_hari", jumlahHari);
         body.append("jumlah_jam", jumlahJam);
         body.append("keterangan", keterangan);
+        body.append("mc", base64);
 
         const response = await fetch(
           `/api/web/pengajuan-izin/${session.uuid}`,
@@ -89,6 +91,33 @@ const PengajuanIzinPegawaiData = ({
         alert("something went wrong");
       }
       setIsLoading(false);
+    }
+  };
+
+  const handleFileChange = (event: any) => {
+    const file = event.target.files[0];
+    if (file) {
+      const fileExtension = file.name.split(".").pop().toLowerCase();
+      const allowedExtensions = ["png", "jpg", "jpeg"];
+
+      if (!allowedExtensions.includes(fileExtension)) {
+        alert("Only PNG, JPG, and JPEG files are allowed.");
+        event.target.value = "";
+        return;
+      }
+
+      const fileSize = file.size / 1024;
+      if (fileSize > 500) {
+        alert("Maximum file size is 500KB.");
+        event.target.value = "";
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBase64(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -285,7 +314,12 @@ const PengajuanIzinPegawaiData = ({
                 >
                   MC/SURAT KETERANGAN SAKIT
                 </label>
-                <input type="file" className="form-control" required />
+                <input
+                  type="file"
+                  className="form-control"
+                  required
+                  onChange={(e) => handleFileChange(e)}
+                />
               </div>
             )}
           </div>

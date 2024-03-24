@@ -4,7 +4,10 @@ import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
 import { checkDepartments } from "@/libs/checkDepartments";
 
-export async function GET(req: Request) {
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const authorization = req.headers.get("Authorization");
 
@@ -25,7 +28,7 @@ export async function GET(req: Request) {
     }
 
     const roleId = session[1].roleId;
-    const roleAccess = await checkRoles(roleId, "/humanresource/pengajuanizin");
+    const roleAccess = await checkRoles(roleId, "/humanresource/dataizin");
     if (!roleAccess) {
       return new NextResponse(
         JSON.stringify({
@@ -42,7 +45,7 @@ export async function GET(req: Request) {
     }
 
     const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
-    if (!actions.includes("view")) {
+    if (!actions.includes("delete")) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -57,62 +60,8 @@ export async function GET(req: Request) {
       );
     }
 
-    const searchParams = new URL(req.url).searchParams;
-
-    // filter
-    const filter = searchParams.get("filter");
-    const parseFilter = filter ? JSON.parse(filter) : {};
-
-    const departmentAccess = await checkDepartments(roleId);
-    const checkDepartmentAccess = departmentAccess.find(
-      (item) => item.department_id === Number(parseFilter.department)
-    );
-    if (!checkDepartmentAccess) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Unauthorized",
-        }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
-
-    // search
-    const search = searchParams.get("search");
-
-    const getData = await prisma.pengajuan_izin.findMany({
-      include: {
-        pegawai: {
-          select: {
-            nama: true,
-          },
-        },
-      },
-      where: {
-        department_id: Number(parseFilter.department),
-        status: 0,
-        pegawai: {
-          nama: {
-            contains: search ? search : undefined,
-          },
-          ...(parseFilter.subDepartment && {
-            sub_department: {
-              id: Number(parseFilter.subDepartment),
-            },
-          }),
-        },
-      },
-      orderBy: {
-        id: "desc",
-      },
-    });
-
-    if (!getData) {
+    const id = params.id;
+    if (!id) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -127,12 +76,47 @@ export async function GET(req: Request) {
       );
     }
 
+    const departmentAccess = await checkDepartments(roleId);
+    const deletes = await prisma.$transaction([
+      prisma.izin.deleteMany({
+        where: {
+          pengajuan_izin_id: Number(id),
+          department_id: {
+            in: departmentAccess.map((item) => item.department_id),
+          },
+        },
+      }),
+
+      prisma.pengajuan_izin.delete({
+        where: {
+          id: Number(id),
+          department_id: {
+            in: departmentAccess.map((item) => item.department_id),
+          },
+        },
+      }),
+    ]);
+
+    if (!deletes) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Failed to delete data pengajuan izin",
+        }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "success",
-        data: getData,
-        actions: actions,
+        message: "Success to delete pengajuan izin",
+        data: deletes,
       }),
       {
         status: 200,

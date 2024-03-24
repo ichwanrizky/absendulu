@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { checkSession } from "@/libs/checkSession";
-import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
-import { checkDepartments } from "@/libs/checkDepartments";
+import { checkSession } from "@/libs/checkSession";
 
-export async function GET(req: Request) {
+export async function GET(
+  req: Request,
+  { params }: { params: { uuid: string } }
+) {
   try {
     const authorization = req.headers.get("Authorization");
 
@@ -24,9 +25,8 @@ export async function GET(req: Request) {
       );
     }
 
-    const roleId = session[1].roleId;
-    const roleAccess = await checkRoles(roleId, "/humanresource/pengajuanizin");
-    if (!roleAccess) {
+    const uuid = params.uuid;
+    if (!uuid) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -41,74 +41,26 @@ export async function GET(req: Request) {
       );
     }
 
-    const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
-    if (!actions.includes("view")) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Unauthorized",
-        }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
-
-    const searchParams = new URL(req.url).searchParams;
-
-    // filter
-    const filter = searchParams.get("filter");
-    const parseFilter = filter ? JSON.parse(filter) : {};
-
-    const departmentAccess = await checkDepartments(roleId);
-    const checkDepartmentAccess = departmentAccess.find(
-      (item) => item.department_id === Number(parseFilter.department)
-    );
-    if (!checkDepartmentAccess) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Unauthorized",
-        }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
-
-    // search
-    const search = searchParams.get("search");
-
-    const getData = await prisma.pengajuan_izin.findMany({
+    const getData = await prisma.pengajuan_izin.findFirst({
       include: {
         pegawai: {
           select: {
             nama: true,
+            department: {
+              select: {
+                nama_department: true,
+              },
+            },
+            sub_department: {
+              select: {
+                nama_sub_department: true,
+              },
+            },
           },
         },
       },
       where: {
-        department_id: Number(parseFilter.department),
-        status: 0,
-        pegawai: {
-          nama: {
-            contains: search ? search : undefined,
-          },
-          ...(parseFilter.subDepartment && {
-            sub_department: {
-              id: Number(parseFilter.subDepartment),
-            },
-          }),
-        },
-      },
-      orderBy: {
-        id: "desc",
+        uuid: uuid,
       },
     });
 
@@ -132,7 +84,6 @@ export async function GET(req: Request) {
         status: true,
         message: "success",
         data: getData,
-        actions: actions,
       }),
       {
         status: 200,
