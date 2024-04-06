@@ -125,6 +125,7 @@ export async function POST(req: Request) {
       username: getData.username,
       pegawaiId: getData.pegawai?.id,
       pegawaiName: getData.pegawai?.nama.toUpperCase(),
+      department: getData.pegawai?.department?.nama_department.toUpperCase(),
     };
 
     // generate token
