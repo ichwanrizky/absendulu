@@ -83,8 +83,7 @@ export async function GET(req: Request) {
           message: "Request Success",
           data: {
             ...existSession,
-            url:
-              "http://192.168.10.110:3000/pengajuan-izin/" + existSession.uuid,
+            url: process.env.IZIN_URL + "/pengajuan-izin/" + existSession.uuid,
           },
         }),
         {
