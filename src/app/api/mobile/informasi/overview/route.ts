@@ -26,7 +26,7 @@ export async function GET(req: Request) {
     const countAbsen = await prisma.absen.count({
       where: {
         pegawai_id: session[1].pegawaiId,
-        bulan: new Date().getMonth(),
+        bulan: new Date().getMonth() + 1,
         tahun: new Date().getFullYear(),
       },
     });
@@ -38,7 +38,7 @@ export async function GET(req: Request) {
       },
       where: {
         pegawai_id: session[1].pegawaiId,
-        bulan: new Date().getMonth(),
+        bulan: new Date().getMonth() + 1,
         tahun: new Date().getFullYear(),
       },
     });
@@ -47,7 +47,7 @@ export async function GET(req: Request) {
     const countIzin = await prisma.pengajuan_izin.count({
       where: {
         pegawai_id: session[1].pegawaiId,
-        bulan: new Date().getMonth(),
+        bulan: new Date().getMonth() + 1,
         tahun: new Date().getFullYear(),
         status: 1,
         jenis_izin: {
@@ -60,7 +60,7 @@ export async function GET(req: Request) {
     const countCuti = await prisma.pengajuan_izin.count({
       where: {
         pegawai_id: session[1].pegawaiId,
-        bulan: new Date().getMonth(),
+        bulan: new Date().getMonth() + 1,
         tahun: new Date().getFullYear(),
         status: 1,
         jenis_izin: {
@@ -73,7 +73,7 @@ export async function GET(req: Request) {
     const countSakit = await prisma.pengajuan_izin.count({
       where: {
         pegawai_id: session[1].pegawaiId,
-        bulan: new Date().getMonth(),
+        bulan: new Date().getMonth() + 1,
         tahun: new Date().getFullYear(),
         status: 1,
         jenis_izin: "S",
