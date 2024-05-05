@@ -18,7 +18,7 @@ export default function withAuth(
       secret: process.env.JWT,
     });
 
-    if (pathname === "/login" && token) {
+    if (pathname === "/auth/login" && token) {
       return NextResponse.redirect(new URL("/redirect", req.url));
     }
 
@@ -29,7 +29,7 @@ export default function withAuth(
     if (authenticationRequired) {
       if (!token) {
         const url = new URL(`/auth/login`, req.url);
-        url.searchParams.set("callbackUrl", encodeURI(req.url));
+        url.searchParams.set("callbackUrl", encodeURI(pathname));
         return NextResponse.redirect(url);
       }
 
