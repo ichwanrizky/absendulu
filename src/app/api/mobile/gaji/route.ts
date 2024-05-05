@@ -27,13 +27,13 @@ export async function GET(req: Request) {
         status: true,
         message: "success",
         data: [
-          {
-            bulan: "Januari",
-            tahun: 2024,
-            gaji: 3000000,
-            slipStatus: false,
-            url: "https://example.com",
-          },
+          // {
+          //   bulan: "Januari",
+          //   tahun: 2024,
+          //   gaji: 3000000,
+          //   slipStatus: false,
+          //   url: "https://example.com",
+          // },
         ],
       }),
       {
