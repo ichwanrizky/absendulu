@@ -15,6 +15,7 @@ type User = {
   pegawai_id: number;
   pegawai: Pegawai;
   roles: Roles;
+  password_show: string;
 };
 
 type Pegawai = {
@@ -320,6 +321,9 @@ const UserData = ({
                   Username
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "20%" }}>
+                  Password
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "20%" }}>
                   Role
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
@@ -340,6 +344,7 @@ const UserData = ({
                     <td align="center">{item.number}</td>
                     <td align="left">{item.name?.toUpperCase()}</td>
                     <td align="left">{item.username.toLowerCase()}</td>
+                    <td align="left">{item.password_show.toLowerCase()}</td>
                     <td align="left">{item.roles?.role_name.toUpperCase()}</td>
                     <td>
                       <div className="d-flex gap-2">

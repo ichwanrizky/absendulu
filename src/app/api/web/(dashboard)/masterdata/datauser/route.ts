@@ -80,6 +80,8 @@ export async function GET(req: Request) {
         pegawai: {
           select: {
             id: true,
+            nama: true,
+            tgl_lahir: true,
           },
         },
         roles: {
@@ -110,12 +112,16 @@ export async function GET(req: Request) {
       skip: page ? (parseInt(page) - 1) * ITEMS_PER_PAGE : 0,
       take: ITEMS_PER_PAGE,
     });
+
     data = data.map((data, index) => {
       return {
         number: page
           ? (Number(page) - 1) * ITEMS_PER_PAGE + index + 1
           : index + 1,
         ...data,
+        password_show:
+          data.pegawai!.nama.split(" ")[0] +
+          data.pegawai!.tgl_lahir?.getFullYear(),
       };
     });
 
