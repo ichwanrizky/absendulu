@@ -33,7 +33,7 @@ export async function GET(req: Request) {
 
     // check total late per month
     const countLate = await prisma.absen.aggregate({
-      _sum: {
+      _count: {
         late: true,
       },
       where: {
@@ -82,7 +82,7 @@ export async function GET(req: Request) {
 
     const data = {
       total_absen: countAbsen,
-      total_late: countLate._sum.late ? countLate._sum.late : 0,
+      total_late: countLate._count.late ? countLate._count.late : 0,
       total_izin: countIzin,
       total_cuti: countCuti,
       total_sakit: countSakit,

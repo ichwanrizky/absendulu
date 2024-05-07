@@ -35,6 +35,7 @@ export async function GET(req: Request) {
       orderBy: {
         id: "desc",
       },
+      take: 30,
     });
 
     if (!getData) {

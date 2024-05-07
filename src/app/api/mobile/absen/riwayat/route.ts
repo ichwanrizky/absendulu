@@ -28,6 +28,7 @@ export async function GET(req: Request) {
       orderBy: {
         tanggal: "desc",
       },
+      take: 70,
     });
 
     if (!data) {

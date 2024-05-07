@@ -178,7 +178,7 @@ const ModalEdit = (props: Props) => {
 
         const response = await fetch(
           process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/masterdata/datakaryawan/" +
+            "/api/web/humanresource/datakaryawan/" +
             data.id,
           {
             method: "POST",

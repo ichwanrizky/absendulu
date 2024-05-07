@@ -117,6 +117,7 @@ export async function POST(req: Request) {
     const currendDate2 = new Date();
     const formattedDate2 = new Date(currendDate2);
     formattedDate2.setHours(formattedDate2.getHours() + 7);
+    formattedDate2.setMinutes(formattedDate2.getMinutes() - 4);
 
     // late
     const jam_masuk_department = dataDepartment.pegawai[0].shift
