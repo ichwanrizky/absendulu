@@ -1,3 +1,4 @@
+// "use client";
 import Script from "next/script";
 
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
@@ -11,6 +12,10 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
           src="/themes/js/all.min.js"
         ></Script>
         <Script src="/themes/js/feather.min.js"></Script>
+        <Script
+          src="/themes/js/scripts.js"
+          strategy="afterInteractive"
+        ></Script>
       </head>
 
       <body className="bg-dark">
@@ -35,7 +40,6 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
         <Script src="/themes/js/bootstrap.bundle.min.js"></Script>
-        <Script src="/themes/js/scripts.js"></Script>
       </body>
     </>
   );

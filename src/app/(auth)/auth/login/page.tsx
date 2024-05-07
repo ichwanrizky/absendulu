@@ -31,6 +31,7 @@ const LoginPage = ({
         username,
         password,
       });
+      console.log(res);
 
       if (!res?.ok) {
         setIsLoading(false);
@@ -73,7 +74,8 @@ const LoginPage = ({
                 </div>
               )}
               <div className="card-header justify-content-center text-center">
-                <h3 className="fw-semibold my-4">PANJI JAYA</h3>
+                <h3 className="fw-semibold my-2">PANJI JAYA</h3>
+                <h5 className="fw-semibold">ENTERPRISE MANAGEMENT SYSTEM</h5>
               </div>
               <div className="card-body">
                 <div className="mb-3">
@@ -120,11 +122,11 @@ const LoginPage = ({
                       role="status"
                       aria-hidden="true"
                     ></span>
-                    Loading...
+                    LOADING...
                   </button>
                 ) : (
                   <button type="submit" className="btn btn-primary px-5">
-                    Login
+                    LOGIN
                   </button>
                 )}
               </div>

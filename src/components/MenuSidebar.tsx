@@ -1,4 +1,5 @@
 "use client";
+import { menu_group } from "@prisma/client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import useSWR from "swr";
@@ -20,40 +21,14 @@ type Menu = {
   menu_group_id: number;
 };
 
-const MenuSidebar = ({ accessToken }: { accessToken: string }) => {
+const MenuSidebar = ({ menu }: { menu: MenuGroup[] }) => {
   const pathname = usePathname();
-
-  const fetcher = (url: RequestInfo) => {
-    return fetch(url, {
-      headers: {
-        authorization: `Bearer ${accessToken}`,
-      },
-      next: {
-        revalidate: 60,
-      },
-    }).then((res) => res.json());
-  };
-
-  const { data, error, isLoading } = useSWR(
-    process.env.NEXT_PUBLIC_API_URL + "/api/web/menusidebar",
-    fetcher
-  );
-
-  if (isLoading) {
-    return <></>;
-  }
-
-  if (error) {
-    return <>something went wrong</>;
-  }
-
-  const menuGroups = data?.data;
 
   return (
     <div className="nav accordion" id="accordionSidenav">
       <div className="sidenav-menu-heading"></div>
-      {menuGroups?.map((item: MenuGroup, index: number) => (
-        <div key={item.id}>
+      {menu?.map((item: MenuGroup, index: number) => (
+        <div key={index}>
           <a
             className={`nav-link ${
               item.menu.some((menuItem) => menuItem.path === pathname)
