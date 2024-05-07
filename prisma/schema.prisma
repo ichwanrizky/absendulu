@@ -40,10 +40,12 @@ model menu_group {
 }
 
 model menu {
-  id            Int           @id @default(autoincrement())
-  menu          String?
-  path          String?
-  urut          Int?
+  id        Int     @id @default(autoincrement())
+  menu      String?
+  path      String?
+  last_path String?
+  urut      Int?
+
   menu_group_id Int?
   access_menu   access_menu[]
   menu_group    menu_group?   @relation(fields: [menu_group_id], references: [id])

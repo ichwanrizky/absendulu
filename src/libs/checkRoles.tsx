@@ -1,10 +1,10 @@
 import prisma from "@/libs/db";
-export const checkRoles = async (roleId: number, path: string) => {
+export const checkRoles = async (roleId: number, menu: string) => {
   const accessMenu = await prisma.access_menu.findFirst({
     where: {
       role_id: roleId,
       menu: {
-        path: path,
+        last_path: menu.replace(/\s+/g, ""),
       },
     },
   });

@@ -1,8 +1,6 @@
 "use client";
-import { menu_group } from "@prisma/client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import useSWR from "swr";
 
 type MenuGroup = {
   id: number;

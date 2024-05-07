@@ -33,7 +33,7 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
           <DashboardSidebar session={session.user} />
 
           <div id="layoutSidenav_content">
-            {/* {children} */}
+            {children}
             {/* footer */}
             <DashboardFooter />
           </div>
