@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { checkSession } from "@/libs/checkSession";
 import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
+import { checkDepartments } from "@/libs/checkDepartments";
 import { handleError } from "@/libs/handleError";
 
 export async function GET(
@@ -29,6 +30,7 @@ export async function GET(
 
     const searchParams = new URL(req.url).searchParams;
     const menu_url = searchParams.get("menu_url");
+
     if (!menu_url) {
       return new NextResponse(
         JSON.stringify({
@@ -77,9 +79,14 @@ export async function GET(
       );
     }
 
-    const data = await prisma.roles.findFirst({
+    const departmentAccess = await checkDepartments(roleId);
+
+    const data = await prisma.pegawai.findFirst({
       where: {
         id: Number(id),
+        department_id: {
+          in: departmentAccess.map((item) => item.department_id),
+        },
       },
     });
 
@@ -141,6 +148,7 @@ export async function POST(
 
     const searchParams = new URL(req.url).searchParams;
     const menu_url = searchParams.get("menu_url");
+
     if (!menu_url) {
       return new NextResponse(
         JSON.stringify({
@@ -206,14 +214,78 @@ export async function POST(
     }
 
     const body = await req.formData();
-    const role_name = body.get("role_name")!.toString();
+    const nama = body.get("nama")!.toString();
+    const idKaryawan = body.get("id_karyawan")?.toString();
+    const department = body.get("department")!.toString();
+    const subDepartment = body.get("sub_department")!.toString();
+    const nik = body.get("nik")!.toString();
+    const posisi = body.get("posisi")!.toString();
+    const tempatLahir = body.get("tempat_lahir")?.toString();
+    const jenisKelamin = body.get("jenis_kelamin")!.toString();
+    const agama = body.get("agama")?.toString();
+    const kebangsaan = body.get("kebangsaan")?.toString();
+    const alamat = body.get("alamat")!.toString();
+    const rt = body.get("rt")?.toString();
+    const rw = body.get("rw")?.toString();
+    const kelurahan = body.get("kelurahan")?.toString();
+    const kecamatan = body.get("kecamatan")?.toString();
+    const kota = body.get("kota")?.toString();
+    const telp = body.get("telp")?.toString();
+    const email = body.get("email")?.toString();
+    const statusNikah = body.get("status_nikah")!.toString();
+    const npwp = body.get("npwp")?.toString();
+    const jenisBank = body.get("jenis_bank")?.toString();
+    const noRekening = body.get("no_rekening")?.toString();
+    const bpjstk = body.get("bpjstk")?.toString();
+    const bpjkskes = body.get("bpjkskes")?.toString();
 
-    const update = await prisma.roles.update({
+    const tanggalLahir = body.get("tanggal_lahir")!.toString();
+    const tanggalJoin = body.get("tanggal_join")?.toString();
+
+    const departmentAccess = await checkDepartments(roleId);
+
+    const update = await prisma.pegawai.update({
       data: {
-        role_name: role_name?.toUpperCase(),
+        panji_id: idKaryawan ? idKaryawan.toUpperCase() : null,
+        nama: nama.toUpperCase(),
+        nik_ktp: nik,
+        tmp_lahir: tempatLahir,
+        tgl_lahir: new Date(tanggalLahir),
+        tgl_join: tanggalJoin ? new Date(tanggalJoin) : null,
+        jk: jenisKelamin,
+        agama: agama,
+        kebangsaan: kebangsaan,
+        alamat: alamat,
+        rt: rt,
+        rw: rw,
+        kel: kelurahan,
+        kec: kecamatan,
+        kota: kota,
+        telp: telp,
+        status_nikah: statusNikah,
+        email: email,
+        position: posisi,
+        npwp: npwp,
+        jenis_bank: jenisBank,
+        no_rek: noRekening,
+        bpjs_tk: bpjstk,
+        bpjs_kes: bpjkskes,
+        department: {
+          connect: {
+            id: Number(department),
+          },
+        },
+        sub_department: {
+          connect: {
+            id: Number(subDepartment),
+          },
+        },
       },
       where: {
         id: Number(id),
+        department_id: {
+          in: departmentAccess.map((item) => item.department_id),
+        },
       },
     });
 
@@ -221,7 +293,7 @@ export async function POST(
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to update roles",
+          message: "Failed to update karyawan",
         }),
         {
           status: 500,
@@ -235,7 +307,7 @@ export async function POST(
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to update roles",
+        message: "Success to update karyawan",
         data: update,
       }),
       {
@@ -275,6 +347,7 @@ export async function DELETE(
 
     const searchParams = new URL(req.url).searchParams;
     const menu_url = searchParams.get("menu_url");
+
     if (!menu_url) {
       return new NextResponse(
         JSON.stringify({
@@ -339,9 +412,13 @@ export async function DELETE(
       );
     }
 
-    const deletes = await prisma.roles.delete({
+    const departmentAccess = await checkDepartments(roleId);
+    const deletes = await prisma.pegawai.delete({
       where: {
         id: Number(id),
+        department_id: {
+          in: departmentAccess.map((item) => item.department_id),
+        },
       },
     });
 
@@ -349,7 +426,7 @@ export async function DELETE(
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to delete roles",
+          message: "Failed to delete data karyawan",
         }),
         {
           status: 404,
@@ -363,7 +440,7 @@ export async function DELETE(
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to delete roles",
+        message: "Success to delete data karyawan",
         data: deletes,
       }),
       {

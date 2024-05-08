@@ -3,7 +3,7 @@ import { checkSession } from "@/libs/checkSession";
 import prisma from "@/libs/db";
 import { handleError } from "@/libs/handleError";
 
-export async function GET(req: Request) {
+export async function POST(req: Request) {
   try {
     const authorization = req.headers.get("Authorization");
 
@@ -23,13 +23,12 @@ export async function GET(req: Request) {
       );
     }
 
-    const data = await prisma.department.findMany({
+    const body = await req.formData();
+    const department = body.get("department")!.toString();
+
+    const data = await prisma.sub_department.findMany({
       where: {
-        access_department: {
-          some: {
-            role_id: session[1].roleId,
-          },
-        },
+        department_id: Number(department),
       },
       orderBy: {
         id: "asc",

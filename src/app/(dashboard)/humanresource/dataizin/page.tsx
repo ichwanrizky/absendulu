@@ -1,6 +1,6 @@
 import { authOptions } from "@/libs/authOptions";
 import { getServerSession } from "next-auth";
-import Data from "./data";
+import IzinData from "./data";
 
 type Session = {
   user: UserSession;
@@ -17,7 +17,7 @@ type UserSession = {
 const getDepartments = async (token: string) => {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listdepartment_access`,
+      process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department",
       {
         headers: {
           authorization: `Bearer ${token}`,
@@ -27,19 +27,18 @@ const getDepartments = async (token: string) => {
         },
       }
     );
-
     const res = await response.json();
 
     if (response.ok) {
       return res.data;
     }
+
     return [];
   } catch (error) {
     return [];
   }
 };
-
-const Page = async () => {
+const DataIzinPage = async () => {
   const session = (await getServerSession(authOptions)) as Session | null;
 
   if (!session) {
@@ -57,7 +56,9 @@ const Page = async () => {
               <div className="col-auto mt-4">
                 <h1 className="page-header-title">
                   <div className="page-header-icon"></div>
-                  <span style={{ fontSize: "1.8rem" }}>HOLIDAY</span>
+                  <span style={{ fontSize: "1.8rem" }}>
+                    PERMIT APPLICATION{" "}
+                  </span>
                 </h1>
               </div>
             </div>
@@ -67,8 +68,8 @@ const Page = async () => {
 
       <div className="container-xl px-4 mt-n10">
         <div className="card mb-4">
-          <div className="card-header">DATA TANGGAL MERAH</div>
-          <Data
+          <div className="card-header">Data Izin</div>
+          <IzinData
             accessToken={session.user.accessToken}
             departments={departments}
           />
@@ -78,4 +79,4 @@ const Page = async () => {
   );
 };
 
-export default Page;
+export default DataIzinPage;

@@ -31,7 +31,6 @@ const LoginPage = ({
         username,
         password,
       });
-      console.log(res);
 
       if (!res?.ok) {
         setIsLoading(false);

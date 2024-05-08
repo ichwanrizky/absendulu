@@ -140,7 +140,6 @@ export async function POST(
     }
 
     const searchParams = new URL(req.url).searchParams;
-    console.log("🚀 ~ searchParams:", searchParams);
     const menu_url = searchParams.get("menu_url");
     if (!menu_url) {
       return new NextResponse(

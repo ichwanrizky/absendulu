@@ -27,18 +27,17 @@ const getDepartments = async (token: string) => {
         },
       }
     );
-
     const res = await response.json();
 
     if (response.ok) {
       return res.data;
     }
+
     return [];
   } catch (error) {
     return [];
   }
 };
-
 const Page = async () => {
   const session = (await getServerSession(authOptions)) as Session | null;
 
@@ -57,7 +56,7 @@ const Page = async () => {
               <div className="col-auto mt-4">
                 <h1 className="page-header-title">
                   <div className="page-header-icon"></div>
-                  <span style={{ fontSize: "1.8rem" }}>HOLIDAY</span>
+                  <span style={{ fontSize: "1.8rem" }}>EMPLOYEES</span>
                 </h1>
               </div>
             </div>
@@ -67,7 +66,7 @@ const Page = async () => {
 
       <div className="container-xl px-4 mt-n10">
         <div className="card mb-4">
-          <div className="card-header">DATA TANGGAL MERAH</div>
+          <div className="card-header">Data Karyawan</div>
           <Data
             accessToken={session.user.accessToken}
             departments={departments}
