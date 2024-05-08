@@ -113,9 +113,19 @@ model sub_department {
   id                  Int        @id @default(autoincrement())
   nama_sub_department String
   department_id       Int
-  pegawai             pegawai[]
+  pegawai             pegawai[]  @relation("PegawaiSubDept")
   department          department @relation(fields: [department_id], references: [id])
   akses_izin          String?
+  manager             manager[]
+}
+
+model manager {
+  sub_department_id Int
+  sub_department    sub_department @relation(fields: [sub_department_id], references: [id])
+  pegawai_id        Int
+  pegawai           pegawai        @relation(fields: [pegawai_id], references: [id])
+
+  @@unique([sub_department_id, pegawai_id])
 }
 
 model pegawai {
@@ -151,7 +161,7 @@ model pegawai {
   is_active            Boolean                @default(true)
   is_overtime          Boolean                @default(false)
   department           department             @relation(fields: [department_id], references: [id])
-  sub_department       sub_department         @relation(fields: [sub_department_id], references: [id])
+  sub_department       sub_department         @relation("PegawaiSubDept", fields: [sub_department_id], references: [id])
   shift_id             Int?
   shift                shift?                 @relation(fields: [shift_id], references: [id])
   absen                absen[]
@@ -159,6 +169,7 @@ model pegawai {
   pengajuan_izin       pengajuan_izin[]
   izin                 izin[]
   request_session_izin request_session_izin[]
+  manager              manager[]
 }
 
 model shift {

@@ -84,6 +84,17 @@ export async function GET(req: Request) {
             nama_department: true,
           },
         },
+        manager: {
+          select: {
+            pegawai: {
+              select: {
+                id: true,
+                nama: true,
+                telp: true,
+              },
+            },
+          },
+        },
       },
       where: {
         department: {
@@ -203,6 +214,7 @@ export async function POST(req: Request) {
     const nama_sub_department = body.get("nama_sub_department")!.toString();
     const department = body.get("department")!.toString();
     const akses_izin = body.get("akses_izin")?.toString();
+    const manager = body.get("manager")?.toString();
 
     const create = await prisma.sub_department.create({
       data: {
@@ -213,6 +225,13 @@ export async function POST(req: Request) {
           },
         },
         akses_izin: akses_izin ? akses_izin : null,
+      },
+    });
+
+    await prisma.manager.create({
+      data: {
+        sub_department_id: create.id,
+        pegawai_id: Number(manager),
       },
     });
 
