@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { checkSession } from "@/libs/checkSession";
 import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
+import { checkDepartments } from "@/libs/checkDepartments";
 import { handleError } from "@/libs/handleError";
 
 export async function GET(
@@ -77,7 +78,7 @@ export async function GET(
       );
     }
 
-    const data = await prisma.roles.findFirst({
+    const data = await prisma.department.findFirst({
       where: {
         id: Number(id),
       },
@@ -206,11 +207,19 @@ export async function POST(
     }
 
     const body = await req.formData();
-    const role_name = body.get("role_name")!.toString();
+    const nama_department = body.get("nama_department")!.toString();
+    const lot = body.get("lot")?.toString();
+    const latitude = body.get("latitude")?.toString();
+    const longitude = body.get("longitude")?.toString();
+    const radius = body.get("radius")?.toString();
 
-    const update = await prisma.roles.update({
+    const update = await prisma.department.update({
       data: {
-        role_name: role_name?.toUpperCase(),
+        nama_department: nama_department.toUpperCase(),
+        lot: lot,
+        latitude: latitude,
+        longitude: longitude,
+        radius: radius,
       },
       where: {
         id: Number(id),
@@ -221,7 +230,7 @@ export async function POST(
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to update roles",
+          message: "Failed to update department",
         }),
         {
           status: 500,
@@ -235,7 +244,7 @@ export async function POST(
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to update roles",
+        message: "Success to update department",
         data: update,
       }),
       {
@@ -339,7 +348,7 @@ export async function DELETE(
       );
     }
 
-    const deletes = await prisma.roles.delete({
+    const deletes = await prisma.department.delete({
       where: {
         id: Number(id),
       },
@@ -349,7 +358,7 @@ export async function DELETE(
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to delete roles",
+          message: "Failed to delete department",
         }),
         {
           status: 404,
@@ -363,7 +372,7 @@ export async function DELETE(
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to delete roles",
+        message: "Success to delete department",
         data: deletes,
       }),
       {

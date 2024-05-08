@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { checkSession } from "@/libs/checkSession";
 import { checkRoles } from "@/libs/checkRoles";
+import { checkDepartments } from "@/libs/checkDepartments";
 import prisma from "@/libs/db";
 import { handleError } from "@/libs/handleError";
 
@@ -73,9 +74,10 @@ export async function GET(req: Request) {
         }
       );
     }
-    const data = await prisma.menu_group.findMany({
+
+    const data = await prisma.department.findMany({
       orderBy: {
-        urut: "asc",
+        id: "asc",
       },
     });
 
@@ -184,17 +186,19 @@ export async function POST(req: Request) {
     }
 
     const body = await req.formData();
-    const menu_group = body.get("menu_group")!.toString();
-    const urut = body.get("urut")!.toString();
-    const group = body.get("group")!.toString();
-    const parent_id = body.get("parent_id")!.toString();
+    const nama_department = body.get("nama_department")!.toString();
+    const lot = body.get("lot")?.toString();
+    const latitude = body.get("latitude")?.toString();
+    const longitude = body.get("longitude")?.toString();
+    const radius = body.get("radius")?.toString();
 
-    const create = await prisma.menu_group.create({
+    const create = await prisma.department.create({
       data: {
-        menu_group: menu_group,
-        urut: Number(urut),
-        group: Number(group),
-        parent_id: parent_id,
+        nama_department: nama_department.toUpperCase(),
+        lot: lot,
+        latitude: latitude,
+        longitude: longitude,
+        radius: radius,
       },
     });
 
@@ -202,7 +206,7 @@ export async function POST(req: Request) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to create menu group",
+          message: "Failed to create department",
         }),
         {
           status: 500,
@@ -216,7 +220,7 @@ export async function POST(req: Request) {
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to create menu group",
+        message: "Success to create department",
         data: create,
       }),
       {

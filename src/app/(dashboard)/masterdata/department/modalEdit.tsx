@@ -1,4 +1,5 @@
 "use client";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 type Props = {
@@ -18,6 +19,10 @@ type Department = {
 };
 
 const ModalEdit = (props: Props) => {
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
+
   const { isModalOpen, onClose, accessToken, data } = props;
 
   // loading state
@@ -42,9 +47,8 @@ const ModalEdit = (props: Props) => {
         body.append("radius", radius);
 
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/masterdata/department/" +
-            data.id,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/department/${data.id}?menu_url=${menu_url}`,
+
           {
             method: "POST",
             headers: {
@@ -86,7 +90,7 @@ const ModalEdit = (props: Props) => {
               <div className="modal-content">
                 <div className="modal-header">
                   <h1 className="modal-title fs-5 fw-semibold   ">
-                    Edit Department
+                    EDIT DEPARTMENT
                   </h1>
                   <button
                     type="button"
@@ -98,11 +102,12 @@ const ModalEdit = (props: Props) => {
                 <div className="modal-body">
                   <div className="form-group mb-3">
                     <label className="mb-1 fw-semibold small">
-                      Nama Department
+                      NAMA DEPARTMENT
                     </label>
                     <input
                       type="text"
                       className="form-control"
+                      style={{ textTransform: "uppercase" }}
                       onChange={(e) => setNamaDepartment(e.target.value)}
                       value={namaDepartment}
                       required
@@ -120,7 +125,7 @@ const ModalEdit = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Latitude</label>
+                    <label className="mb-1 fw-semibold small">LATITUDE</label>
                     <input
                       type="number"
                       step={"any"}
@@ -131,7 +136,7 @@ const ModalEdit = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Longitude</label>
+                    <label className="mb-1 fw-semibold small">LONGITUDE</label>
                     <input
                       type="number"
                       step={"any"}
@@ -142,7 +147,7 @@ const ModalEdit = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Radius(m)</label>
+                    <label className="mb-1 fw-semibold small">RADIUS (m)</label>
                     <input
                       type="number"
                       className="form-control"
@@ -157,7 +162,7 @@ const ModalEdit = (props: Props) => {
                     className="btn btn-dark btn-sm"
                     onClick={onClose}
                   >
-                    Close
+                    CLOSE
                   </button>
                   {isLoading ? (
                     <button
@@ -170,11 +175,11 @@ const ModalEdit = (props: Props) => {
                         role="status"
                         aria-hidden="true"
                       ></span>
-                      Loading...
+                      LOADING...
                     </button>
                   ) : (
                     <button type="submit" className="btn btn-primary btn-sm">
-                      Save changes
+                      SAVE CHANGES
                     </button>
                   )}
                 </div>
