@@ -74,9 +74,24 @@ export async function GET(req: Request) {
       );
     }
 
-    const data = await prisma.department.findMany({
+    // filter
+    const select_dept = searchParams.get("select_dept");
+
+    const data = await prisma.sub_department.findMany({
+      include: {
+        department: {
+          select: {
+            nama_department: true,
+          },
+        },
+      },
+      where: {
+        department: {
+          id: Number(select_dept),
+        },
+      },
       orderBy: {
-        id: "asc",
+        nama_sub_department: "asc",
       },
     });
 
@@ -185,19 +200,19 @@ export async function POST(req: Request) {
     }
 
     const body = await req.formData();
-    const nama_department = body.get("nama_department")!.toString();
-    const lot = body.get("lot")?.toString();
-    const latitude = body.get("latitude")?.toString();
-    const longitude = body.get("longitude")?.toString();
-    const radius = body.get("radius")?.toString();
+    const nama_sub_department = body.get("nama_sub_department")!.toString();
+    const department = body.get("department")!.toString();
+    const akses_izin = body.get("akses_izin")?.toString();
 
-    const create = await prisma.department.create({
+    const create = await prisma.sub_department.create({
       data: {
-        nama_department: nama_department.toUpperCase(),
-        lot: lot,
-        latitude: latitude,
-        longitude: longitude,
-        radius: radius,
+        nama_sub_department: nama_sub_department?.toUpperCase(),
+        department: {
+          connect: {
+            id: Number(department),
+          },
+        },
+        akses_izin: akses_izin ? akses_izin : null,
       },
     });
 
@@ -205,7 +220,7 @@ export async function POST(req: Request) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to create department",
+          message: "Failed to create sub department",
         }),
         {
           status: 500,
@@ -219,7 +234,7 @@ export async function POST(req: Request) {
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to create department",
+        message: "Success to create sub department",
         data: create,
       }),
       {

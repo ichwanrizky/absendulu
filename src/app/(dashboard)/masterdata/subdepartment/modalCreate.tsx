@@ -1,4 +1,5 @@
 "use client";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Select from "react-select";
 
@@ -19,6 +20,10 @@ type Department = {
 
 const ModalCreate = (props: Props) => {
   const { isModalOpen, onClose, accessToken, dataDepartment } = props;
+
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
 
   // lodaing state
   const [isLoading, setIsLoading] = useState(false);
@@ -46,7 +51,7 @@ const ModalCreate = (props: Props) => {
         );
 
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/subdepartment",
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/subdepartment?menu_url=${menu_url}`,
           {
             method: "POST",
             headers: {
@@ -88,7 +93,7 @@ const ModalCreate = (props: Props) => {
               <div className="modal-content">
                 <div className="modal-header">
                   <h1 className="modal-title fs-5 fw-semibold   ">
-                    Add Sub Department
+                    ADD SUB DEPARTMENT
                   </h1>
                   <button
                     type="button"
@@ -99,7 +104,7 @@ const ModalCreate = (props: Props) => {
                 </div>
                 <div className="modal-body">
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Department</label>
+                    <label className="mb-1 fw-semibold small">DEPARTMENT</label>
                     <select
                       className="form-select"
                       required
@@ -118,18 +123,19 @@ const ModalCreate = (props: Props) => {
 
                   <div className="form-group mb-3">
                     <label className="mb-1 fw-semibold small">
-                      Nama Sub Department
+                      NAMA SUB DEPARTMENT
                     </label>
                     <input
                       type="text"
                       className="form-control"
+                      style={{ textTransform: "uppercase" }}
                       required
                       onChange={(e) => setNamaSubDepartment(e.target.value)}
                     />
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Akses Izin</label>
+                    <label className="mb-1 fw-semibold small">AKSES IZIN</label>
                     <Select
                       options={[
                         { value: "C", label: "Cuti" },
@@ -155,7 +161,7 @@ const ModalCreate = (props: Props) => {
                     className="btn btn-dark btn-sm"
                     onClick={onClose}
                   >
-                    Close
+                    CLOSE
                   </button>
                   {isLoading ? (
                     <button
@@ -168,11 +174,11 @@ const ModalCreate = (props: Props) => {
                         role="status"
                         aria-hidden="true"
                       ></span>
-                      Loading...
+                      LOADING...
                     </button>
                   ) : (
                     <button type="submit" className="btn btn-primary btn-sm">
-                      Save changes
+                      SAVE CHANGES
                     </button>
                   )}
                 </div>

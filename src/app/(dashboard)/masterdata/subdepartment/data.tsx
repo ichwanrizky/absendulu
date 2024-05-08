@@ -4,6 +4,7 @@ import useSWR, { mutate } from "swr";
 import ModalCreate from "./modalCreate";
 import ModalEdit from "./modalEdit";
 import ModalFilter from "./modalFilter";
+import { usePathname } from "next/navigation";
 
 type SubDepartment = {
   id: number;
@@ -25,13 +26,17 @@ interface isLoadingProps {
   [key: number]: boolean;
 }
 
-const SubDepartmentData = ({
+const Data = ({
   accessToken,
   departments,
 }: {
   accessToken: string;
   departments: Department[];
 }) => {
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
+
   // loading state
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
@@ -45,10 +50,7 @@ const SubDepartmentData = ({
   const [dataEdit, setDataEdit] = useState({} as SubDepartment);
 
   // filter
-  const [filter, setFilter] = useState<any>({
-    filter: false,
-    department: departments[0].id.toString(),
-  });
+  const [selectDept, setSelectDept] = useState(departments[0].id.toString());
 
   const handleCreate = async () => {
     setIsModalCreateOpen(true);
@@ -59,9 +61,7 @@ const SubDepartmentData = ({
     try {
       // get edit data
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/subdepartment/" +
-          id,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/web/subdepartment/${id}?menu_url=${menu_url}`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -87,9 +87,8 @@ const SubDepartmentData = ({
       setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
       try {
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/masterdata/subdepartment/" +
-            id,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/subdepartment/${id}?menu_url=${menu_url}`,
+
           {
             method: "DELETE",
             headers: {
@@ -102,9 +101,7 @@ const SubDepartmentData = ({
         alert(res.message);
         if (response.ok) {
           mutate(
-            process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/masterdata/subdepartment?filter=" +
-              JSON.stringify(filter)
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/subdepartment?menu_url=${menu_url}&select_dept=${selectDept}`
           );
         }
       } catch (error) {
@@ -119,19 +116,8 @@ const SubDepartmentData = ({
     setIsModalEditOpen(false);
     setIsModalFilterOpen(false);
     mutate(
-      process.env.NEXT_PUBLIC_API_URL +
-        "/api/web/masterdata/subdepartment?filter=" +
-        JSON.stringify(filter)
+      `${process.env.NEXT_PUBLIC_API_URL}/api/web/subdepartment?menu_url=${menu_url}&select_dept=${selectDept}`
     );
-  };
-
-  const handleFilter = async () => {
-    setIsModalFilterOpen(true);
-  };
-
-  const handleFilterData = (department: any) => {
-    setIsModalFilterOpen(false);
-    setFilter({ filter: true, department: department });
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -146,9 +132,7 @@ const SubDepartmentData = ({
   };
 
   const { data, error, isLoading } = useSWR(
-    process.env.NEXT_PUBLIC_API_URL +
-      "/api/web/masterdata/subdepartment?filter=" +
-      JSON.stringify(filter),
+    `${process.env.NEXT_PUBLIC_API_URL}/api/web/subdepartment?menu_url=${menu_url}&select_dept=${selectDept}`,
     fetcher
   );
 
@@ -169,8 +153,20 @@ const SubDepartmentData = ({
 
   if (error) {
     return (
-      <div className="card-body text-center">
-        something went wrong, please refresh the page
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message && `Err: ${data?.message} - `} please refresh the page
+        </div>
+      </div>
+    );
+  }
+
+  if (!data.status) {
+    return (
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message} please refresh the page
+        </div>
       </div>
     );
   }
@@ -189,31 +185,21 @@ const SubDepartmentData = ({
                 className="btn btn-primary btn-sm fw-bold"
                 onClick={() => handleCreate()}
               >
-                Add Data
+                ADD DATA
               </button>
             )}
 
-            <button
-              type="button"
-              className="btn btn-dark btn-sm fw-bold ms-2"
-              onClick={() => handleFilter()}
+            <select
+              className="form-select-sm ms-2"
+              value={selectDept}
+              onChange={(e) => setSelectDept(e.target.value)}
             >
-              Filter Data
-            </button>
-            {filter.filter && (
-              <button
-                type="button"
-                className="btn btn-outline-dark btn-sm fw-bold ms-1"
-                onClick={() =>
-                  setFilter({
-                    filter: false,
-                    department: departments[0].id.toString(),
-                  })
-                }
-              >
-                Reset
-              </button>
-            )}
+              {departments?.map((item: Department, index: number) => (
+                <option value={item.id} key={index}>
+                  {item.nama_department?.toUpperCase()}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -222,14 +208,14 @@ const SubDepartmentData = ({
             <thead>
               <tr>
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
-                  No
+                  NO
                 </th>
-                <th className="fw-semibold fs-6">Sub Department</th>
+                <th className="fw-semibold fs-6">SUB DEPARTMENT</th>
                 <th className="fw-semibold fs-6" style={{ width: "30%" }}>
-                  Department
+                  DEPARTMENT
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  Action
+                  ACTION
                 </th>
               </tr>
             </thead>
@@ -266,7 +252,7 @@ const SubDepartmentData = ({
                               className="btn btn-success btn-sm"
                               onClick={() => handleEdit(item.id)}
                             >
-                              Edit
+                              EDIT
                             </button>
                           ))}
 
@@ -284,7 +270,7 @@ const SubDepartmentData = ({
                               className="btn btn-danger btn-sm"
                               onClick={() => handleDelete(item.id)}
                             >
-                              Delete
+                              DELETE
                             </button>
                           ))}
                       </div>
@@ -317,18 +303,7 @@ const SubDepartmentData = ({
           data={dataEdit}
         />
       )}
-
-      {/* modal filter */}
-      {isModalFilterOpen && (
-        <ModalFilter
-          isModalOpen={isModalFilterOpen}
-          onClose={closeModal}
-          dataDepartment={departments}
-          onFilter={handleFilterData}
-          filterData={filter}
-        />
-      )}
     </>
   );
 };
-export default SubDepartmentData;
+export default Data;

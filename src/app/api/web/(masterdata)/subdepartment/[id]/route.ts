@@ -4,7 +4,10 @@ import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
 import { handleError } from "@/libs/handleError";
 
-export async function GET(req: Request) {
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const authorization = req.headers.get("Authorization");
 
@@ -58,15 +61,15 @@ export async function GET(req: Request) {
       );
     }
 
-    const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
-    if (!actions.includes("view")) {
+    const id = params.id;
+    if (!id) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Unauthorized",
+          message: "Data not found",
         }),
         {
-          status: 401,
+          status: 404,
           headers: {
             "Content-Type": "application/json",
           },
@@ -74,9 +77,9 @@ export async function GET(req: Request) {
       );
     }
 
-    const data = await prisma.department.findMany({
-      orderBy: {
-        id: "asc",
+    const data = await prisma.sub_department.findFirst({
+      where: {
+        id: Number(id),
       },
     });
 
@@ -100,7 +103,6 @@ export async function GET(req: Request) {
         status: true,
         message: "success",
         data: data,
-        actions: actions,
       }),
       {
         status: 200,
@@ -114,7 +116,10 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const authorization = req.headers.get("Authorization");
 
@@ -169,7 +174,7 @@ export async function POST(req: Request) {
     }
 
     const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
-    if (!actions.includes("insert")) {
+    if (!actions.includes("update")) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -184,28 +189,47 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.formData();
-    const nama_department = body.get("nama_department")!.toString();
-    const lot = body.get("lot")?.toString();
-    const latitude = body.get("latitude")?.toString();
-    const longitude = body.get("longitude")?.toString();
-    const radius = body.get("radius")?.toString();
-
-    const create = await prisma.department.create({
-      data: {
-        nama_department: nama_department.toUpperCase(),
-        lot: lot,
-        latitude: latitude,
-        longitude: longitude,
-        radius: radius,
-      },
-    });
-
-    if (!create) {
+    const id = params.id;
+    if (!id) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to create department",
+          message: "Data not found",
+        }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const body = await req.formData();
+    const nama_sub_department = body.get("nama_sub_department")!.toString();
+    const department = body.get("department")!.toString();
+    const akses_izin = body.get("akses_izin")?.toString();
+
+    const update = await prisma.sub_department.update({
+      data: {
+        nama_sub_department: nama_sub_department?.toUpperCase(),
+        department: {
+          connect: {
+            id: Number(department),
+          },
+        },
+        akses_izin: akses_izin ? akses_izin : null,
+      },
+      where: {
+        id: Number(id),
+      },
+    });
+
+    if (!update) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Failed to update sub department",
         }),
         {
           status: 500,
@@ -219,8 +243,136 @@ export async function POST(req: Request) {
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to create department",
-        data: create,
+        message: "Success to update sub department",
+        data: update,
+      }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const authorization = req.headers.get("Authorization");
+
+    const session = await checkSession(authorization);
+    if (!session[0]) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const searchParams = new URL(req.url).searchParams;
+    const menu_url = searchParams.get("menu_url");
+    if (!menu_url) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const roleId = session[1].roleId;
+    const roleAccess = await checkRoles(roleId, menu_url);
+    if (!roleAccess) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
+    if (!actions.includes("delete")) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const id = params.id;
+    if (!id) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Data not found",
+        }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const deletes = await prisma.sub_department.delete({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    if (!deletes) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Failed to delete sub department",
+        }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    return new NextResponse(
+      JSON.stringify({
+        status: true,
+        message: "Success to delete sub department",
+        data: deletes,
       }),
       {
         status: 200,
