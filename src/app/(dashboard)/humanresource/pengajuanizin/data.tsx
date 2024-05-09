@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import useSWR, { mutate } from "swr";
-import ModalFilter from "./modalFilter";
 import { usePathname } from "next/navigation";
 
 type PengajuanIzin = {
@@ -55,7 +54,6 @@ const Data = ({
   const menu_url = pathname.substring(lastSlashIndex + 1);
 
   // loading state
-  const [isLoadingFilter, setIsLoadingFilter] = useState(false);
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingApprove, setIsLoadingApprove] = useState<isLoadingProps>({});
 

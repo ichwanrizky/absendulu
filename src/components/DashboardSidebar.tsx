@@ -3,7 +3,7 @@ import MenuSidebar from "./MenuSidebar";
 const getMenuSidebar = async (token: string) => {
   try {
     const response = await fetch(
-      process.env.NEXT_PUBLIC_API_URL + "/api/lib/menusidebar",
+      `${process.env.NEXT_PUBLIC_API_URL}/api/lib/menusidebar`,
       {
         headers: {
           authorization: `Bearer ${token}`,
