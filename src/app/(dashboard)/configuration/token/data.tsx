@@ -3,27 +3,14 @@ import { useState } from "react";
 import useSWR, { mutate } from "swr";
 import { usePathname } from "next/navigation";
 
-type PengajuanIzin = {
+type Token = {
   number: number;
   id: number;
-  jenis_izin: string;
-  tanggal: Date;
-  pegawai_id: number;
-  status: number;
-  bulan: number;
-  tahun: number;
-  keterangan: string;
-  jumlah_hari: string;
-  jumlah_jam: string;
-  mc: null;
-  approve_by: null;
-  approve_date: null;
-  pegawai: Pegawai;
+  token: string;
+  user_id: number;
+  createdAt: Date;
+  expired: boolean;
   user: User;
-};
-
-type Pegawai = {
-  nama: string;
 };
 
 type User = {
@@ -58,39 +45,41 @@ const Data = ({
   const [currentPage, setCurrentPage] = useState(1);
 
   // loading state
-  const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
+  const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
 
-  // filter state
+  // filter
   const [selectDept, setSelectDept] = useState(departments[0].id.toString());
 
   //search state
   const [search, setSearch] = useState("");
 
-  const handleDelete = async (id: number) => {
-    if (confirm("Delete this data?")) {
-      setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
+  const handleEdit = async (id: number) => {
+    if (confirm("Reset Token Karyawan ?")) {
+      setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
       try {
+        // get edit data
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin/${id}?menu_url=${menu_url}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/token/${id}?menu_url=${menu_url}`,
           {
-            method: "DELETE",
             headers: {
               authorization: `Bearer ${accessToken}`,
             },
           }
         );
         const res = await response.json();
-        alert(res.message);
-        if (response.ok) {
+        if (!response.ok) {
+          alert(res.message);
+        } else {
+          alert(res.message);
           setSearch("");
           mutate(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin?menu_url=${menu_url}&select_dept=${selectDept}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/token?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}`
           );
         }
       } catch (error) {
         alert("something went wrong");
       }
-      setIsLoadingDelete((prev) => ({ ...prev, [id]: false }));
+      setIsLoadingEdit((prev) => ({ ...prev, [id]: false }));
     }
   };
 
@@ -104,10 +93,11 @@ const Data = ({
       },
     }).then((res) => res.json());
   };
+
   const { data, error, isLoading } = useSWR(
     search === ""
-      ? `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}`
-      : `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}&search=${search}`,
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/web/token?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}`
+      : `${process.env.NEXT_PUBLIC_API_URL}/api/web/token?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}&search=${search}`,
     fetcher
   );
 
@@ -166,7 +156,7 @@ const Data = ({
     );
   }
 
-  const permits = data?.data;
+  const tokens = data?.data;
   const actions = data?.actions;
 
   const ITEMS_PER_PAGE = data?.itemsPerPage;
@@ -233,7 +223,6 @@ const Data = ({
                 ))}
               </select>
             </div>
-
             <input
               type="text"
               placeholder="Search..."
@@ -241,7 +230,6 @@ const Data = ({
               onChange={(e) => setSearch(e.target.value)}
               value={search}
               className="form-control-sm ms-2"
-              id="search"
               style={{
                 width: "200px",
                 float: "right",
@@ -258,75 +246,42 @@ const Data = ({
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
                   NO
                 </th>
-                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
+                <th className="fw-semibold fs-6">TOKEN</th>
+                <th className="fw-semibold fs-6" style={{ width: "20%" }}>
                   NAMA
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  JENIS IZIN
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  TANGGAL
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "5%" }}>
-                  JUMLAH HARI
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "5%" }}>
-                  JUMLAH JAM
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "5%" }}>
-                  MC
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  KETERANGAN
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  STATUS
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "5%" }}>
                   ACTION
                 </th>
               </tr>
             </thead>
             <tbody>
-              {permits?.length === 0 ? (
+              {tokens?.length === 0 ? (
                 <tr>
-                  <td colSpan={10}>
+                  <td colSpan={4}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
               ) : (
-                permits?.map((item: PengajuanIzin, index: number) => (
-                  <tr key={index} style={{ verticalAlign: "middle" }}>
+                tokens?.map((item: Token, index: number) => (
+                  <tr key={index}>
                     <td align="center">{item.number}</td>
-                    <td align="left">{item.pegawai.nama}</td>
-                    <td align="left">{jenisPengajuan(item.jenis_izin)}</td>
-                    <td align="left">
-                      {new Date(item.tanggal as Date).toLocaleString(
-                        "id-ID",
-                        optionsDate
-                      )}
+                    <td
+                      style={{
+                        maxWidth: "100px",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        textAlign: "center",
+                      }}
+                    >
+                      {item.token}
                     </td>
-                    <td align="center">{item.jumlah_hari}</td>
-                    <td align="center">{item.jumlah_jam}</td>
-                    <td align="center"></td>
-                    <td align="left">{item.keterangan}</td>
+                    <td align="left">{item?.user.name.toUpperCase()}</td>
                     <td align="center">
-                      {item.status === 1 ? (
-                        <>
-                          <span className="badge bg-success">Approved By</span>
-                          <strong>{item.user.name}</strong>
-                        </>
-                      ) : (
-                        <>
-                          <span className="badge bg-danger">Rejected By</span>
-                          <strong>{item.user.name}</strong>
-                        </>
-                      )}
-                    </td>
-                    <td align="center">
-                      {actions?.includes("delete") &&
-                        (isLoadingDelete[item.id] ? (
-                          <button className="btn btn-danger btn-sm" disabled>
+                      {actions?.includes("update") &&
+                        (isLoadingEdit[item.id] ? (
+                          <button className="btn btn-success btn-sm" disabled>
                             <span
                               className="spinner-border spinner-border-sm"
                               role="status"
@@ -335,10 +290,10 @@ const Data = ({
                           </button>
                         ) : (
                           <button
-                            className="btn btn-danger btn-sm"
-                            onClick={() => handleDelete(item.id)}
+                            className="btn btn-success btn-sm"
+                            onClick={() => handleEdit(item.id)}
                           >
-                            DELETE
+                            Reset
                           </button>
                         ))}
                     </td>
@@ -347,6 +302,7 @@ const Data = ({
               )}
             </tbody>
           </table>
+
           {TOTAL_PAGES > 0 && (
             <nav>
               <ul className="pagination">
@@ -380,45 +336,6 @@ const Data = ({
       </div>
     </>
   );
-};
-
-const jenisPengajuan = (jenis: string) => {
-  switch (jenis) {
-    case "C":
-      return "Cuti";
-
-    case "CS":
-      return "Cuti Setengah Hari";
-
-    case "I":
-      return "Izin";
-
-    case "IS":
-      return "Izin Setengah Hari";
-
-    case "S":
-      return "Sakit";
-
-    case "G1":
-      return "Gatepass";
-
-    case "G2":
-      return "Datang Terlambat";
-
-    case "G3":
-      return "Pulang Awal";
-
-    case "P/M":
-      return "Lupa Absen";
-  }
-};
-
-const optionsDate: any = {
-  weekday: "long",
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-  timeZone: "UTC",
 };
 
 export default Data;

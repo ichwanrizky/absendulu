@@ -59,12 +59,6 @@ const Data = ({
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingApprove, setIsLoadingApprove] = useState<isLoadingProps>({});
 
-  // modal state
-  const [isModalFilterOpen, setIsModalFilterOpen] = useState(false);
-
-  // data state
-  const [subDepartments, setSubDepartments] = useState([] as SubDepartment[]);
-
   // filter
   const [selectDept, setSelectDept] = useState(departments[0].id.toString());
 
