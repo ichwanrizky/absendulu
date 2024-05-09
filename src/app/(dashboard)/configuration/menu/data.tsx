@@ -3,6 +3,7 @@ import { useState } from "react";
 import useSWR, { mutate } from "swr";
 import ModalCreate from "./modalCreate";
 import ModalEdit from "./modalEdit";
+import { usePathname } from "next/navigation";
 
 type Menu = {
   id: number;
@@ -29,7 +30,11 @@ interface isLoadingProps {
   [key: number]: boolean;
 }
 
-const MenuData = ({ accessToken }: { accessToken: string }) => {
+const Data = ({ accessToken }: { accessToken: string }) => {
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
+
   // loading state
   const [isLoadingCreate, setIsLoadingCreate] = useState(false);
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
@@ -47,7 +52,7 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
     setIsLoadingCreate(true);
     try {
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menugroup",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/menugroup`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -72,7 +77,7 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
     setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
     try {
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menugroup",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/menugroup`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -81,7 +86,7 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
       );
 
       const response2 = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menu/" + id,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/web/menu/${id}?menu_url=${menu_url}`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -109,7 +114,7 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
       setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
       try {
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menu/" + id,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/menu/${id}?menu_url=${menu_url}`,
           {
             method: "DELETE",
             headers: {
@@ -122,7 +127,7 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
         alert(res.message);
         if (response.ok) {
           mutate(
-            process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menu"
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/menu?menu_url=${menu_url}`
           );
         }
       } catch (error) {
@@ -135,7 +140,9 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
   const closeModal = () => {
     setIsModalCreateOpen(false);
     setIsModalEditOpen(false);
-    mutate(process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menu");
+    mutate(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/web/menu?menu_url=${menu_url}`
+    );
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -150,7 +157,7 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
   };
 
   const { data, error, isLoading } = useSWR(
-    process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/menu",
+    `${process.env.NEXT_PUBLIC_API_URL}/api/web/menu?menu_url=${menu_url}`,
     fetcher
   );
 
@@ -171,8 +178,20 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
 
   if (error) {
     return (
-      <div className="card-body text-center">
-        something went wrong, please refresh the page
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message && `Err: ${data?.message} - `} please refresh the page
+        </div>
+      </div>
+    );
+  }
+
+  if (!data.status) {
+    return (
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message} please refresh the page
+        </div>
       </div>
     );
   }
@@ -197,7 +216,7 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
                     role="status"
                     aria-hidden="true"
                   />{" "}
-                  Loading...
+                  LOADING...
                 </button>
               ) : (
                 <button
@@ -205,7 +224,7 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
                   className="btn btn-primary btn-sm fw-bold"
                   onClick={() => handleCreate()}
                 >
-                  Add Data
+                  ADD DATA
                 </button>
               ))}
           </div>
@@ -216,17 +235,17 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
             <thead>
               <tr>
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
-                  No
+                  NO
                 </th>
-                <th className="fw-semibold fs-6">Menu</th>
+                <th className="fw-semibold fs-6">MENU</th>
                 <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  Path
+                  PATH
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  Group
+                  GROUP
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  Action
+                  ACTION
                 </th>
               </tr>
             </thead>
@@ -241,9 +260,9 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
                 menus?.map((item: Menu, index: number) => (
                   <tr key={index}>
                     <td align="center">{index + 1}</td>
-                    <td>{item.menu}</td>
+                    <td>{item.menu?.toUpperCase()}</td>
                     <td>{item.path}</td>
-                    <td>{item.menu_group.menu_group}</td>
+                    <td>{item.menu_group.menu_group?.toUpperCase()}</td>
                     <td>
                       <div className="d-flex gap-2">
                         {actions?.includes("update") &&
@@ -260,7 +279,7 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
                               className="btn btn-success btn-sm"
                               onClick={() => handleEdit(item.id)}
                             >
-                              Edit
+                              EDIT
                             </button>
                           ))}
 
@@ -278,7 +297,7 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
                               className="btn btn-danger btn-sm"
                               onClick={() => handleDelete(item.id)}
                             >
-                              Delete
+                              DELETE
                             </button>
                           ))}
                       </div>
@@ -314,4 +333,4 @@ const MenuData = ({ accessToken }: { accessToken: string }) => {
     </>
   );
 };
-export default MenuData;
+export default Data;

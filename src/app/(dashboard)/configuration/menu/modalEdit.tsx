@@ -1,4 +1,5 @@
 "use client";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 type Props = {
@@ -26,6 +27,10 @@ type MenuGroups = {
 };
 const ModalEdit = (props: Props) => {
   const { isModalOpen, onClose, accessToken, menuGroups, dataEdit } = props;
+
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
 
   // loading state
   const [isLoading, setIsLoading] = useState(false);
@@ -56,9 +61,7 @@ const ModalEdit = (props: Props) => {
         body.append("path", path);
 
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/configuration/menu/" +
-            dataEdit.id,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/menu/${dataEdit.id}?menu_url=${menu_url}`,
           {
             method: "POST",
             headers: {
@@ -99,7 +102,7 @@ const ModalEdit = (props: Props) => {
             <form onSubmit={handleSubmit}>
               <div className="modal-content">
                 <div className="modal-header">
-                  <h1 className="modal-title fs-5 fw-semibold">Edit Menu</h1>
+                  <h1 className="modal-title fs-5 fw-semibold">EDIT MENU</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -109,16 +112,16 @@ const ModalEdit = (props: Props) => {
                 </div>
                 <div className="modal-body">
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Menu Group</label>
+                    <label className="mb-1 fw-semibold small">MENU GROUP</label>
                     <select
                       className="form-select"
-                      required
                       onChange={(e) => setMenuGroup(e.target.value)}
                       value={menuGroup}
+                      required
                     >
                       <option value="">--PILIH--</option>
                       {menuGroups.map((item: MenuGroups, index: number) => (
-                        <option value={item.id}>
+                        <option value={item.id} key={index}>
                           {item.menu_group.toUpperCase()}
                         </option>
                       ))}
@@ -126,24 +129,25 @@ const ModalEdit = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Menu</label>
+                    <label className="mb-1 fw-semibold small">MENU</label>
                     <input
                       type="text"
                       className="form-control"
-                      required
+                      style={{ textTransform: "uppercase" }}
                       onChange={(e) => setMenu(e.target.value)}
                       value={menu}
+                      required
                     />
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Urut</label>
+                    <label className="mb-1 fw-semibold small">URUT</label>
                     <input
                       type="number"
                       className="form-control"
-                      required
                       onChange={(e) => setUrut(e.target.value)}
                       value={urut}
+                      required
                     />
                   </div>
                 </div>
@@ -153,7 +157,7 @@ const ModalEdit = (props: Props) => {
                     className="btn btn-dark btn-sm"
                     onClick={onClose}
                   >
-                    Close
+                    CLOSE
                   </button>
                   {isLoading ? (
                     <button
@@ -166,11 +170,11 @@ const ModalEdit = (props: Props) => {
                         role="status"
                         aria-hidden="true"
                       ></span>
-                      Loading...
+                      LOADING...
                     </button>
                   ) : (
                     <button type="submit" className="btn btn-primary btn-sm">
-                      Save changes
+                      SAVE CHANGES
                     </button>
                   )}
                 </div>

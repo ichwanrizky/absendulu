@@ -1,4 +1,5 @@
 "use client";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 type Props = {
@@ -8,6 +9,10 @@ type Props = {
 };
 const ModalCreate = (props: Props) => {
   const { isModalOpen, onClose, accessToken } = props;
+
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
 
   // loading state
   const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +28,7 @@ const ModalCreate = (props: Props) => {
         body.append("role_name", roleName);
 
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/roles",
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/roles?menu_url=${menu_url}`,
           {
             method: "POST",
             headers: {
@@ -64,7 +69,7 @@ const ModalCreate = (props: Props) => {
             <form onSubmit={handleSubmit}>
               <div className="modal-content">
                 <div className="modal-header">
-                  <h1 className="modal-title fs-5 fw-semibold   ">Add Role</h1>
+                  <h1 className="modal-title fs-5 fw-semibold">ADD ROLE</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -74,10 +79,11 @@ const ModalCreate = (props: Props) => {
                 </div>
                 <div className="modal-body">
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Role Name</label>
+                    <label className="mb-1 fw-semibold small">ROLE NAME</label>
                     <input
                       type="text"
                       className="form-control"
+                      style={{ textTransform: "uppercase" }}
                       onChange={(e) => setRoleName(e.target.value)}
                       required
                     />
@@ -89,7 +95,7 @@ const ModalCreate = (props: Props) => {
                     className="btn btn-dark btn-sm"
                     onClick={onClose}
                   >
-                    Close
+                    CLOSE
                   </button>
                   {isLoading ? (
                     <button
@@ -102,11 +108,11 @@ const ModalCreate = (props: Props) => {
                         role="status"
                         aria-hidden="true"
                       ></span>
-                      Loading...
+                      LOADING...
                     </button>
                   ) : (
                     <button type="submit" className="btn btn-primary btn-sm">
-                      Save changes
+                      SAVE CHANGES
                     </button>
                   )}
                 </div>

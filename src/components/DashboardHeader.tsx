@@ -21,7 +21,7 @@ const DashboardHeader = ({ session }: { session: any }) => {
         <i data-feather="menu" />
       </button>
       <a className="navbar-brand pe-3 ps-4 ps-lg-2" href="index.html">
-        title here
+        EMS PJ
       </a>
 
       <ul className="navbar-nav align-items-center ms-auto">
@@ -58,12 +58,6 @@ const DashboardHeader = ({ session }: { session: any }) => {
               </div>
             </h6>
             <div className="dropdown-divider" />
-            <a className="dropdown-item" href="#!">
-              <div className="dropdown-item-icon">
-                <i data-feather="settings" />
-              </div>
-              Account
-            </a>
             <button className="dropdown-item" type="button" onClick={logout}>
               <div className="dropdown-item-icon">
                 <i data-feather="log-out" />

@@ -4,6 +4,7 @@ import useSWR, { mutate } from "swr";
 import ModalFilter from "./modalFilter";
 import ModalEdit from "./modalEdit";
 import ModalCreate from "./modalCreate";
+import { usePathname } from "next/navigation";
 
 type Karyawan = {
   number: number;
@@ -59,13 +60,17 @@ interface isLoadingProps {
   [key: number]: boolean;
 }
 
-const KaryawanData = ({
+const Data = ({
   accessToken,
   departments,
 }: {
   accessToken: string;
   departments: Department[];
 }) => {
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
+
   // pagination
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -86,13 +91,12 @@ const KaryawanData = ({
   // filter state
   const [filter, setFilter] = useState({
     filter: false,
-    department: departments[0].id.toString(),
     subDepartment: "",
     active: "1",
   });
+  const [selectDept, setSelectDept] = useState(departments[0].id.toString());
 
   //search state
-  const [typingTimeout, setTypingTimeout] = useState<any>();
   const [search, setSearch] = useState("");
 
   const handleCreate = () => {
@@ -104,9 +108,7 @@ const KaryawanData = ({
     try {
       // data edit
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/humanresource/datakaryawan/" +
-          id,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/web/datakaryawan/${id}?menu_url=${menu_url}`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -116,14 +118,16 @@ const KaryawanData = ({
       const res = await response.json();
 
       // sub department
+      const body = new FormData();
+      body.append("department", selectDept);
       const responseSubDepartment = await fetch(
-        process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/subdepartment?filter=" +
-          JSON.stringify({ department: department }),
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listsubdepartment`,
         {
+          method: "POST",
           headers: {
             authorization: `Bearer ${accessToken}`,
           },
+          body: body,
         }
       );
       const resSubDepartment = await responseSubDepartment.json();
@@ -146,9 +150,7 @@ const KaryawanData = ({
       setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
       try {
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/humanresource/datakaryawan/" +
-            id,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/datakaryawan/${id}?menu_url=${menu_url}`,
           {
             method: "DELETE",
             headers: {
@@ -159,12 +161,13 @@ const KaryawanData = ({
         const res = await response.json();
         alert(res.message);
         if (response.ok) {
+          setSearch("");
           mutate(
-            process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/humanresource/datakaryawan?page=" +
-              currentPage +
-              "&filter=" +
-              JSON.stringify(filter)
+            `${
+              process.env.NEXT_PUBLIC_API_URL
+            }/api/web/datakaryawan?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}&filter=${JSON.stringify(
+              filter
+            )}`
           );
         }
       } catch (error) {
@@ -178,26 +181,30 @@ const KaryawanData = ({
     setIsModalCreateOpen(false);
     setIsModalEditOpen(false);
     setIsModalFilterOpen(false);
+    setSearch("");
     mutate(
-      process.env.NEXT_PUBLIC_API_URL +
-        "/api/web/humanresource/datakaryawan?page=" +
-        currentPage +
-        "&filter=" +
-        JSON.stringify(filter)
+      `${
+        process.env.NEXT_PUBLIC_API_URL
+      }/api/web/datakaryawan?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}&filter=${JSON.stringify(
+        filter
+      )}`
     );
   };
 
   const handleFilter = async () => {
     setIsLoadingFilter(true);
     try {
+      const body = new FormData();
+      body.append("department", selectDept);
+
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/subdepartment?filter=" +
-          JSON.stringify({ department: departments[0].id }),
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listsubdepartment`,
         {
+          method: "POST",
           headers: {
             authorization: `Bearer ${accessToken}`,
           },
+          body: body,
         }
       );
 
@@ -215,29 +222,13 @@ const KaryawanData = ({
     setIsLoadingFilter(false);
   };
 
-  const handleFilterData = (
-    department: any,
-    subDepartment: any,
-    active: any
-  ) => {
+  const handleFilterData = (subDepartment: any, active: any) => {
     setIsModalFilterOpen(false);
     setFilter({
       filter: true,
-      department: department,
       subDepartment: subDepartment,
       active: active,
     });
-  };
-
-  const handleSearch = (search: any) => {
-    if (typingTimeout) clearTimeout(typingTimeout);
-    const newTimeout = setTimeout(() => {
-      setSearch(search);
-      setCurrentPage(1);
-    }, 1000);
-
-    // Update the timeout ID in state
-    setTypingTimeout(newTimeout);
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -252,18 +243,16 @@ const KaryawanData = ({
   };
   const { data, error, isLoading } = useSWR(
     search === ""
-      ? process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/humanresource/datakaryawan?page=" +
-          currentPage +
-          "&filter=" +
-          JSON.stringify(filter)
-      : process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/humanresource/datakaryawan?page=" +
-          1 +
-          "&filter=" +
-          JSON.stringify(filter) +
-          "&search=" +
-          search,
+      ? `${
+          process.env.NEXT_PUBLIC_API_URL
+        }/api/web/datakaryawan?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}&filter=${JSON.stringify(
+          filter
+        )}`
+      : `${
+          process.env.NEXT_PUBLIC_API_URL
+        }/api/web/datakaryawan?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}&filter=${JSON.stringify(
+          filter
+        )}&search=${search}`,
     fetcher
   );
 
@@ -277,7 +266,8 @@ const KaryawanData = ({
               type="text"
               placeholder="Search..."
               aria-label="Search"
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
+              value={search}
               className="form-control-sm ms-2"
               style={{
                 width: "200px",
@@ -302,8 +292,20 @@ const KaryawanData = ({
 
   if (error) {
     return (
-      <div className="card-body text-center">
-        something went wrong, please refresh the page
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message && `Err: ${data?.message} - `} please refresh the page
+        </div>
+      </div>
+    );
+  }
+
+  if (!data.status) {
+    return (
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message} please refresh the page
+        </div>
       </div>
     );
   }
@@ -370,7 +372,7 @@ const KaryawanData = ({
                   className="btn btn-primary btn-sm fw-bold"
                   onClick={() => handleCreate()}
                 >
-                  Add Data
+                  ADD DATA
                 </button>
               )}
               {isLoadingFilter ? (
@@ -384,15 +386,15 @@ const KaryawanData = ({
                     role="status"
                     aria-hidden="true"
                   />{" "}
-                  Loading...
+                  LOADING...
                 </button>
               ) : (
                 <button
                   type="button"
-                  className="btn btn-dark btn-sm fw-bold ms-1"
+                  className="btn btn-dark btn-sm fw-bold ms-2"
                   onClick={() => handleFilter()}
                 >
-                  Filter Data
+                  FILTER DATA
                 </button>
               )}
 
@@ -403,22 +405,33 @@ const KaryawanData = ({
                   onClick={() => {
                     setFilter({
                       filter: false,
-                      department: departments[0].id.toString(),
                       subDepartment: "",
                       active: "1",
                     });
                   }}
                 >
-                  Reset
+                  RESET
                 </button>
               )}
+              <select
+                className="form-select-sm ms-2"
+                value={selectDept}
+                onChange={(e) => setSelectDept(e.target.value)}
+              >
+                {departments?.map((item: Department, index: number) => (
+                  <option value={item.id} key={index}>
+                    {item.nama_department?.toUpperCase()}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <input
               type="text"
               placeholder="Search..."
               aria-label="Search"
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
+              value={search}
               className="form-control-sm ms-2"
               id="search"
               style={{
@@ -435,19 +448,19 @@ const KaryawanData = ({
             <thead>
               <tr>
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
-                  No
+                  NO
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "8%" }}>
                   ID
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "25%" }}>
-                  Nama
+                  NAMA
                 </th>
-                <th className="fw-semibold fs-6">Department</th>
-                <th className="fw-semibold fs-6">Sub Department</th>
-                <th className="fw-semibold fs-6">Posisi</th>
+                <th className="fw-semibold fs-6">DEPARTMENT</th>
+                <th className="fw-semibold fs-6">SUB DEPARTMENT</th>
+                <th className="fw-semibold fs-6">POSISI</th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  Action
+                  ACTION
                 </th>
               </tr>
             </thead>
@@ -489,7 +502,7 @@ const KaryawanData = ({
                                 handleEdit(item.id, item.department_id)
                               }
                             >
-                              Edit
+                              EDIT
                             </button>
                           ))}
 
@@ -507,7 +520,7 @@ const KaryawanData = ({
                               className="btn btn-danger btn-sm"
                               onClick={() => handleDelete(item.id)}
                             >
-                              Delete
+                              DELETE
                             </button>
                           ))}
                       </div>
@@ -577,8 +590,6 @@ const KaryawanData = ({
         <ModalFilter
           isModalOpen={isModalFilterOpen}
           onClose={closeModal}
-          accessToken={accessToken}
-          dataDepartment={departments}
           dataSubDepartment={subDepartments}
           onFilter={handleFilterData}
           filterData={filter}
@@ -587,4 +598,4 @@ const KaryawanData = ({
     </>
   );
 };
-export default KaryawanData;
+export default Data;

@@ -1,6 +1,6 @@
 import { authOptions } from "@/libs/authOptions";
 import { getServerSession } from "next-auth";
-import KaryawanData from "./data";
+import Data from "./data";
 
 type Session = {
   user: UserSession;
@@ -17,7 +17,7 @@ type UserSession = {
 const getDepartments = async (token: string) => {
   try {
     const response = await fetch(
-      process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/department",
+      `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listdepartment_access`,
       {
         headers: {
           authorization: `Bearer ${token}`,
@@ -38,7 +38,7 @@ const getDepartments = async (token: string) => {
     return [];
   }
 };
-const KaryawanPage = async () => {
+const Page = async () => {
   const session = (await getServerSession(authOptions)) as Session | null;
 
   if (!session) {
@@ -67,7 +67,7 @@ const KaryawanPage = async () => {
       <div className="container-xl px-4 mt-n10">
         <div className="card mb-4">
           <div className="card-header">Data Karyawan</div>
-          <KaryawanData
+          <Data
             accessToken={session.user.accessToken}
             departments={departments}
           />
@@ -77,4 +77,4 @@ const KaryawanPage = async () => {
   );
 };
 
-export default KaryawanPage;
+export default Page;

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import useSWR, { mutate } from "swr";
-import ModalFilter from "./modalFilter";
+import { usePathname } from "next/navigation";
 
 type PengajuanIzin = {
   id: number;
@@ -42,33 +42,25 @@ interface isLoadingProps {
   [key: number]: boolean;
 }
 
-const PengajuanIzinData = ({
+const Data = ({
   accessToken,
   departments,
 }: {
   accessToken: string;
   departments: Department[];
 }) => {
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
+
   // loading state
-  const [isLoadingFilter, setIsLoadingFilter] = useState(false);
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingApprove, setIsLoadingApprove] = useState<isLoadingProps>({});
 
-  // modal state
-  const [isModalFilterOpen, setIsModalFilterOpen] = useState(false);
-
-  // data state
-  const [subDepartments, setSubDepartments] = useState([] as SubDepartment[]);
-
-  // filter state
-  const [filter, setFilter] = useState({
-    filter: false,
-    department: departments[0].id.toString(),
-    subDepartment: "",
-  });
+  // filter
+  const [selectDept, setSelectDept] = useState(departments[0].id.toString());
 
   //search state
-  const [typingTimeout, setTypingTimeout] = useState<any>();
   const [search, setSearch] = useState("");
 
   const handleDelete = async (id: number) => {
@@ -76,9 +68,7 @@ const PengajuanIzinData = ({
       setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
       try {
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/humanresource/pengajuanizin/" +
-            id,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanizin/${id}?menu_url=${menu_url}`,
           {
             method: "DELETE",
             headers: {
@@ -89,10 +79,9 @@ const PengajuanIzinData = ({
         const res = await response.json();
         alert(res.message);
         if (response.ok) {
+          setSearch("");
           mutate(
-            process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/humanresource/pengajuanizin?&filter=" +
-              JSON.stringify(filter)
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanizin?menu_url=${menu_url}&select_dept=${selectDept}`
           );
         }
       } catch (error) {
@@ -110,9 +99,7 @@ const PengajuanIzinData = ({
         body.append("status", "1");
 
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/humanresource/pengajuanizin/" +
-            id,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanizin/${id}?menu_url=${menu_url}`,
           {
             method: "POST",
             body: body,
@@ -126,10 +113,9 @@ const PengajuanIzinData = ({
           alert(res.message);
         } else {
           alert(res.message);
+          setSearch("");
           mutate(
-            process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/humanresource/pengajuanizin?&filter=" +
-              JSON.stringify(filter)
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanizin?menu_url=${menu_url}&select_dept=${selectDept}`
           );
         }
       } catch (error) {
@@ -147,9 +133,7 @@ const PengajuanIzinData = ({
         body.append("status", "2");
 
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/humanresource/pengajuanizin/" +
-            id,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanizin/${id}?menu_url=${menu_url}`,
           {
             method: "POST",
             body: body,
@@ -163,10 +147,9 @@ const PengajuanIzinData = ({
           alert(res.message);
         } else {
           alert(res.message);
+          setSearch("");
           mutate(
-            process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/humanresource/pengajuanizin?&filter=" +
-              JSON.stringify(filter)
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanizin?menu_url=${menu_url}&select_dept=${selectDept}`
           );
         }
       } catch (error) {
@@ -174,62 +157,6 @@ const PengajuanIzinData = ({
       }
       setIsLoadingApprove((prev) => ({ ...prev, [id]: false }));
     }
-  };
-
-  const closeModal = () => {
-    setIsModalFilterOpen(false);
-    mutate(
-      process.env.NEXT_PUBLIC_API_URL +
-        "/api/web/humanresource/pengajuanizin?filter=" +
-        JSON.stringify(filter)
-    );
-  };
-
-  const handleFilter = async () => {
-    setIsLoadingFilter(true);
-    try {
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/subdepartment?filter=" +
-          JSON.stringify({ department: departments[0].id }),
-        {
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-
-      const res = await response.json();
-
-      if (!response.ok) {
-        alert(res.message);
-      } else {
-        setSubDepartments(res.data);
-        setIsModalFilterOpen(true);
-      }
-    } catch (error) {
-      alert("something went wrong");
-    }
-    setIsLoadingFilter(false);
-  };
-
-  const handleFilterData = (department: any, subDepartment: any) => {
-    setIsModalFilterOpen(false);
-    setFilter({
-      filter: true,
-      department: department,
-      subDepartment: subDepartment,
-    });
-  };
-
-  const handleSearch = (search: any) => {
-    if (typingTimeout) clearTimeout(typingTimeout);
-    const newTimeout = setTimeout(() => {
-      setSearch(search);
-    }, 1000);
-
-    // Update the timeout ID in state
-    setTypingTimeout(newTimeout);
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -244,14 +171,8 @@ const PengajuanIzinData = ({
   };
   const { data, error, isLoading } = useSWR(
     search === ""
-      ? process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/humanresource/pengajuanizin?&filter=" +
-          JSON.stringify(filter)
-      : process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/humanresource/pengajuanizin?&filter=" +
-          JSON.stringify(filter) +
-          "&search=" +
-          search,
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanizin?menu_url=${menu_url}&select_dept=${selectDept}`
+      : `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanizin?menu_url=${menu_url}&select_dept=${selectDept}&search=${search}`,
     fetcher
   );
 
@@ -261,12 +182,14 @@ const PengajuanIzinData = ({
         <div className="row">
           <div className="col-sm-12 d-flex justify-content-between align-items-center">
             <div></div>
+
             <input
               type="text"
               placeholder="Search..."
               aria-label="Search"
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               className="form-control-sm ms-2"
+              id="search"
               style={{
                 width: "200px",
                 float: "right",
@@ -275,7 +198,6 @@ const PengajuanIzinData = ({
             />
           </div>
         </div>
-
         <div className="text-center">
           <span
             className="spinner-border spinner-border-sm me-2"
@@ -290,12 +212,23 @@ const PengajuanIzinData = ({
 
   if (error) {
     return (
-      <div className="card-body text-center">
-        something went wrong, please refresh the page
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message && `Err: ${data?.message} - `} please refresh the page
+        </div>
       </div>
     );
   }
 
+  if (!data.status) {
+    return (
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message} please refresh the page
+        </div>
+      </div>
+    );
+  }
   const permits = data?.data;
   const actions = data?.actions;
 
@@ -304,53 +237,25 @@ const PengajuanIzinData = ({
       <div className="card-body">
         <div className="row">
           <div className="col-sm-12 d-flex justify-content-between align-items-center">
-            {/* button */}
             <div>
-              {isLoadingFilter ? (
-                <button
-                  type="button"
-                  className="btn btn-dark btn-sm fw-bold ms-2"
-                  disabled
-                >
-                  <span
-                    className="spinner-border spinner-border-sm me-2"
-                    role="status"
-                    aria-hidden="true"
-                  />{" "}
-                  Loading...
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="btn btn-dark btn-sm fw-bold ms-1"
-                  onClick={() => handleFilter()}
-                >
-                  Filter Data
-                </button>
-              )}
-
-              {filter.filter && (
-                <button
-                  type="button"
-                  className="btn btn-outline-dark btn-sm fw-bold ms-1"
-                  onClick={() => {
-                    setFilter({
-                      filter: false,
-                      department: departments[0].id.toString(),
-                      subDepartment: "",
-                    });
-                  }}
-                >
-                  Reset
-                </button>
-              )}
+              <select
+                className="form-select-sm"
+                value={selectDept}
+                onChange={(e) => setSelectDept(e.target.value)}
+              >
+                {departments?.map((item: Department, index: number) => (
+                  <option value={item.id} key={index}>
+                    {item.nama_department?.toUpperCase()}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <input
               type="text"
               placeholder="Search..."
               aria-label="Search"
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               className="form-control-sm ms-2"
               id="search"
               style={{
@@ -367,34 +272,34 @@ const PengajuanIzinData = ({
             <thead>
               <tr>
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
-                  No
+                  NO
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  Nama
+                  NAMA
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  Jenis Izin
+                  JENIS IZIN
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  Tanggal
+                  TANGGAL
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "5%" }}>
-                  Jumlah Hari
+                  JUMLAH HARI
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "5%" }}>
-                  Jumlah Jam
+                  JUMLAH JAM
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "5%" }}>
                   MC
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  Keterangan
+                  KETERANGAN
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  Persetujuan
+                  PERSETUJUAN
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "5%" }}>
-                  Action
+                  ACTION
                 </th>
               </tr>
             </thead>
@@ -502,23 +407,9 @@ const PengajuanIzinData = ({
           </table>
         </div>
       </div>
-
-      {/* modal filter */}
-      {isModalFilterOpen && (
-        <ModalFilter
-          isModalOpen={isModalFilterOpen}
-          onClose={closeModal}
-          accessToken={accessToken}
-          dataDepartment={departments}
-          dataSubDepartment={subDepartments}
-          onFilter={handleFilterData}
-          filterData={filter}
-        />
-      )}
     </>
   );
 };
-export default PengajuanIzinData;
 
 const jenisPengajuan = (jenis: string) => {
   switch (jenis) {
@@ -558,3 +449,5 @@ const optionsDate: any = {
   day: "numeric",
   timeZone: "UTC",
 };
+
+export default Data;

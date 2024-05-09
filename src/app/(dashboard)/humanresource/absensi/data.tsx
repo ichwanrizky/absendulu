@@ -1,7 +1,10 @@
 "use client";
 import { useState } from "react";
-import useSWR, { mutate } from "swr";
-import ModalFilter from "./modalFilter";
+import useSWR from "swr";
+import { usePathname } from "next/navigation";
+
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 type Absensi = {
   id: string | number;
@@ -23,48 +26,24 @@ type Department = {
   radius: string;
 };
 
-interface isLoadingProps {
-  [key: number]: boolean;
-}
-
-const AttendanceData = ({
+const Data = ({
   accessToken,
   departments,
 }: {
   accessToken: string;
   departments: Department[];
 }) => {
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
+
   const currentDate = new Date();
   currentDate.setHours(0, 0, 0, 0);
   currentDate.setHours(currentDate.getHours() + 7);
 
-  // modal state
-  const [isModalFilterOpen, setIsModalFilterOpen] = useState(false);
-
   // filter
-  const [filter, setFilter] = useState<any>({
-    filter: false,
-    department: departments[0].id.toString(),
-    tanngalAbsen: currentDate,
-  });
-
-  const closeModal = () => {
-    setIsModalFilterOpen(false);
-    mutate(process.env.NEXT_PUBLIC_API_URL + "/api/web/humanresource/absensi");
-  };
-
-  const handleFilter = async () => {
-    setIsModalFilterOpen(true);
-  };
-
-  const handleFilterData = (department: any, tanggalAbsen: Date) => {
-    setIsModalFilterOpen(false);
-    setFilter({
-      filter: true,
-      department: department,
-      tanngalAbsen: tanggalAbsen,
-    });
-  };
+  const [selectDept, setSelectDept] = useState(departments[0].id.toString());
+  const [tanggalAbsen, setTanggalAbsen] = useState(currentDate as Date);
 
   const fetcher = (url: RequestInfo) => {
     return fetch(url, {
@@ -78,9 +57,9 @@ const AttendanceData = ({
   };
 
   const { data, error, isLoading } = useSWR(
-    process.env.NEXT_PUBLIC_API_URL +
-      "/api/web/humanresource/absensi?filter=" +
-      JSON.stringify(filter),
+    `${
+      process.env.NEXT_PUBLIC_API_URL
+    }/api/web/absensi?menu_url=${menu_url}&select_dept=${selectDept}&tanggal_absen=${tanggalAbsen.toISOString()}`,
     fetcher
   );
 
@@ -101,8 +80,20 @@ const AttendanceData = ({
 
   if (error) {
     return (
-      <div className="card-body text-center">
-        something went wrong, please refresh the page
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message && `Err: ${data?.message} - `} please refresh the page
+        </div>
+      </div>
+    );
+  }
+
+  if (!data.status) {
+    return (
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message} please refresh the page
+        </div>
       </div>
     );
   }
@@ -113,29 +104,38 @@ const AttendanceData = ({
     <>
       <div className="card-body">
         <div className="row">
-          <div className="col-sm-12">
-            <button
-              type="button"
-              className="btn btn-dark btn-sm fw-bold "
-              onClick={() => handleFilter()}
+          <div className="col-sm-12" style={{ display: "flex" }}>
+            <div
+              className="date-picker-container"
+              style={{
+                position: "relative",
+                zIndex: "2",
+              }}
             >
-              Filter Data
-            </button>
-            {filter.filter && (
-              <button
-                type="button"
-                className="btn btn-outline-dark btn-sm fw-bold ms-1"
-                onClick={() =>
-                  setFilter({
-                    filter: false,
-                    department: departments[0].id.toString(),
-                    tanngalAbsen: currentDate,
-                  })
-                }
-              >
-                Reset
-              </button>
-            )}
+              <DatePicker
+                className="form-select-sm"
+                selected={tanggalAbsen}
+                onChange={(e: Date) => setTanggalAbsen(e)}
+                dateFormat={"yyyy-MM-dd"}
+                showMonthDropdown
+                showYearDropdown
+                scrollableYearDropdown
+                dropdownMode="select"
+                required
+              />
+            </div>
+
+            <select
+              className="form-select-sm ms-2"
+              value={selectDept}
+              onChange={(e) => setSelectDept(e.target.value)}
+            >
+              {departments?.map((item: Department, index: number) => (
+                <option value={item.id} key={index}>
+                  {item.nama_department?.toUpperCase()}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -144,20 +144,20 @@ const AttendanceData = ({
             <thead>
               <tr>
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
-                  No
+                  NO
                 </th>
-                <th className="fw-semibold fs-6">Nama</th>
+                <th className="fw-semibold fs-6">NAMA</th>
                 <th className="fw-semibold fs-6" style={{ width: "20%" }}>
-                  Tanggal
+                  TANGGAL
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  Absen Masuk
+                  ABSEN MASUK
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  Absen Pulang
+                  ABSEN PULANG
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
-                  Terlambat
+                  TERLAMBAT
                 </th>
               </tr>
             </thead>
@@ -187,18 +187,7 @@ const AttendanceData = ({
           </table>
         </div>
       </div>
-
-      {/* modal filter */}
-      {isModalFilterOpen && (
-        <ModalFilter
-          isModalOpen={isModalFilterOpen}
-          onClose={closeModal}
-          dataDepartment={departments}
-          onFilter={handleFilterData}
-          filterData={filter}
-        />
-      )}
     </>
   );
 };
-export default AttendanceData;
+export default Data;

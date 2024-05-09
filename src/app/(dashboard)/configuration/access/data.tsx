@@ -3,6 +3,7 @@ import { useState } from "react";
 import useSWR, { mutate } from "swr";
 import ModalCreate from "./modalCreate";
 import ModalEdit from "./modalEdit";
+import { usePathname } from "next/navigation";
 
 type Access = {
   id: number;
@@ -51,7 +52,11 @@ interface isLoadingProps {
   [key: number]: boolean;
 }
 
-const AccessData = ({ accessToken }: { accessToken: string }) => {
+const Data = ({ accessToken }: { accessToken: string }) => {
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
+
   // loading state
   const [isLoadingCreate, setIsLoadingCreate] = useState(false);
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
@@ -75,7 +80,7 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
     try {
       // get roles
       const responseRoles = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/getrolesaccess",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listroles`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -86,8 +91,7 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
 
       // get menu
       const responseMenu = await fetch(
-        process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/configuration/menugroup_menu",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/menugroup_menu`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -98,7 +102,7 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
 
       // get department
       const responseDepartment = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/getalldepartment",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listdepartment`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -131,7 +135,7 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
     setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
     try {
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/access/" + id,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/web/access/${id}?menu_url=${menu_url}`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -142,8 +146,7 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
 
       // get menu
       const responseMenu = await fetch(
-        process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/configuration/menugroup_menu",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/menugroup_menu`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -154,7 +157,7 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
 
       // get department
       const responseDepartment = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/getalldepartment",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listdepartment`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -165,9 +168,7 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
 
       // get akses department
       const responseAccessDepartment = await fetch(
-        process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/configuration/access_department/" +
-          id,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/access_department/${id}`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -209,9 +210,7 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
       setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
       try {
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/configuration/access/" +
-            id,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/access/${id}?menu_url=${menu_url}`,
           {
             method: "DELETE",
             headers: {
@@ -224,7 +223,7 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
         alert(res.message);
         if (response.ok) {
           mutate(
-            process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/access"
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/access?menu_url=${menu_url}`
           );
         }
       } catch (error) {
@@ -237,7 +236,9 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
   const closeModal = () => {
     setIsModalCreateOpen(false);
     setIsModalEditOpen(false);
-    mutate(process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/access");
+    mutate(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/web/access?menu_url=${menu_url}`
+    );
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -252,7 +253,7 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
   };
 
   const { data, error, isLoading } = useSWR(
-    process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/access",
+    `${process.env.NEXT_PUBLIC_API_URL}/api/web/access?menu_url=${menu_url}`,
     fetcher
   );
 
@@ -273,8 +274,20 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
 
   if (error) {
     return (
-      <div className="card-body text-center">
-        something went wrong, please refresh the page
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message && `Err: ${data?.message} - `} please refresh the page
+        </div>
+      </div>
+    );
+  }
+
+  if (!data.status) {
+    return (
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message} please refresh the page
+        </div>
       </div>
     );
   }
@@ -298,7 +311,7 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
                     role="status"
                     aria-hidden="true"
                   />{" "}
-                  Loading...
+                  LOADING...
                 </button>
               ) : (
                 <button
@@ -306,7 +319,7 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
                   className="btn btn-primary btn-sm fw-bold"
                   onClick={() => handleCreate()}
                 >
-                  Add Data
+                  ADD DATA
                 </button>
               ))}
           </div>
@@ -317,11 +330,11 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
             <thead>
               <tr>
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
-                  No
+                  NO
                 </th>
-                <th className="fw-semibold fs-6">Roles</th>
+                <th className="fw-semibold fs-6">ROLES</th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  Action
+                  ACTION
                 </th>
               </tr>
             </thead>
@@ -353,7 +366,7 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
                               className="btn btn-success btn-sm"
                               onClick={() => handleEdit(item.id)}
                             >
-                              Edit
+                              EDIT
                             </button>
                           ))}
 
@@ -371,7 +384,7 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
                               className="btn btn-danger btn-sm"
                               onClick={() => handleDelete(item.id)}
                             >
-                              Delete
+                              DELETE
                             </button>
                           ))}
                       </div>
@@ -411,4 +424,4 @@ const AccessData = ({ accessToken }: { accessToken: string }) => {
     </>
   );
 };
-export default AccessData;
+export default Data;

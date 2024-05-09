@@ -1,4 +1,5 @@
 "use client";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 type Props = {
@@ -18,6 +19,10 @@ type MenuGroup = {
 
 const ModalEdit = (props: Props) => {
   const { isModalOpen, onClose, accessToken, data } = props;
+
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
 
   // loading state
   const [isLoading, setIsLoading] = useState(false);
@@ -40,9 +45,7 @@ const ModalEdit = (props: Props) => {
         body.append("parent_id", parentId);
 
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/configuration/menugroup/" +
-            data.id,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/menugroup/${data.id}?menu_url=${menu_url}`,
           {
             method: "POST",
             headers: {
@@ -84,7 +87,7 @@ const ModalEdit = (props: Props) => {
               <div className="modal-content">
                 <div className="modal-header">
                   <h1 className="modal-title fs-5 fw-semibold   ">
-                    Edit Menu Group
+                    EDIT MENU GROUP
                   </h1>
                   <button
                     type="button"
@@ -95,10 +98,11 @@ const ModalEdit = (props: Props) => {
                 </div>
                 <div className="modal-body">
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Menu Group</label>
+                    <label className="mb-1 fw-semibold small">MENU GROUP</label>
                     <input
                       type="text"
                       className="form-control"
+                      style={{ textTransform: "uppercase" }}
                       onChange={(e) => setMenuGroup(e.target.value)}
                       value={menuGroup}
                       required
@@ -106,7 +110,7 @@ const ModalEdit = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Urut</label>
+                    <label className="mb-1 fw-semibold small">URUT</label>
                     <input
                       type="number"
                       className="form-control"
@@ -117,7 +121,7 @@ const ModalEdit = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Group</label>
+                    <label className="mb-1 fw-semibold small">GROUP</label>
                     <select
                       className="form-select"
                       onChange={(e) => setGroup(e.target.value)}
@@ -134,7 +138,7 @@ const ModalEdit = (props: Props) => {
                     className="btn btn-dark btn-sm"
                     onClick={onClose}
                   >
-                    Close
+                    CLOSE
                   </button>
                   {isLoading ? (
                     <button
@@ -147,11 +151,11 @@ const ModalEdit = (props: Props) => {
                         role="status"
                         aria-hidden="true"
                       ></span>
-                      Loading...
+                      LOADING...
                     </button>
                   ) : (
                     <button type="submit" className="btn btn-primary btn-sm">
-                      Save changes
+                      SAVE CHANGES
                     </button>
                   )}
                 </div>

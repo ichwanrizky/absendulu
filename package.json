@@ -1,5 +1,5 @@
 {
-  "name": "absendulu-nextjs",
+  "name": "new_absendulu",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,7 +12,6 @@
     "bcrypt": "^5.1.1",
     "bootstrap": "^5.3.2",
     "jsonwebtoken": "^9.0.2",
-    "net": "^1.0.2",
     "next": "14.1.0",
     "next-auth": "^4.24.5",
     "react": "^18",

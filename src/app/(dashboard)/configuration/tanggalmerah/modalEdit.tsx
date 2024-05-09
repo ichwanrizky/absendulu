@@ -1,4 +1,5 @@
 "use client";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Select from "react-select";
 
@@ -30,6 +31,10 @@ type TanggalMerahList = {
 const ModalEdit = (props: Props) => {
   const { isModalOpen, onClose, accessToken, dataEdit } = props;
 
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
+
   // loading state
   const [isLoading, setIsLoading] = useState(false);
 
@@ -52,9 +57,7 @@ const ModalEdit = (props: Props) => {
         body.append("tahun", tahun);
         body.append("tanggal_merah", JSON.stringify(tanggalMerah));
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/configuration/tanggalmerah/" +
-            dataEdit.id,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/tanggalmerah/${dataEdit.id}?menu_url=${menu_url}`,
           {
             method: "POST",
             headers: {
@@ -96,7 +99,7 @@ const ModalEdit = (props: Props) => {
               <div className="modal-content">
                 <div className="modal-header">
                   <h1 className="modal-title fs-5 fw-semibold">
-                    Edit Tanggal Merah
+                    EDIT TANGGAL MERAH
                   </h1>
                   <button
                     type="button"
@@ -107,21 +110,21 @@ const ModalEdit = (props: Props) => {
                 </div>
                 <div className="modal-body">
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Department</label>
+                    <label className="mb-1 fw-semibold small">DEPARTMENT</label>
                     <input
                       className="form-control"
                       value={dataEdit?.department?.nama_department?.toUpperCase()}
-                      disabled
+                      readOnly
                     />
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Bulan</label>
+                    <label className="mb-1 fw-semibold small">BULAN</label>
                     <select
                       className="form-select"
-                      required
                       value={bulan}
                       onChange={(e) => setBulan(e.target.value)}
+                      required
                     >
                       <option value="">--PILIH--</option>
                       {Array.from({ length: 12 }, (_, i) => {
@@ -139,22 +142,26 @@ const ModalEdit = (props: Props) => {
                           "November",
                           "Desember",
                         ];
-                        return <option value={i + 1}>{monthNames[i]}</option>;
+                        return (
+                          <option value={i + 1} key={i}>
+                            {monthNames[i]}
+                          </option>
+                        );
                       })}
                     </select>
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Tahun</label>
+                    <label className="mb-1 fw-semibold small">TAHUN</label>
                     <select
                       className="form-select"
-                      required
                       value={tahun}
                       onChange={(e) => setTahun(e.target.value)}
+                      required
                     >
                       <option value="">--PILIH--</option>
                       {Array.from({ length: 5 }, (_, i) => (
-                        <option value={new Date().getFullYear() - i}>
+                        <option value={new Date().getFullYear() - i} key={i}>
                           {new Date().getFullYear() - i}
                         </option>
                       ))}
@@ -162,7 +169,7 @@ const ModalEdit = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Tanggal</label>
+                    <label className="mb-1 fw-semibold small">TANGGAL</label>
                     <Select
                       value={tanggalMerah}
                       options={Array.from({ length: 31 }, (_, i) => ({
@@ -170,10 +177,10 @@ const ModalEdit = (props: Props) => {
                         value: `${(i + 1).toString().padStart(2, "0")}`,
                       }))}
                       onChange={(e: any) => setTanggalMerah(e)}
-                      required
                       isMulti
                       isClearable
                       closeMenuOnSelect={false}
+                      required
                     />
                   </div>
                 </div>
@@ -184,7 +191,7 @@ const ModalEdit = (props: Props) => {
                     className="btn btn-dark btn-sm"
                     onClick={onClose}
                   >
-                    Close
+                    CLOSE
                   </button>
                   {isLoading ? (
                     <button
@@ -197,11 +204,11 @@ const ModalEdit = (props: Props) => {
                         role="status"
                         aria-hidden="true"
                       ></span>
-                      Loading...
+                      LOADING...
                     </button>
                   ) : (
                     <button type="submit" className="btn btn-primary btn-sm">
-                      Save changes
+                      SAVE CHANGES
                     </button>
                   )}
                 </div>

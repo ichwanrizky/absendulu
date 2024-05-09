@@ -4,44 +4,20 @@ import { useState } from "react";
 type Props = {
   isModalOpen: any;
   onClose: any;
-  accessToken?: string;
-  dataDepartment: Department[];
   dataSubDepartment: SubDepartment[];
   onFilter: any;
   filterData: any;
-};
-
-type Department = {
-  id: number;
-  nama_department: string;
-  lot: string;
-  latitude: string;
-  longitude: string;
-  radius: string;
 };
 
 type SubDepartment = {
   id: number;
   nama_sub_department: string;
   department_id: number;
-  department: Department;
 };
 
 const ModalFilter = (props: Props) => {
-  const {
-    isModalOpen,
-    onClose,
-    accessToken,
-    dataDepartment,
-    dataSubDepartment,
-    onFilter,
-    filterData,
-  } = props;
-
-  // department state
-  const [department, setDepartment] = useState(
-    filterData === "" ? dataDepartment[0].id.toString() : filterData.department
-  );
+  const { isModalOpen, onClose, dataSubDepartment, onFilter, filterData } =
+    props;
 
   // sub department state
   const [subDepartment, setSubDepartment] = useState(
@@ -59,40 +35,7 @@ const ModalFilter = (props: Props) => {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    onFilter(department, subDepartment, active);
-  };
-
-  const changeDepartment = async (department: number) => {
-    if (department === 0) {
-      setSubDepartments([]);
-      return;
-    }
-
-    try {
-      setSubDepartments([]);
-
-      const filter = { department: department };
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/subdepartment?filter=" +
-          JSON.stringify(filter),
-        {
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-
-      const res = await response.json();
-
-      if (!response.ok) {
-        alert(res.message);
-      } else {
-        setSubDepartments(res.data);
-      }
-    } catch (error) {
-      alert("something went wrong");
-    }
+    onFilter(subDepartment, active);
   };
 
   return (
@@ -112,7 +55,7 @@ const ModalFilter = (props: Props) => {
             <form onSubmit={handleSubmit}>
               <div className="modal-content">
                 <div className="modal-header">
-                  <h1 className="modal-title fs-5 fw-semibold">Filter</h1>
+                  <h1 className="modal-title fs-5 fw-semibold">FILTER</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -123,28 +66,8 @@ const ModalFilter = (props: Props) => {
 
                 <div className="modal-body">
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Department</label>
-                    <select
-                      className="form-select"
-                      onChange={(e) => {
-                        setDepartment(e.target.value);
-                        changeDepartment(Number(e.target.value));
-                      }}
-                      value={department}
-                    >
-                      {dataDepartment?.map(
-                        (item: Department, index: number) => (
-                          <option value={item.id} key={index}>
-                            {item.nama_department.toUpperCase()}
-                          </option>
-                        )
-                      )}
-                    </select>
-                  </div>
-
-                  <div className="form-group mb-3">
                     <label className="mb-1 fw-semibold small">
-                      Sub Department
+                      SUB DEPARTMENT
                     </label>
                     <select
                       className="form-select"
@@ -164,15 +87,15 @@ const ModalFilter = (props: Props) => {
 
                   <div className="form-group mb-3">
                     <label className="mb-1 fw-semibold small">
-                      Status Active
+                      STATUS ACTIVE
                     </label>
                     <select
                       className="form-select"
                       onChange={(e) => setActive(e.target.value)}
                       value={active}
                     >
-                      <option value="1">Aktif</option>
-                      <option value="0">Tidak Aktif</option>
+                      <option value="1">AKTIF</option>
+                      <option value="0">TIDAK AKTIF</option>
                     </select>
                   </div>
                 </div>
@@ -182,11 +105,11 @@ const ModalFilter = (props: Props) => {
                     className="btn btn-dark btn-sm"
                     onClick={onClose}
                   >
-                    Close
+                    CLOSE
                   </button>
 
                   <button type="submit" className="btn btn-primary btn-sm">
-                    Filter Data
+                    FILTER DATA
                   </button>
                 </div>
               </div>

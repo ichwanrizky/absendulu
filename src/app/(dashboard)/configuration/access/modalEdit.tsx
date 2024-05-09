@@ -1,4 +1,5 @@
 "use client";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Select from "react-select";
 
@@ -66,6 +67,10 @@ const ModalEdit = (props: Props) => {
     dataAccessDepartment,
   } = props;
 
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
+
   // loading state
   const [isLoading, setIsLoading] = useState(false);
 
@@ -117,9 +122,7 @@ const ModalEdit = (props: Props) => {
         body.append("akses_department", JSON.stringify(aksesDepartment));
 
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/configuration/access/" +
-            dataAccess[0].role_id,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/access/${dataAccess[0].role_id}?menu_url=${menu_url}`,
           {
             method: "POST",
             headers: {
@@ -161,7 +164,7 @@ const ModalEdit = (props: Props) => {
               <div className="modal-content">
                 <div className="modal-header">
                   <h1 className="modal-title fs-5 fw-semibold   ">
-                    Edit Access
+                    EDIT ACCESS
                   </h1>
                   <button
                     type="button"
@@ -172,7 +175,7 @@ const ModalEdit = (props: Props) => {
                 </div>
                 <div className="modal-body">
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Roles</label>
+                    <label className="mb-1 fw-semibold small">ROLES</label>
                     <input
                       type="text"
                       className="form-control"
@@ -182,19 +185,17 @@ const ModalEdit = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">
-                      Akses Department
-                    </label>
+                    <label className="mb-1 fw-semibold small">DEPARTMENT</label>
                     <Select
                       options={dataDepartment?.map((item: Department) => ({
                         value: item.id,
                         label: item.nama_department.toUpperCase(),
                       }))}
                       value={aksesDepartment}
-                      required
+                      onChange={(e: any) => setAksesDepartment(e)}
                       isMulti
                       isClearable
-                      onChange={(e: any) => setAksesDepartment(e)}
+                      required
                     />
                   </div>
 
@@ -253,7 +254,7 @@ const ModalEdit = (props: Props) => {
                     className="btn btn-dark btn-sm"
                     onClick={onClose}
                   >
-                    Close
+                    CLOSE
                   </button>
                   {isLoading ? (
                     <button
@@ -266,11 +267,11 @@ const ModalEdit = (props: Props) => {
                         role="status"
                         aria-hidden="true"
                       ></span>
-                      Loading...
+                      LOADING...
                     </button>
                   ) : (
                     <button type="submit" className="btn btn-primary btn-sm">
-                      Save changes
+                      SAVE CHANGES
                     </button>
                   )}
                 </div>

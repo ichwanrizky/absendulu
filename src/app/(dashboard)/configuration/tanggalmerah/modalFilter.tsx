@@ -4,31 +4,18 @@ import { useState } from "react";
 type Props = {
   isModalOpen: any;
   onClose: any;
-  dataDepartment: Department[];
   onFilter: any;
   filterData: any;
 };
 
-type Department = {
-  id: number;
-  nama_department: string;
-  lot: string;
-  latitude: string;
-  longitude: string;
-  radius: string;
-};
-
 const ModalFilter = (props: Props) => {
-  const { isModalOpen, onClose, dataDepartment, onFilter, filterData } = props;
+  const { isModalOpen, onClose, onFilter, filterData } = props;
 
-  const [department, setDepartment] = useState(
-    filterData === "" ? "" : filterData.department
-  );
   const [tahun, setTahun] = useState(filterData === "" ? "" : filterData.tahun);
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    onFilter(department, tahun);
+    onFilter(tahun);
   };
 
   return (
@@ -48,7 +35,7 @@ const ModalFilter = (props: Props) => {
             <form onSubmit={handleSubmit}>
               <div className="modal-content">
                 <div className="modal-header">
-                  <h1 className="modal-title fs-5 fw-semibold">Filter</h1>
+                  <h1 className="modal-title fs-5 fw-semibold">FILTER</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -58,24 +45,7 @@ const ModalFilter = (props: Props) => {
                 </div>
                 <div className="modal-body">
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Department</label>
-                    <select
-                      className="form-select"
-                      onChange={(e) => setDepartment(e.target.value)}
-                      value={department}
-                    >
-                      {dataDepartment?.map(
-                        (item: Department, index: number) => (
-                          <option value={item.id} key={index}>
-                            {item.nama_department.toUpperCase()}
-                          </option>
-                        )
-                      )}
-                    </select>
-                  </div>
-
-                  <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Tahun</label>
+                    <label className="mb-1 fw-semibold small">TAHUN</label>
                     <select
                       className="form-select"
                       required
@@ -83,7 +53,7 @@ const ModalFilter = (props: Props) => {
                       onChange={(e) => setTahun(e.target.value)}
                     >
                       {Array.from({ length: 5 }, (_, i) => (
-                        <option value={new Date().getFullYear() - i}>
+                        <option value={new Date().getFullYear() - i} key={i}>
                           {new Date().getFullYear() - i}
                         </option>
                       ))}
@@ -96,11 +66,11 @@ const ModalFilter = (props: Props) => {
                     className="btn btn-dark btn-sm"
                     onClick={onClose}
                   >
-                    Close
+                    CLOSE
                   </button>
 
                   <button type="submit" className="btn btn-primary btn-sm">
-                    Filter Data
+                    FILTER DATA
                   </button>
                 </div>
               </div>

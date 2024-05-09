@@ -1,4 +1,5 @@
 "use client";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Select from "react-select";
 
@@ -18,6 +19,10 @@ type Department = {
 };
 const ModalCreate = (props: Props) => {
   const { isModalOpen, onClose, accessToken, dataDepartment } = props;
+
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
 
   // loading state
   const [isLoading, setIsLoading] = useState(false);
@@ -43,8 +48,7 @@ const ModalCreate = (props: Props) => {
         body.append("tahun", tahun);
         body.append("tanggal_merah", JSON.stringify(tanggalMerah));
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/configuration/tanggalmerah",
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/tanggalmerah?menu_url=${menu_url}`,
           {
             method: "POST",
             headers: {
@@ -86,7 +90,7 @@ const ModalCreate = (props: Props) => {
               <div className="modal-content">
                 <div className="modal-header">
                   <h1 className="modal-title fs-5 fw-semibold">
-                    Add Tanggal Merah
+                    ADD TANGGAL MERAH
                   </h1>
                   <button
                     type="button"
@@ -97,17 +101,17 @@ const ModalCreate = (props: Props) => {
                 </div>
                 <div className="modal-body">
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Department</label>
+                    <label className="mb-1 fw-semibold small">DEPARTMENT</label>
                     <select
                       className="form-select"
-                      required
                       value={department}
                       onChange={(e) => setDepartment(e.target.value)}
+                      required
                     >
                       <option value="">--PILIH--</option>
                       {dataDepartment?.map(
                         (item: Department, index: number) => (
-                          <option value={item.id}>
+                          <option value={item.id} key={index}>
                             {item.nama_department?.toUpperCase()}
                           </option>
                         )
@@ -116,12 +120,12 @@ const ModalCreate = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Bulan</label>
+                    <label className="mb-1 fw-semibold small">BULAN</label>
                     <select
                       className="form-select"
-                      required
                       value={bulan}
                       onChange={(e) => setBulan(e.target.value)}
+                      required
                     >
                       <option value="">--PILIH--</option>
                       {Array.from({ length: 12 }, (_, i) => {
@@ -139,13 +143,17 @@ const ModalCreate = (props: Props) => {
                           "November",
                           "Desember",
                         ];
-                        return <option value={i + 1}>{monthNames[i]}</option>;
+                        return (
+                          <option value={i + 1} key={i}>
+                            {monthNames[i]}
+                          </option>
+                        );
                       })}
                     </select>
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Tahun</label>
+                    <label className="mb-1 fw-semibold small">TAHUN</label>
                     <select
                       className="form-select"
                       required
@@ -154,7 +162,7 @@ const ModalCreate = (props: Props) => {
                     >
                       <option value="">--PILIH--</option>
                       {Array.from({ length: 5 }, (_, i) => (
-                        <option value={new Date().getFullYear() - i}>
+                        <option value={new Date().getFullYear() - i} key={i}>
                           {new Date().getFullYear() - i}
                         </option>
                       ))}
@@ -162,17 +170,17 @@ const ModalCreate = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Tanggal</label>
+                    <label className="mb-1 fw-semibold small">TANGGAL</label>
                     <Select
                       options={Array.from({ length: 31 }, (_, i) => ({
                         label: `${(i + 1).toString().padStart(2, "0")}`,
                         value: `${(i + 1).toString().padStart(2, "0")}`,
                       }))}
                       onChange={(e: any) => setTanggalMerah(e)}
-                      required
                       isMulti
                       isClearable
                       closeMenuOnSelect={false}
+                      required
                     />
                   </div>
                 </div>
@@ -183,7 +191,7 @@ const ModalCreate = (props: Props) => {
                     className="btn btn-dark btn-sm"
                     onClick={onClose}
                   >
-                    Close
+                    CLOSE
                   </button>
                   {isLoading ? (
                     <button
@@ -196,11 +204,11 @@ const ModalCreate = (props: Props) => {
                         role="status"
                         aria-hidden="true"
                       ></span>
-                      Loading...
+                      LOADING...
                     </button>
                   ) : (
                     <button type="submit" className="btn btn-primary btn-sm">
-                      Save changes
+                      SAVE CHANGES
                     </button>
                   )}
                 </div>

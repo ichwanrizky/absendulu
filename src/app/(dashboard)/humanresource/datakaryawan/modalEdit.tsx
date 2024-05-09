@@ -3,6 +3,7 @@ import { useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import styles from "./styles.module.css";
+import { usePathname } from "next/navigation";
 
 type Props = {
   isModalOpen: any;
@@ -74,6 +75,10 @@ const ModalEdit = (props: Props) => {
     dataSubDepartment,
   } = props;
 
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
+
   // loading state
   const [isLoading, setIsLoading] = useState(false);
 
@@ -81,7 +86,9 @@ const ModalEdit = (props: Props) => {
   const [subDepartments, setSubDepartments] = useState(dataSubDepartment);
 
   const [nama, setNama] = useState(data.nama);
-  const [idKaryawan, setIdKaryawan] = useState(data.panji_id);
+  const [idKaryawan, setIdKaryawan] = useState(
+    data.panji_id !== null ? data.panji_id : ""
+  );
   const [department, setDepartment] = useState(data.department_id.toString());
   const [subDepartment, setSubDepartment] = useState(
     data.sub_department_id.toString()
@@ -120,15 +127,18 @@ const ModalEdit = (props: Props) => {
     }
     try {
       setSubDepartments([]);
-      const filter = { department: department };
+
+      const body = new FormData();
+      body.append("department", department.toString());
+
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/subdepartment?filter=" +
-          JSON.stringify(filter),
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listsubdepartment`,
         {
+          method: "POST",
           headers: {
             authorization: `Bearer ${accessToken}`,
           },
+          body: body,
         }
       );
       const res = await response.json();
@@ -177,9 +187,7 @@ const ModalEdit = (props: Props) => {
         body.append("tanggal_join", tanggalJoin?.toISOString() || "");
 
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/humanresource/datakaryawan/" +
-            data.id,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/datakaryawan/${data.id}?menu_url=${menu_url}`,
           {
             method: "POST",
             headers: {
@@ -221,7 +229,7 @@ const ModalEdit = (props: Props) => {
               <div className="modal-content">
                 <div className="modal-header">
                   <h1 className="modal-title fs-5 fw-semibold   ">
-                    Edit Karyawan
+                    EDIT KARYAWAN
                   </h1>
                   <button
                     type="button"
@@ -235,7 +243,7 @@ const ModalEdit = (props: Props) => {
                     <div className="row">
                       <div className="col-sm-9">
                         <label className="mb-1 fw-semibold small">
-                          Nama Karyawan
+                          NAMA KARYAWAN
                         </label>
                         <input
                           type="text"
@@ -249,7 +257,7 @@ const ModalEdit = (props: Props) => {
 
                       <div className="col-sm-3">
                         <label className="mb-1 fw-semibold small">
-                          ID Karyawan
+                          ID KARYAWAN
                         </label>
                         <input
                           type="text"
@@ -257,7 +265,6 @@ const ModalEdit = (props: Props) => {
                           style={{ textTransform: "uppercase" }}
                           onChange={(e) => setIdKaryawan(e.target.value)}
                           value={idKaryawan}
-                          required
                         />
                       </div>
                     </div>
@@ -267,16 +274,16 @@ const ModalEdit = (props: Props) => {
                     <div className="row">
                       <div className="col-sm-6">
                         <label className="mb-1 fw-semibold small">
-                          Department
+                          DEPARTMENT
                         </label>
                         <select
                           className="form-select"
-                          required
                           onChange={(e) => {
                             setDepartment(e.target.value);
                             changeDepartment(Number(e.target.value));
                           }}
                           value={department}
+                          required
                         >
                           <option value="">--PILIH--</option>
                           {dataDepartment?.map(
@@ -291,13 +298,13 @@ const ModalEdit = (props: Props) => {
 
                       <div className="col-sm-6">
                         <label className="mb-1 fw-semibold small">
-                          Sub Department
+                          SUB DEPARTMENT
                         </label>
                         <select
                           className="form-select"
-                          required
                           onChange={(e) => setSubDepartment(e.target.value)}
                           value={subDepartment}
+                          required
                         >
                           <option value="">--PILIH--</option>
                           {subDepartments?.map(
@@ -319,20 +326,20 @@ const ModalEdit = (props: Props) => {
                         <input
                           type="number"
                           className="form-control"
-                          required
                           onChange={(e) => setNik(e.target.value)}
                           value={nik}
+                          required
                         />
                       </div>
 
                       <div className="col-sm-6">
-                        <label className="mb-1 fw-semibold small">Posisi</label>
+                        <label className="mb-1 fw-semibold small">POSISI</label>
                         <input
                           type="text"
                           className="form-control"
-                          required
                           onChange={(e) => setPosisi(e.target.value)}
                           value={posisi}
+                          required
                         />
                       </div>
                     </div>
@@ -342,7 +349,7 @@ const ModalEdit = (props: Props) => {
                     <div className="row">
                       <div className="col-sm-6">
                         <label className="mb-1 fw-semibold small">
-                          Tempat Lahir
+                          TEMPAT LAHIR
                         </label>
                         <input
                           type="text"
@@ -354,7 +361,7 @@ const ModalEdit = (props: Props) => {
 
                       <div className="col-sm-6">
                         <label className="mb-1 fw-semibold small">
-                          Tanggal Lahir
+                          TANGGAL LAHIR
                         </label>
                         <br />
                         <DatePicker
@@ -377,27 +384,27 @@ const ModalEdit = (props: Props) => {
                     <div className="row">
                       <div className="col-sm-6">
                         <label className="mb-1 fw-semibold small">
-                          Jenis Kelamin
+                          JENIS KELAMIN
                         </label>
                         <select
                           className="form-select"
-                          required
                           onChange={(e) => setJenisKelamin(e.target.value)}
                           value={jenisKelamin}
+                          required
                         >
                           <option value="">--PILIH--</option>
-                          <option value="L">Laki-Laki</option>
-                          <option value="P">Perempuan</option>
+                          <option value="L">LAKI-LAKI</option>
+                          <option value="P">PEREMPUAN</option>
                         </select>
                       </div>
 
                       <div className="col-sm-6">
-                        <label className="mb-1 fw-semibold small">Agama</label>
+                        <label className="mb-1 fw-semibold small">AGAMA</label>
                         <select
                           className="form-select"
-                          required
                           onChange={(e) => setAgama(e.target.value)}
                           value={agama}
+                          required
                         >
                           <option value="">--PILIH--</option>
                           <option value="Islam">Islam</option>
@@ -416,7 +423,7 @@ const ModalEdit = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Kebangsaan</label>
+                    <label className="mb-1 fw-semibold small">KEBANGSAAN</label>
                     <input
                       type="text"
                       className="form-control"
@@ -426,7 +433,7 @@ const ModalEdit = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Alamat</label>
+                    <label className="mb-1 fw-semibold small">ALAMAT</label>
                     <textarea
                       className="form-control"
                       rows={5}
@@ -463,7 +470,7 @@ const ModalEdit = (props: Props) => {
                     <div className="row">
                       <div className="col-sm-6">
                         <label className="mb-1 fw-semibold small">
-                          Kelurahan
+                          KELURAHAN
                         </label>
                         <input
                           type="text"
@@ -475,7 +482,7 @@ const ModalEdit = (props: Props) => {
 
                       <div className="col-sm-6">
                         <label className="mb-1 fw-semibold small">
-                          Kecamatan
+                          KECAMATAN
                         </label>
                         <input
                           type="text"
@@ -488,7 +495,7 @@ const ModalEdit = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Kota</label>
+                    <label className="mb-1 fw-semibold small">KOTA</label>
                     <input
                       type="text"
                       className="form-control"
@@ -501,7 +508,7 @@ const ModalEdit = (props: Props) => {
                     <div className="row">
                       <div className="col-sm-6">
                         <label className="mb-1 fw-semibold small">
-                          Telp/Hp/WA
+                          TELP/HP/WA
                         </label>
                         <input
                           type="number"
@@ -512,7 +519,7 @@ const ModalEdit = (props: Props) => {
                       </div>
 
                       <div className="col-sm-6">
-                        <label className="mb-1 fw-semibold small">Email</label>
+                        <label className="mb-1 fw-semibold small">EMAIL</label>
                         <input
                           type="email"
                           className="form-control"
@@ -525,7 +532,7 @@ const ModalEdit = (props: Props) => {
 
                   <div className="form-group mb-3">
                     <label className="mb-1 fw-semibold small">
-                      Status Nikah
+                      STATUS NIKAH
                     </label>
                     <select
                       className="form-select"
@@ -548,7 +555,7 @@ const ModalEdit = (props: Props) => {
 
                   <div className="form-group mb-3">
                     <label className="mb-1 fw-semibold small">
-                      Tanggal Join
+                      TANGGAL JOIN
                     </label>
                     <br />
                     <DatePicker
@@ -578,7 +585,7 @@ const ModalEdit = (props: Props) => {
                     <div className="row">
                       <div className="col-sm-6">
                         <label className="mb-1 fw-semibold small">
-                          Jenis Bank
+                          JENIS BANK
                         </label>
                         <input
                           type="text"
@@ -590,7 +597,7 @@ const ModalEdit = (props: Props) => {
 
                       <div className="col-sm-6">
                         <label className="mb-1 fw-semibold small">
-                          No Rekening
+                          NO. REKENING
                         </label>
                         <input
                           type="number"
@@ -636,7 +643,7 @@ const ModalEdit = (props: Props) => {
                     className="btn btn-dark btn-sm"
                     onClick={onClose}
                   >
-                    Close
+                    CLOSE
                   </button>
                   {isLoading ? (
                     <button
@@ -649,11 +656,11 @@ const ModalEdit = (props: Props) => {
                         role="status"
                         aria-hidden="true"
                       ></span>
-                      Loading...
+                      LOADING...
                     </button>
                   ) : (
                     <button type="submit" className="btn btn-primary btn-sm">
-                      Save changes
+                      SAVE CHANGES
                     </button>
                   )}
                 </div>

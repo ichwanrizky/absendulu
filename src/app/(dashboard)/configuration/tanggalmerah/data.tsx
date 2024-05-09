@@ -4,6 +4,7 @@ import useSWR, { mutate } from "swr";
 import ModalCreate from "./modalCreate";
 import ModalEdit from "./modalEdit";
 import ModalFilter from "./modalFilter";
+import { usePathname } from "next/navigation";
 
 type Department = {
   id: number;
@@ -32,13 +33,17 @@ interface isLoadingProps {
   [key: number]: boolean;
 }
 
-const TanggalMerahData = ({
+const Data = ({
   accessToken,
   departments,
 }: {
   accessToken: string;
   departments: Department[];
 }) => {
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
+
   // loading state
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
@@ -54,9 +59,9 @@ const TanggalMerahData = ({
   // filter
   const [filter, setFilter] = useState<any>({
     filter: false,
-    department: departments[0].id.toString(),
     tahun: new Date().getFullYear(),
   });
+  const [selectDept, setSelectDept] = useState(departments[0].id.toString());
 
   const handleCreate = async () => {
     setIsModalCreateOpen(true);
@@ -66,9 +71,7 @@ const TanggalMerahData = ({
     setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
     try {
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/configuration/tanggalmerah/" +
-          id,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/web/tanggalmerah/${id}?menu_url=${menu_url}`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -94,9 +97,7 @@ const TanggalMerahData = ({
       setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
       try {
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/configuration/tanggalmerah/" +
-            id,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/tanggalmerah/${id}?menu_url=${menu_url}`,
           {
             method: "DELETE",
             headers: {
@@ -109,9 +110,11 @@ const TanggalMerahData = ({
         alert(res.message);
         if (response.ok) {
           mutate(
-            process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/configuration/tanggalmerah?filter=" +
-              JSON.stringify(filter)
+            `${
+              process.env.NEXT_PUBLIC_API_URL
+            }/api/web/tanggalmerah?menu_url=${menu_url}&select_dept=${selectDept}&filter=${JSON.stringify(
+              filter
+            )}`
           );
         }
       } catch (error) {
@@ -126,9 +129,11 @@ const TanggalMerahData = ({
     setIsModalEditOpen(false);
     setIsModalFilterOpen(false);
     mutate(
-      process.env.NEXT_PUBLIC_API_URL +
-        "/api/web/configuration/tanggalmerah?filter=" +
-        JSON.stringify(filter)
+      `${
+        process.env.NEXT_PUBLIC_API_URL
+      }/api/web/tanggalmerah?menu_url=${menu_url}&select_dept=${selectDept}&filter=${JSON.stringify(
+        filter
+      )}`
     );
   };
 
@@ -136,9 +141,9 @@ const TanggalMerahData = ({
     setIsModalFilterOpen(true);
   };
 
-  const handleFilterData = (department: any, tahun: any) => {
+  const handleFilterData = (tahun: any) => {
     setIsModalFilterOpen(false);
-    setFilter({ filter: true, department: department, tahun: tahun });
+    setFilter({ filter: true, tahun: tahun });
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -153,9 +158,11 @@ const TanggalMerahData = ({
   };
 
   const { data, error, isLoading } = useSWR(
-    process.env.NEXT_PUBLIC_API_URL +
-      "/api/web/configuration/tanggalmerah?filter=" +
-      JSON.stringify(filter),
+    `${
+      process.env.NEXT_PUBLIC_API_URL
+    }/api/web/tanggalmerah?menu_url=${menu_url}&select_dept=${selectDept}&filter=${JSON.stringify(
+      filter
+    )}`,
     fetcher
   );
 
@@ -176,8 +183,20 @@ const TanggalMerahData = ({
 
   if (error) {
     return (
-      <div className="card-body text-center">
-        something went wrong, please refresh the page
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message && `Err: ${data?.message} - `} please refresh the page
+        </div>
+      </div>
+    );
+  }
+
+  if (!data.status) {
+    return (
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message} please refresh the page
+        </div>
       </div>
     );
   }
@@ -196,7 +215,7 @@ const TanggalMerahData = ({
                 className="btn btn-primary btn-sm fw-bold"
                 onClick={() => handleCreate()}
               >
-                Add Data
+                ADD DATA
               </button>
             )}
 
@@ -205,7 +224,7 @@ const TanggalMerahData = ({
               className="btn btn-dark btn-sm fw-bold ms-2"
               onClick={() => handleFilter()}
             >
-              Filter Data
+              FILTER DATA
             </button>
             {filter.filter && (
               <button
@@ -214,14 +233,24 @@ const TanggalMerahData = ({
                 onClick={() =>
                   setFilter({
                     filter: false,
-                    department: departments[0].id.toString(),
                     tahun: new Date().getFullYear(),
                   })
                 }
               >
-                Reset
+                RESET
               </button>
             )}
+            <select
+              className="form-select-sm ms-2"
+              value={selectDept}
+              onChange={(e) => setSelectDept(e.target.value)}
+            >
+              {departments?.map((item: Department, index: number) => (
+                <option value={item.id} key={index}>
+                  {item.nama_department?.toUpperCase()}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -230,20 +259,20 @@ const TanggalMerahData = ({
             <thead>
               <tr>
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
-                  No
+                  NO
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "20%" }}>
-                  Department
+                  DEPARTMENT
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  Tahun
+                  TAHUN
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  Bulan
+                  BULAN
                 </th>
-                <th className="fw-semibold fs-6">Tanggal Merah</th>
+                <th className="fw-semibold fs-6">TANGGAL MERAH</th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  Action
+                  ACTION
                 </th>
               </tr>
             </thead>
@@ -297,7 +326,7 @@ const TanggalMerahData = ({
                               className="btn btn-success btn-sm"
                               onClick={() => handleEdit(item.id)}
                             >
-                              Edit
+                              EDIT
                             </button>
                           ))}
 
@@ -315,7 +344,7 @@ const TanggalMerahData = ({
                               className="btn btn-danger btn-sm"
                               onClick={() => handleDelete(item.id)}
                             >
-                              Delete
+                              DELETE
                             </button>
                           ))}
                       </div>
@@ -353,7 +382,6 @@ const TanggalMerahData = ({
         <ModalFilter
           isModalOpen={isModalFilterOpen}
           onClose={closeModal}
-          dataDepartment={departments}
           onFilter={handleFilterData}
           filterData={filter}
         />
@@ -361,7 +389,6 @@ const TanggalMerahData = ({
     </>
   );
 };
-export default TanggalMerahData;
 
 const optionsDate: any = {
   year: "numeric",
@@ -388,3 +415,5 @@ const monthNames = (month: number) => {
 
   return monthNames[month - 1];
 };
+
+export default Data;

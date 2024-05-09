@@ -4,6 +4,7 @@ import useSWR, { mutate } from "swr";
 import ModalCreate from "./modalCreate";
 import ModalEdit from "./modalEdit";
 import { roles } from "@prisma/client";
+import { usePathname } from "next/navigation";
 
 type Roles = {
   id: number;
@@ -14,7 +15,11 @@ interface isLoadingProps {
   [key: number]: boolean;
 }
 
-const RolesData = ({ accessToken }: { accessToken: string }) => {
+const Data = ({ accessToken }: { accessToken: string }) => {
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
+
   // loading state
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
@@ -34,7 +39,7 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
     setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
     try {
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/roles/" + id,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/web/roles/${id}?menu_url=${menu_url}`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -60,9 +65,7 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
       setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
       try {
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/configuration/roles/" +
-            id,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/roles/${id}?menu_url=${menu_url}`,
           {
             method: "DELETE",
             headers: {
@@ -75,7 +78,7 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
         alert(res.message);
         if (response.ok) {
           mutate(
-            process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/roles"
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/roles?menu_url=${menu_url}`
           );
         }
       } catch (error) {
@@ -88,7 +91,9 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
   const closeModal = () => {
     setIsModalCreateOpen(false);
     setIsModalEditOpen(false);
-    mutate(process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/roles");
+    mutate(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/web/roles?menu_url=${menu_url}`
+    );
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -103,13 +108,9 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
   };
 
   const { data, error, isLoading } = useSWR(
-    process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/roles",
+    `${process.env.NEXT_PUBLIC_API_URL}/api/web/roles?menu_url=${menu_url}`,
     fetcher
   );
-
-  if (isLoading) {
-    return <></>;
-  }
 
   if (isLoading) {
     return (
@@ -121,6 +122,26 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
             aria-hidden="true"
           />{" "}
           Loading...
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message && `Err: ${data?.message} - `} please refresh the page
+        </div>
+      </div>
+    );
+  }
+
+  if (!data.status) {
+    return (
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message} please refresh the page
         </div>
       </div>
     );
@@ -140,7 +161,7 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
                 className="btn btn-primary btn-sm fw-bold"
                 onClick={() => handleCreate()}
               >
-                Add Data
+                ADD DATA
               </button>
             )}
           </div>
@@ -151,11 +172,11 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
             <thead>
               <tr>
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
-                  No
+                  NO
                 </th>
-                <th className="fw-semibold fs-6">Role Name</th>
+                <th className="fw-semibold fs-6">ROLE NAME</th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  Action
+                  ACTION
                 </th>
               </tr>
             </thead>
@@ -170,7 +191,7 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
                 roles?.map((item: Roles, index: number) => (
                   <tr key={index}>
                     <td align="center">{index + 1}</td>
-                    <td>{item.role_name}</td>
+                    <td>{item.role_name?.toUpperCase()}</td>
                     <td>
                       <div className="d-flex gap-2">
                         {actions?.includes("update") &&
@@ -187,7 +208,7 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
                               className="btn btn-success btn-sm"
                               onClick={() => handleEdit(item.id)}
                             >
-                              Edit
+                              EDIT
                             </button>
                           ))}
 
@@ -205,7 +226,7 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
                               className="btn btn-danger btn-sm"
                               onClick={() => handleDelete(item.id)}
                             >
-                              Delete
+                              DELETE
                             </button>
                           ))}
                       </div>
@@ -239,4 +260,4 @@ const RolesData = ({ accessToken }: { accessToken: string }) => {
     </>
   );
 };
-export default RolesData;
+export default Data;
