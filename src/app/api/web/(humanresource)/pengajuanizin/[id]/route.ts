@@ -4,7 +4,10 @@ import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
 import { handleError } from "@/libs/handleError";
 
-export async function GET(req: Request) {
+export async function POST(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const authorization = req.headers.get("Authorization");
 
@@ -26,6 +29,7 @@ export async function GET(req: Request) {
 
     const searchParams = new URL(req.url).searchParams;
     const menu_url = searchParams.get("menu_url");
+
     if (!menu_url) {
       return new NextResponse(
         JSON.stringify({
@@ -59,7 +63,7 @@ export async function GET(req: Request) {
     }
 
     const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
-    if (!actions.includes("view")) {
+    if (!actions.includes("update")) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -74,39 +78,8 @@ export async function GET(req: Request) {
       );
     }
 
-    // filter
-    const select_dept = searchParams.get("select_dept");
-
-    const data = await prisma.sub_department.findMany({
-      include: {
-        department: {
-          select: {
-            nama_department: true,
-          },
-        },
-        manager: {
-          select: {
-            pegawai: {
-              select: {
-                id: true,
-                nama: true,
-                telp: true,
-              },
-            },
-          },
-        },
-      },
-      where: {
-        department: {
-          id: Number(select_dept),
-        },
-      },
-      orderBy: {
-        nama_sub_department: "asc",
-      },
-    });
-
-    if (!data) {
+    const id = params.id;
+    if (!id) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -121,12 +94,125 @@ export async function GET(req: Request) {
       );
     }
 
+    const body = await req.formData();
+    const status = body.get("status")!.toString();
+
+    // format date
+    const currendDate = new Date();
+    const formattedDate = new Date(currendDate);
+    formattedDate.setHours(formattedDate.getHours() + 7);
+
+    const update = await prisma.pengajuan_izin.update({
+      data: {
+        status: Number(status),
+        approve_by: session[1].id,
+        approve_date: formattedDate,
+      },
+      where: {
+        id: Number(id),
+      },
+    });
+
+    if (!update) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Failed to update pengajuan izin",
+        }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    if (status === "1") {
+      const currentYear = new Date().getFullYear();
+      const nextYear = currentYear + 1;
+
+      const tanggalMerah = await prisma.tanggal_merah_list.findMany({
+        where: {
+          tanggal_merah: {
+            department_id: Number(update.department_id),
+          },
+          OR: [
+            {
+              tanggal_merah: {
+                tahun: currentYear,
+              },
+            },
+            {
+              tanggal_merah: {
+                tahun: nextYear,
+              },
+            },
+          ],
+        },
+      });
+
+      const tanggalMerahSet = new Set(
+        tanggalMerah.map(
+          (item: any) => item.tanggal.toISOString().split("T")[0]
+        )
+      );
+
+      const jumlahHari =
+        update.jumlah_hari === "" ? 1 : Number(update.jumlah_hari);
+
+      const izinData = [];
+      let tanggalIzin = new Date(update.tanggal as Date);
+      let i = 0;
+
+      while (izinData.length < jumlahHari) {
+        if (i > 0) {
+          tanggalIzin.setDate(tanggalIzin.getDate() + 1);
+        }
+
+        if (!tanggalMerahSet.has(tanggalIzin.toISOString().split("T")[0])) {
+          const izinEntry = {
+            jenis_izin: update.jenis_izin,
+            tanggal: new Date(tanggalIzin),
+            pegawai_id: update.pegawai_id,
+            bulan: update.bulan,
+            tahun: update.tahun,
+            keterangan: update.keterangan,
+            pengajuan_izin_id: update.id,
+            department_id: update.department_id,
+          };
+
+          izinData.push(izinEntry);
+        }
+
+        i++;
+      }
+
+      const insertIzin = await prisma.izin.createMany({
+        data: izinData,
+      });
+
+      if (!insertIzin) {
+        return new NextResponse(
+          JSON.stringify({
+            status: false,
+            message: "Failed to update pengajuan izin",
+          }),
+          {
+            status: 500,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+    }
+
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "success",
-        data: data,
-        actions: actions,
+        message: "Success to update pengajuan izin",
+        data: update,
       }),
       {
         status: 200,
@@ -140,7 +226,10 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const authorization = req.headers.get("Authorization");
 
@@ -162,6 +251,7 @@ export async function POST(req: Request) {
 
     const searchParams = new URL(req.url).searchParams;
     const menu_url = searchParams.get("menu_url");
+
     if (!menu_url) {
       return new NextResponse(
         JSON.stringify({
@@ -195,7 +285,7 @@ export async function POST(req: Request) {
     }
 
     const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
-    if (!actions.includes("insert")) {
+    if (!actions.includes("delete")) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -210,40 +300,36 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.formData();
-    const nama_sub_department = body.get("nama_sub_department")!.toString();
-    const department = body.get("department")!.toString();
-    const akses_izin = body.get("akses_izin")?.toString();
-    const manager = body.get("manager")?.toString();
-
-    let createManager;
-    if (manager) {
-      createManager = await prisma.manager.create({
-        data: {
-          pegawai_id: Number(manager),
-        },
-      });
-    }
-
-    const create = await prisma.sub_department.create({
-      data: {
-        nama_sub_department: nama_sub_department?.toUpperCase(),
-        department_id: Number(department),
-        akses_izin: akses_izin === "" ? akses_izin : null,
-        ...(manager && {
-          manager_id: createManager!.id as number,
-        }),
-      },
-    });
-
-    if (!create) {
+    const id = params.id;
+    if (!id) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to create sub department",
+          message: "Data not found",
         }),
         {
-          status: 500,
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const deletes = await prisma.pengajuan_izin.delete({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    if (!deletes) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Failed to delete data pengajuan izin",
+        }),
+        {
+          status: 404,
           headers: {
             "Content-Type": "application/json",
           },
@@ -254,8 +340,8 @@ export async function POST(req: Request) {
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to create sub department",
-        data: create,
+        message: "Success to delete pengajuan izin",
+        data: deletes,
       }),
       {
         status: 200,

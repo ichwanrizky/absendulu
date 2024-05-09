@@ -116,16 +116,15 @@ model sub_department {
   pegawai             pegawai[]  @relation("PegawaiSubDept")
   department          department @relation(fields: [department_id], references: [id])
   akses_izin          String?
-  manager             manager[]
+  manager_id          Int?
+  manager             manager?   @relation(fields: [manager_id], references: [id])
 }
 
 model manager {
-  sub_department_id Int
-  sub_department    sub_department @relation(fields: [sub_department_id], references: [id])
-  pegawai_id        Int
-  pegawai           pegawai        @relation(fields: [pegawai_id], references: [id])
-
-  @@unique([sub_department_id, pegawai_id])
+  id             Int              @id @default(autoincrement())
+  pegawai_id     Int
+  pegawai        pegawai          @relation(fields: [pegawai_id], references: [id])
+  sub_department sub_department[]
 }
 
 model pegawai {

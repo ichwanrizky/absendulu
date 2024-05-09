@@ -4,6 +4,7 @@ import useSWR, { mutate } from "swr";
 import ModalCreate from "./modalCreate";
 import ModalEdit from "./modalEdit";
 import ModalFilter from "./modalFilter";
+import { usePathname } from "next/navigation";
 
 type Shift = {
   id: number;
@@ -29,13 +30,17 @@ interface isLoadingProps {
   [key: number]: boolean;
 }
 
-const ShiftData = ({
+const Data = ({
   accessToken,
   departments,
 }: {
   accessToken: string;
   departments: Department[];
 }) => {
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
+
   // loading state
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
@@ -49,10 +54,7 @@ const ShiftData = ({
   const [dataEdit, setDataEdit] = useState({} as Shift);
 
   // filter
-  const [filter, setFilter] = useState<any>({
-    filter: false,
-    department: departments[0].id.toString(),
-  });
+  const [selectDept, setSelectDept] = useState(departments[0].id.toString());
 
   const handleCreate = async () => {
     setIsModalCreateOpen(true);
@@ -63,7 +65,7 @@ const ShiftData = ({
     try {
       // get edit data
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/shift/" + id,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/web/shift/${id}?menu_url=${menu_url}&select_dept=${selectDept}`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -88,7 +90,7 @@ const ShiftData = ({
       setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
       try {
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/shift/" + id,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/shift/${id}?menu_url=${menu_url}&select_dept=${selectDept}`,
           {
             method: "DELETE",
             headers: {
@@ -101,9 +103,7 @@ const ShiftData = ({
         alert(res.message);
         if (response.ok) {
           mutate(
-            process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/masterdata/shift?filter=" +
-              JSON.stringify(filter)
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/shift?menu_url=${menu_url}&select_dept=${selectDept}`
           );
         }
       } catch (error) {
@@ -118,19 +118,8 @@ const ShiftData = ({
     setIsModalEditOpen(false);
     setIsModalFilterOpen(false);
     mutate(
-      process.env.NEXT_PUBLIC_API_URL +
-        "/api/web/masterdata/shift?filter=" +
-        JSON.stringify(filter)
+      `${process.env.NEXT_PUBLIC_API_URL}/api/web/shift?menu_url=${menu_url}&select_dept=${selectDept}`
     );
-  };
-
-  const handleFilter = async () => {
-    setIsModalFilterOpen(true);
-  };
-
-  const handleFilterData = (department: any) => {
-    setIsModalFilterOpen(false);
-    setFilter({ filter: true, department: department });
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -145,9 +134,7 @@ const ShiftData = ({
   };
 
   const { data, error, isLoading } = useSWR(
-    process.env.NEXT_PUBLIC_API_URL +
-      "/api/web/masterdata/shift?filter=" +
-      JSON.stringify(filter),
+    `${process.env.NEXT_PUBLIC_API_URL}/api/web/shift?menu_url=${menu_url}&select_dept=${selectDept}`,
     fetcher
   );
 
@@ -168,8 +155,20 @@ const ShiftData = ({
 
   if (error) {
     return (
-      <div className="card-body text-center">
-        something went wrong, please refresh the page
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message && `Err: ${data?.message} - `} please refresh the page
+        </div>
+      </div>
+    );
+  }
+
+  if (!data.status) {
+    return (
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message} please refresh the page
+        </div>
       </div>
     );
   }
@@ -188,31 +187,21 @@ const ShiftData = ({
                 className="btn btn-primary btn-sm fw-bold"
                 onClick={() => handleCreate()}
               >
-                Add Data
+                ADD DATA
               </button>
             )}
 
-            <button
-              type="button"
-              className="btn btn-dark btn-sm fw-bold ms-2"
-              onClick={() => handleFilter()}
+            <select
+              className="form-select-sm ms-2"
+              value={selectDept}
+              onChange={(e) => setSelectDept(e.target.value)}
             >
-              Filter Data
-            </button>
-            {filter.filter && (
-              <button
-                type="button"
-                className="btn btn-outline-dark btn-sm fw-bold ms-1"
-                onClick={() =>
-                  setFilter({
-                    filter: false,
-                    department: departments[0].id.toString(),
-                  })
-                }
-              >
-                Reset
-              </button>
-            )}
+              {departments?.map((item: Department, index: number) => (
+                <option value={item.id} key={index}>
+                  {item.nama_department?.toUpperCase()}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -221,27 +210,27 @@ const ShiftData = ({
             <thead>
               <tr>
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
-                  No
+                  NO
                 </th>
-                <th className="fw-semibold fs-6">Department</th>
+                <th className="fw-semibold fs-6">DEPARTEMEN</th>
                 <th className="fw-semibold fs-6" style={{ width: "20%" }}>
-                  Keterangan
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "20%" }}>
-                  Jam Masuk
+                  KETERANGAN
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "20%" }}>
-                  Jam Pulang
+                  JAM MASUK
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "20%" }}>
+                  JAM PULANG
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  Action
+                  ACTION
                 </th>
               </tr>
             </thead>
             <tbody>
               {shifts?.length === 0 ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
@@ -281,7 +270,7 @@ const ShiftData = ({
                               className="btn btn-success btn-sm"
                               onClick={() => handleEdit(item.id)}
                             >
-                              Edit
+                              EDIT
                             </button>
                           ))}
 
@@ -299,7 +288,7 @@ const ShiftData = ({
                               className="btn btn-danger btn-sm"
                               onClick={() => handleDelete(item.id)}
                             >
-                              Delete
+                              DELETE
                             </button>
                           ))}
                       </div>
@@ -332,21 +321,9 @@ const ShiftData = ({
           data={dataEdit}
         />
       )}
-
-      {/* modal filter */}
-      {isModalFilterOpen && (
-        <ModalFilter
-          isModalOpen={isModalFilterOpen}
-          onClose={closeModal}
-          dataDepartment={departments}
-          onFilter={handleFilterData}
-          filterData={filter}
-        />
-      )}
     </>
   );
 };
-export default ShiftData;
 
 const optionsDate: any = {
   hour: "numeric",
@@ -354,3 +331,5 @@ const optionsDate: any = {
   second: "numeric",
   timeZone: "UTC",
 };
+
+export default Data;

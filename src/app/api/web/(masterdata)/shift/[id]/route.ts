@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { checkSession } from "@/libs/checkSession";
 import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
+import { checkDepartments } from "@/libs/checkDepartments";
 import { handleError } from "@/libs/handleError";
 
 export async function GET(
@@ -77,19 +78,7 @@ export async function GET(
       );
     }
 
-    const data = await prisma.sub_department.findFirst({
-      include: {
-        manager: {
-          select: {
-            pegawai: {
-              select: {
-                id: true,
-                nama: true,
-              },
-            },
-          },
-        },
-      },
+    const data = await prisma.shift.findFirst({
       where: {
         id: Number(id),
       },
@@ -218,53 +207,41 @@ export async function POST(
     }
 
     const body = await req.formData();
-    const nama_sub_department = body.get("nama_sub_department")!.toString();
+    const jam_masuk = body.get("jam_masuk")!.toString();
+    const jam_pulang = body.get("jam_pulang")!.toString();
     const department = body.get("department")!.toString();
-    const akses_izin = body.get("akses_izin")?.toString();
-    const manager = body.get("manager")?.toString();
+    const keterangan = body.get("keterangan")?.toString();
+    const cond_friday = body.get("cond_friday")?.toString();
 
-    let createManager;
-    if (manager) {
-      createManager = await prisma.$transaction([
-        prisma.manager.deleteMany({
-          where: {
-            sub_department: {
-              some: {
-                id: Number(id),
-              },
-            },
-          },
-        }),
+    const today = new Date();
+    const dateString = today.toISOString().split("T")[0];
 
-        prisma.manager.create({
-          data: {
-            pegawai_id: Number(manager),
-          },
-        }),
-      ]);
-    }
+    // Create Date objects for jam_masuk and jam_pulang
+    let jam_masukDateTime = new Date(`${dateString}T${jam_masuk}`);
+    let jam_pulangDateTime = new Date(`${dateString}T${jam_pulang}`);
 
-    const update = await prisma.$transaction([
-      prisma.sub_department.update({
-        data: {
-          nama_sub_department: nama_sub_department?.toUpperCase(),
-          department_id: Number(department),
-          akses_izin: akses_izin === "" ? akses_izin : null,
-          ...(manager && {
-            manager_id: createManager![1].id as number,
-          }),
-        },
-        where: {
-          id: Number(id),
-        },
-      }),
-    ]);
+    // Add 7 hours to jam_masuk and jam_pulang
+    jam_masukDateTime = addHoursToDate(jam_masukDateTime, 7);
+    jam_pulangDateTime = addHoursToDate(jam_pulangDateTime, 7);
+
+    const update = await prisma.shift.update({
+      data: {
+        jam_masuk: jam_masukDateTime,
+        jam_pulang: jam_pulangDateTime,
+        keterangan: keterangan,
+        department_id: Number(department),
+        cond_friday: Number(cond_friday),
+      },
+      where: {
+        id: Number(id),
+      },
+    });
 
     if (!update) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to update sub department",
+          message: "Failed to update shift",
         }),
         {
           status: 500,
@@ -278,7 +255,7 @@ export async function POST(
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to update sub department",
+        message: "Success to update shift",
         data: update,
       }),
       {
@@ -382,29 +359,17 @@ export async function DELETE(
       );
     }
 
-    const deletes = await prisma.$transaction([
-      prisma.manager.deleteMany({
-        where: {
-          sub_department: {
-            some: {
-              id: Number(id),
-            },
-          },
-        },
-      }),
-
-      prisma.sub_department.delete({
-        where: {
-          id: Number(id),
-        },
-      }),
-    ]);
+    const deletes = await prisma.shift.delete({
+      where: {
+        id: Number(id),
+      },
+    });
 
     if (!deletes) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to delete sub department",
+          message: "Failed to delete shift",
         }),
         {
           status: 404,
@@ -418,7 +383,7 @@ export async function DELETE(
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to delete sub department",
+        message: "Success to delete shift",
         data: deletes,
       }),
       {
@@ -431,4 +396,8 @@ export async function DELETE(
   } catch (error) {
     return handleError(error);
   }
+}
+
+function addHoursToDate(date: Date, hours: number) {
+  return new Date(date.getTime() + hours * 3600000);
 }

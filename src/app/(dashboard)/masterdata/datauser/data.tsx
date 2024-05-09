@@ -3,6 +3,7 @@ import { useState } from "react";
 import useSWR, { mutate } from "swr";
 import ModalCreate from "./modalCreate";
 import ModalEdit from "./modalEdit";
+import { usePathname } from "next/navigation";
 
 type User = {
   number: number;
@@ -15,7 +16,6 @@ type User = {
   pegawai_id: number;
   pegawai: Pegawai;
   roles: Roles;
-  password_show: string;
 };
 
 type Pegawai = {
@@ -40,13 +40,17 @@ interface isLoadingProps {
   [key: number]: boolean;
 }
 
-const UserData = ({
+const Data = ({
   accessToken,
   departments,
 }: {
   accessToken: string;
   departments: Department[];
 }) => {
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
+
   // pagination
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -63,8 +67,10 @@ const UserData = ({
   const [dataRoles, setDataRoles] = useState<Roles[]>();
 
   //search state
-  const [typingTimeout, setTypingTimeout] = useState<any>();
   const [search, setSearch] = useState("");
+
+  // filter
+  const [selectDept, setSelectDept] = useState(departments[0].id.toString());
 
   const handleCreate = async () => {
     setIsModalCreateOpen(true);
@@ -75,7 +81,7 @@ const UserData = ({
     try {
       // get edit data
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/datauser/" + id,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/web/datauser/${id}?menu_url=${menu_url}`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -86,7 +92,7 @@ const UserData = ({
 
       // get roles
       const responseRoles = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/web/configuration/roles",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listroles`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -113,9 +119,7 @@ const UserData = ({
       setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
       try {
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/masterdata/datauser/" +
-            id,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/datauser/${id}?menu_url=${menu_url}`,
           {
             method: "DELETE",
             headers: {
@@ -127,10 +131,9 @@ const UserData = ({
         const res = await response.json();
         alert(res.message);
         if (response.ok) {
+          setSearch("");
           mutate(
-            process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/masterdata/datauser?page=" +
-              currentPage
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/datauser?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}`
           );
         }
       } catch (error) {
@@ -143,22 +146,10 @@ const UserData = ({
   const closeModal = () => {
     setIsModalCreateOpen(false);
     setIsModalEditOpen(false);
+    setSearch("");
     mutate(
-      process.env.NEXT_PUBLIC_API_URL +
-        "/api/web/masterdata/datauser?page=" +
-        currentPage
+      `${process.env.NEXT_PUBLIC_API_URL}/api/web/datauser?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}`
     );
-  };
-
-  const handleSearch = (search: any) => {
-    if (typingTimeout) clearTimeout(typingTimeout);
-    const newTimeout = setTimeout(() => {
-      setSearch(search);
-      setCurrentPage(1);
-    }, 1000);
-
-    // Update the timeout ID in state
-    setTypingTimeout(newTimeout);
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -174,14 +165,8 @@ const UserData = ({
 
   const { data, error, isLoading } = useSWR(
     search === ""
-      ? process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/datauser?page=" +
-          currentPage
-      : process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/datauser?page=" +
-          1 +
-          "&search=" +
-          search,
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/web/datauser?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}`
+      : `${process.env.NEXT_PUBLIC_API_URL}/api/web/datauser?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}&search=${search}`,
     fetcher
   );
 
@@ -195,8 +180,10 @@ const UserData = ({
               type="text"
               placeholder="Search..."
               aria-label="Search"
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
+              value={search}
               className="form-control-sm ms-2"
+              id="search"
               style={{
                 width: "200px",
                 float: "right",
@@ -220,8 +207,20 @@ const UserData = ({
 
   if (error) {
     return (
-      <div className="card-body text-center">
-        something went wrong, please refresh the page
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message && `Err: ${data?.message} - `} please refresh the page
+        </div>
+      </div>
+    );
+  }
+
+  if (!data.status) {
+    return (
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message} please refresh the page
+        </div>
       </div>
     );
   }
@@ -288,16 +287,29 @@ const UserData = ({
                   className="btn btn-primary btn-sm fw-bold"
                   onClick={() => handleCreate()}
                 >
-                  Add Data
+                  ADD DATA
                 </button>
               )}
+
+              <select
+                className="form-select-sm ms-2"
+                value={selectDept}
+                onChange={(e) => setSelectDept(e.target.value)}
+              >
+                {departments?.map((item: Department, index: number) => (
+                  <option value={item.id} key={index}>
+                    {item.nama_department?.toUpperCase()}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <input
               type="text"
               placeholder="Search..."
               aria-label="Search"
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
+              value={search}
               className="form-control-sm ms-2"
               id="search"
               style={{
@@ -314,20 +326,17 @@ const UserData = ({
             <thead>
               <tr>
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
-                  No
+                  NO
                 </th>
-                <th className="fw-semibold fs-6">Nama</th>
-                <th className="fw-semibold fs-6" style={{ width: "20%" }}>
-                  Username
+                <th className="fw-semibold fs-6">NAMA</th>
+                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
+                  USERNAME
                 </th>
-                <th className="fw-semibold fs-6" style={{ width: "20%" }}>
-                  Password
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "20%" }}>
-                  Role
+                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
+                  ROLE
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  Action
+                  ACTION
                 </th>
               </tr>
             </thead>
@@ -344,7 +353,6 @@ const UserData = ({
                     <td align="center">{item.number}</td>
                     <td align="left">{item.name?.toUpperCase()}</td>
                     <td align="left">{item.username.toLowerCase()}</td>
-                    <td align="left">{item.password_show.toLowerCase()}</td>
                     <td align="left">{item.roles?.role_name.toUpperCase()}</td>
                     <td>
                       <div className="d-flex gap-2">
@@ -362,7 +370,7 @@ const UserData = ({
                               className="btn btn-success btn-sm"
                               onClick={() => handleEdit(item.id)}
                             >
-                              Edit
+                              EDIT
                             </button>
                           ))}
 
@@ -380,7 +388,7 @@ const UserData = ({
                               className="btn btn-danger btn-sm"
                               onClick={() => handleDelete(item.id)}
                             >
-                              Delete
+                              DELETE
                             </button>
                           ))}
                       </div>
@@ -446,4 +454,4 @@ const UserData = ({
   );
 };
 
-export default UserData;
+export default Data;

@@ -9,6 +9,7 @@ type Props = {
   accessToken?: string;
   dataDepartment: Department[];
   data: SubDepartment;
+  dataManager: Karyawan[];
 };
 
 type SubDepartment = {
@@ -17,6 +18,10 @@ type SubDepartment = {
   department_id: number;
   department: Department;
   akses_izin: string;
+  manager_id: number;
+  manager: {
+    pegawai: Karyawan;
+  };
 };
 
 type Department = {
@@ -27,8 +32,21 @@ type Department = {
   longitude: string;
   radius: string;
 };
+
+type Karyawan = {
+  id: number;
+  nama: string;
+};
+
 const ModalEdit = (props: Props) => {
-  const { isModalOpen, onClose, accessToken, dataDepartment, data } = props;
+  const {
+    isModalOpen,
+    onClose,
+    accessToken,
+    dataDepartment,
+    data,
+    dataManager,
+  } = props;
 
   const pathname = usePathname();
   const lastSlashIndex = pathname.lastIndexOf("/");
@@ -36,6 +54,8 @@ const ModalEdit = (props: Props) => {
 
   // loading state
   const [isLoading, setIsLoading] = useState(false);
+
+  const [listManager, setListManager] = useState(dataManager as Karyawan[]);
 
   const [department, setDepartment] = useState(data.department_id.toString());
   const [namaSubDepartment, setNamaSubDepartment] = useState(
@@ -46,6 +66,34 @@ const ModalEdit = (props: Props) => {
       ?.split(",")
       .map((item) => ({ value: item, label: jenisPengajuan(item) }))
   );
+  const [manager, setManager] = useState(data.manager?.pegawai.id?.toString());
+
+  const getManager = async (department: string) => {
+    setManager("");
+    try {
+      const body = new FormData();
+      body.append("department", department);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listkaryawan`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+          body: body,
+        }
+      );
+      const res = await response.json();
+      if (!response.ok) {
+        alert(res.message);
+      } else {
+        setListManager(res.data);
+      }
+    } catch (error) {
+      alert("something went wrong");
+    }
+  };
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -57,8 +105,9 @@ const ModalEdit = (props: Props) => {
         body.append("nama_sub_department", namaSubDepartment);
         body.append(
           "akses_izin",
-          aksesIzin.map((item) => item.value).join(",")
+          aksesIzin?.map((item) => item.value).join(",")
         );
+        body.append("manager", manager);
 
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/web/subdepartment/${data.id}?menu_url=${menu_url}`,
@@ -117,7 +166,10 @@ const ModalEdit = (props: Props) => {
                     <label className="mb-1 fw-semibold small">DEPARTMENT</label>
                     <select
                       className="form-select"
-                      onChange={(e) => setDepartment(e.target.value)}
+                      onChange={(e) => {
+                        setDepartment(e.target.value);
+                        getManager(e.target.value);
+                      }}
                       value={department}
                       required
                     >
@@ -144,6 +196,24 @@ const ModalEdit = (props: Props) => {
                       value={namaSubDepartment}
                       required
                     />
+                  </div>
+
+                  <div className="form-group mb-3">
+                    <label className="mb-1 fw-semibold small">
+                      PENANGGUNG JAWAB
+                    </label>
+                    <select
+                      className="form-select"
+                      onChange={(e) => setManager(e.target.value)}
+                      value={manager}
+                    >
+                      <option value="">--PILIH--</option>
+                      {listManager?.map((item: Karyawan, index: number) => (
+                        <option value={item.id} key={index}>
+                          {item.nama.toUpperCase()}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="form-group mb-3">

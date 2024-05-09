@@ -3,6 +3,7 @@ import { checkSession } from "@/libs/checkSession";
 import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
 import { handleError } from "@/libs/handleError";
+const bcrypt = require("bcrypt");
 
 export async function GET(req: Request) {
   try {
@@ -74,36 +75,65 @@ export async function GET(req: Request) {
       );
     }
 
+    // search
+    const search = searchParams.get("search");
+
+    // page
+    const page = searchParams.get("page");
+
     // filter
     const select_dept = searchParams.get("select_dept");
 
-    const data = await prisma.sub_department.findMany({
-      include: {
-        department: {
-          select: {
-            nama_department: true,
-          },
-        },
-        manager: {
-          select: {
-            pegawai: {
-              select: {
-                id: true,
-                nama: true,
-                telp: true,
-              },
-            },
-          },
-        },
-      },
+    const condition = {
       where: {
-        department: {
-          id: Number(select_dept),
+        name: {
+          contains: search ? search : undefined,
+        },
+        pegawai: {
+          department_id: Number(select_dept),
         },
       },
-      orderBy: {
-        nama_sub_department: "asc",
+    };
+
+    const totalData = await prisma.user.count({
+      ...condition,
+    });
+
+    const ITEMS_PER_PAGE = page ? 10 : totalData;
+    var data = await prisma.user.findMany({
+      include: {
+        pegawai: {
+          select: {
+            id: true,
+            nama: true,
+            tgl_lahir: true,
+          },
+        },
+        roles: {
+          select: {
+            role_name: true,
+          },
+        },
       },
+      ...condition,
+      orderBy: [
+        {
+          pegawai: {
+            nama: "asc",
+          },
+        },
+      ],
+      skip: page ? (parseInt(page) - 1) * ITEMS_PER_PAGE : 0,
+      take: ITEMS_PER_PAGE,
+    });
+
+    data = data.map((data, index) => {
+      return {
+        number: page
+          ? (Number(page) - 1) * ITEMS_PER_PAGE + index + 1
+          : index + 1,
+        ...data,
+      };
     });
 
     if (!data) {
@@ -127,6 +157,8 @@ export async function GET(req: Request) {
         message: "success",
         data: data,
         actions: actions,
+        itemsPerPage: ITEMS_PER_PAGE,
+        total: totalData,
       }),
       {
         status: 200,
@@ -211,36 +243,54 @@ export async function POST(req: Request) {
     }
 
     const body = await req.formData();
-    const nama_sub_department = body.get("nama_sub_department")!.toString();
-    const department = body.get("department")!.toString();
-    const akses_izin = body.get("akses_izin")?.toString();
-    const manager = body.get("manager")?.toString();
+    const pegawai = body.get("pegawai")!.toString();
+    const parsePegawai = pegawai ? JSON.parse(pegawai) : {};
 
-    let createManager;
-    if (manager) {
-      createManager = await prisma.manager.create({
-        data: {
-          pegawai_id: Number(manager),
-        },
-      });
-    }
-
-    const create = await prisma.sub_department.create({
-      data: {
-        nama_sub_department: nama_sub_department?.toUpperCase(),
-        department_id: Number(department),
-        akses_izin: akses_izin === "" ? akses_izin : null,
-        ...(manager && {
-          manager_id: createManager!.id as number,
-        }),
+    const dataPegawai = await prisma.pegawai.findMany({
+      select: {
+        id: true,
+        nama: true,
+        tgl_lahir: true,
       },
+      where: {
+        id: {
+          in: parsePegawai?.map((item: any) => Number(item.value)),
+        },
+      },
+    });
+
+    // format date
+    const currendDate = new Date();
+    const formattedDate = new Date(currendDate);
+    formattedDate.setHours(formattedDate.getHours() + 7);
+
+    const formattedPegawai = await Promise.all(
+      dataPegawai.map(async (item) => {
+        const username = item.nama?.toLowerCase().split(" ")[0] + item.id;
+        const rawPassword =
+          item.nama?.toLowerCase().split(" ")[0] +
+          (item.tgl_lahir?.getFullYear() || "");
+        const password = await bcrypt.hash(rawPassword, 10);
+
+        return {
+          username,
+          password,
+          createdAt: formattedDate,
+          pegawai_id: item.id,
+          name: item.nama.toUpperCase(),
+        };
+      })
+    );
+
+    const create = await prisma.user.createMany({
+      data: formattedPegawai,
     });
 
     if (!create) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to create sub department",
+          message: "Failed to create user",
         }),
         {
           status: 500,
@@ -254,7 +304,7 @@ export async function POST(req: Request) {
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to create sub department",
+        message: "Success to create user",
         data: create,
       }),
       {

@@ -26,6 +26,7 @@ export async function GET(req: Request) {
 
     const searchParams = new URL(req.url).searchParams;
     const menu_url = searchParams.get("menu_url");
+
     if (!menu_url) {
       return new NextResponse(
         JSON.stringify({
@@ -77,32 +78,20 @@ export async function GET(req: Request) {
     // filter
     const select_dept = searchParams.get("select_dept");
 
-    const data = await prisma.sub_department.findMany({
-      include: {
-        department: {
-          select: {
-            nama_department: true,
-          },
-        },
-        manager: {
-          select: {
-            pegawai: {
-              select: {
-                id: true,
-                nama: true,
-                telp: true,
-              },
-            },
-          },
-        },
+    const data = await prisma.pegawai.findMany({
+      select: {
+        id: true,
+        nama: true,
+        shift_id: true,
       },
       where: {
+        is_active: true,
         department: {
           id: Number(select_dept),
         },
       },
       orderBy: {
-        nama_sub_department: "asc",
+        nama: "asc",
       },
     });
 
@@ -162,6 +151,7 @@ export async function POST(req: Request) {
 
     const searchParams = new URL(req.url).searchParams;
     const menu_url = searchParams.get("menu_url");
+
     if (!menu_url) {
       return new NextResponse(
         JSON.stringify({
@@ -211,36 +201,27 @@ export async function POST(req: Request) {
     }
 
     const body = await req.formData();
-    const nama_sub_department = body.get("nama_sub_department")!.toString();
-    const department = body.get("department")!.toString();
-    const akses_izin = body.get("akses_izin")?.toString();
-    const manager = body.get("manager")?.toString();
+    const shift_active = body.get("shift_active")!.toString();
+    const parseShiftActive = JSON.parse(shift_active);
 
-    let createManager;
-    if (manager) {
-      createManager = await prisma.manager.create({
-        data: {
-          pegawai_id: Number(manager),
-        },
-      });
-    }
+    const update = await prisma.$transaction(
+      parseShiftActive.map((item: any) =>
+        prisma.pegawai.update({
+          data: {
+            shift_id: Number(item.shift_id),
+          },
+          where: {
+            id: Number(item.id),
+          },
+        })
+      )
+    );
 
-    const create = await prisma.sub_department.create({
-      data: {
-        nama_sub_department: nama_sub_department?.toUpperCase(),
-        department_id: Number(department),
-        akses_izin: akses_izin === "" ? akses_izin : null,
-        ...(manager && {
-          manager_id: createManager!.id as number,
-        }),
-      },
-    });
-
-    if (!create) {
+    if (!update) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to create sub department",
+          message: "Failed to create shift active",
         }),
         {
           status: 500,
@@ -254,8 +235,8 @@ export async function POST(req: Request) {
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to create sub department",
-        data: create,
+        message: "Success to create shift active",
+        data: update,
       }),
       {
         status: 200,

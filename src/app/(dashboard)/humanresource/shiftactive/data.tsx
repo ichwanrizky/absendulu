@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import useSWR, { mutate } from "swr";
-import ModalFilter from "./modalFilter";
+import { usePathname } from "next/navigation";
 
 type ShiftActive = {
   id: number;
@@ -29,7 +29,7 @@ type Shift = {
   department: Department;
 };
 
-const ShiftActiveData = ({
+const Data = ({
   accessToken,
   departments,
   shifts,
@@ -38,21 +38,19 @@ const ShiftActiveData = ({
   departments: Department[];
   shifts: Shift[];
 }) => {
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
+
   // loading state
   const [isLoadingCreate, setIsLoadingCreate] = useState(false);
-
-  // modal state
-  const [isModalFilterOpen, setIsModalFilterOpen] = useState(false);
 
   // data state
   const [dataShiftKaryawan, setDataShiftKaryawan] = useState<any>([]);
   const [dataShift, setDataShift] = useState<Shift[]>(shifts);
 
   // filter
-  const [filter, setFilter] = useState<any>({
-    filter: false,
-    department: departments[0].id.toString(),
-  });
+  const [selectDept, setSelectDept] = useState(departments[0].id.toString());
 
   const handleCreate = async () => {
     if (confirm("Save this data?")) {
@@ -62,8 +60,7 @@ const ShiftActiveData = ({
         body.append("shift_active", JSON.stringify(dataShiftKaryawan));
 
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL +
-            "/api/web/humanresource/shiftactive",
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/shiftactive?menu_url=${menu_url}`,
           {
             method: "POST",
             headers: {
@@ -79,9 +76,7 @@ const ShiftActiveData = ({
         } else {
           alert(res.message);
           mutate(
-            process.env.NEXT_PUBLIC_API_URL +
-              "/api/web/humanresource/shiftactive?filter=" +
-              JSON.stringify(filter)
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/shiftactive?menu_url=${menu_url}&select_dept=${selectDept}`
           );
         }
       } catch (error) {
@@ -89,25 +84,6 @@ const ShiftActiveData = ({
       }
       setIsLoadingCreate(false);
     }
-  };
-
-  const closeModal = () => {
-    setIsModalFilterOpen(false);
-    mutate(
-      process.env.NEXT_PUBLIC_API_URL +
-        "/api/web/humanresource/shiftactive?filter=" +
-        JSON.stringify(filter)
-    );
-  };
-
-  const handleFilter = async () => {
-    setIsModalFilterOpen(true);
-  };
-
-  const handleFilterData = (department: any, dataShift: any) => {
-    setIsModalFilterOpen(false);
-    setFilter({ filter: true, department: department });
-    setDataShift(dataShift);
   };
 
   const toggleShiftActive = (karyawan: number, shift: number) => {
@@ -138,9 +114,7 @@ const ShiftActiveData = ({
   };
 
   const { data, error, isLoading } = useSWR(
-    process.env.NEXT_PUBLIC_API_URL +
-      "/api/web/humanresource/shiftactive?filter=" +
-      JSON.stringify(filter),
+    `${process.env.NEXT_PUBLIC_API_URL}/api/web/shiftactive?menu_url=${menu_url}&select_dept=${selectDept}`,
     fetcher
   );
 
@@ -173,8 +147,20 @@ const ShiftActiveData = ({
 
   if (error) {
     return (
-      <div className="card-body text-center">
-        something went wrong, please refresh the page
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message && `Err: ${data?.message} - `} please refresh the page
+        </div>
+      </div>
+    );
+  }
+
+  if (!data.status) {
+    return (
+      <div className="card-body">
+        <div className="text-center">
+          {data?.message} please refresh the page
+        </div>
       </div>
     );
   }
@@ -199,7 +185,7 @@ const ShiftActiveData = ({
                     role="status"
                     aria-hidden="true"
                   ></span>
-                  Loading...
+                  LOADING...
                 </button>
               ) : (
                 <button
@@ -207,32 +193,21 @@ const ShiftActiveData = ({
                   className="btn btn-primary btn-sm fw-bold"
                   onClick={() => handleCreate()}
                 >
-                  Save Changes
+                  SAVE CHANGES
                 </button>
               ))}
 
-            <button
-              type="button"
-              className="btn btn-dark btn-sm fw-bold ms-2"
-              onClick={() => handleFilter()}
+            <select
+              className="form-select-sm ms-2"
+              value={selectDept}
+              onChange={(e) => setSelectDept(e.target.value)}
             >
-              Filter Data
-            </button>
-            {filter.filter && (
-              <button
-                type="button"
-                className="btn btn-outline-dark btn-sm fw-bold ms-1"
-                onClick={() => {
-                  setFilter({
-                    filter: false,
-                    department: departments[0].id.toString(),
-                  });
-                  setDataShift(shifts);
-                }}
-              >
-                Reset
-              </button>
-            )}
+              {departments?.map((item: Department, index: number) => (
+                <option value={item.id} key={index}>
+                  {item.nama_department?.toUpperCase()}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -244,9 +219,9 @@ const ShiftActiveData = ({
                   className="fw-semibold fs-6 align-middle"
                   style={{ width: "1%" }}
                 >
-                  No
+                  NO
                 </th>
-                <th className="fw-semibold fs-6 align-middle">Nama</th>
+                <th className="fw-semibold fs-6 align-middle">NAMA</th>
                 {dataShift?.map((item: Shift, index: number) => (
                   <th
                     className="fw-semibold fs-6 text-center"
@@ -284,9 +259,8 @@ const ShiftActiveData = ({
                     <td align="center">{index + 1}</td>
                     <td align="left">{item.nama.toUpperCase()}</td>
                     {dataShift?.map((item2: Shift, index: number) => (
-                      <td align="center">
+                      <td align="center" key={index}>
                         <input
-                          key={index}
                           type="radio"
                           name={item.id.toString()}
                           onChange={() => toggleShiftActive(item.id, item2.id)}
@@ -301,23 +275,9 @@ const ShiftActiveData = ({
           </table>
         </div>
       </div>
-
-      {/* modal filter */}
-      {isModalFilterOpen && (
-        <ModalFilter
-          isModalOpen={isModalFilterOpen}
-          onClose={closeModal}
-          dataDepartment={departments}
-          onFilter={handleFilterData}
-          filterData={filter}
-          accessToken={accessToken}
-          shifts={shifts}
-        />
-      )}
     </>
   );
 };
-export default ShiftActiveData;
 
 const optionsDate: any = {
   hour: "numeric",
@@ -325,3 +285,5 @@ const optionsDate: any = {
   second: "numeric",
   timeZone: "UTC",
 };
+
+export default Data;

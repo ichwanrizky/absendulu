@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { checkSession } from "@/libs/checkSession";
 import { checkRoles } from "@/libs/checkRoles";
+import { checkDepartments } from "@/libs/checkDepartments";
 import prisma from "@/libs/db";
 import { handleError } from "@/libs/handleError";
 
@@ -77,22 +78,11 @@ export async function GET(req: Request) {
     // filter
     const select_dept = searchParams.get("select_dept");
 
-    const data = await prisma.sub_department.findMany({
+    const data = await prisma.shift.findMany({
       include: {
         department: {
           select: {
             nama_department: true,
-          },
-        },
-        manager: {
-          select: {
-            pegawai: {
-              select: {
-                id: true,
-                nama: true,
-                telp: true,
-              },
-            },
           },
         },
       },
@@ -102,7 +92,7 @@ export async function GET(req: Request) {
         },
       },
       orderBy: {
-        nama_sub_department: "asc",
+        id: "asc",
       },
     });
 
@@ -211,28 +201,30 @@ export async function POST(req: Request) {
     }
 
     const body = await req.formData();
-    const nama_sub_department = body.get("nama_sub_department")!.toString();
+    const jam_masuk = body.get("jam_masuk")!.toString();
+    const jam_pulang = body.get("jam_pulang")!.toString();
     const department = body.get("department")!.toString();
-    const akses_izin = body.get("akses_izin")?.toString();
-    const manager = body.get("manager")?.toString();
+    const keterangan = body.get("keterangan")?.toString();
+    const cond_friday = body.get("cond_friday")?.toString();
 
-    let createManager;
-    if (manager) {
-      createManager = await prisma.manager.create({
-        data: {
-          pegawai_id: Number(manager),
-        },
-      });
-    }
+    const today = new Date();
+    const dateString = today.toISOString().split("T")[0];
 
-    const create = await prisma.sub_department.create({
+    // Create Date objects for jam_masuk and jam_pulang
+    let jam_masukDateTime = new Date(`${dateString}T${jam_masuk}`);
+    let jam_pulangDateTime = new Date(`${dateString}T${jam_pulang}`);
+
+    // Add 7 hours to jam_masuk and jam_pulang
+    jam_masukDateTime = addHoursToDate(jam_masukDateTime, 7);
+    jam_pulangDateTime = addHoursToDate(jam_pulangDateTime, 7);
+
+    const create = await prisma.shift.create({
       data: {
-        nama_sub_department: nama_sub_department?.toUpperCase(),
+        jam_masuk: jam_masukDateTime,
+        jam_pulang: jam_pulangDateTime,
+        keterangan: keterangan?.toUpperCase(),
         department_id: Number(department),
-        akses_izin: akses_izin === "" ? akses_izin : null,
-        ...(manager && {
-          manager_id: createManager!.id as number,
-        }),
+        cond_friday: Number(cond_friday),
       },
     });
 
@@ -240,7 +232,7 @@ export async function POST(req: Request) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to create sub department",
+          message: "Failed to create shift",
         }),
         {
           status: 500,
@@ -254,7 +246,7 @@ export async function POST(req: Request) {
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to create sub department",
+        message: "Success to create shift",
         data: create,
       }),
       {
@@ -267,4 +259,8 @@ export async function POST(req: Request) {
   } catch (error) {
     return handleError(error);
   }
+}
+
+function addHoursToDate(date: Date, hours: number) {
+  return new Date(date.getTime() + hours * 3600000);
 }

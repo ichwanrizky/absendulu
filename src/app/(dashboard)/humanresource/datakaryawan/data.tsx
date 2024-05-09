@@ -97,7 +97,6 @@ const Data = ({
   const [selectDept, setSelectDept] = useState(departments[0].id.toString());
 
   //search state
-  const [typingTimeout, setTypingTimeout] = useState<any>();
   const [search, setSearch] = useState("");
 
   const handleCreate = () => {
@@ -232,17 +231,6 @@ const Data = ({
     });
   };
 
-  const handleSearch = (search: any) => {
-    if (typingTimeout) clearTimeout(typingTimeout);
-    const newTimeout = setTimeout(() => {
-      setSearch(search);
-      setCurrentPage(1);
-    }, 1000);
-
-    // Update the timeout ID in state
-    setTypingTimeout(newTimeout);
-  };
-
   const fetcher = (url: RequestInfo) => {
     return fetch(url, {
       headers: {
@@ -278,7 +266,8 @@ const Data = ({
               type="text"
               placeholder="Search..."
               aria-label="Search"
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
+              value={search}
               className="form-control-sm ms-2"
               style={{
                 width: "200px",
@@ -441,7 +430,8 @@ const Data = ({
               type="text"
               placeholder="Search..."
               aria-label="Search"
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
+              value={search}
               className="form-control-sm ms-2"
               id="search"
               style={{

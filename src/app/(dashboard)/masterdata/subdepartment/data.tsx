@@ -3,7 +3,6 @@ import { useState } from "react";
 import useSWR, { mutate } from "swr";
 import ModalCreate from "./modalCreate";
 import ModalEdit from "./modalEdit";
-import ModalFilter from "./modalFilter";
 import { usePathname } from "next/navigation";
 
 type SubDepartment = {
@@ -12,6 +11,10 @@ type SubDepartment = {
   department_id: number;
   department: Department;
   akses_izin: string;
+  manager_id: number;
+  manager: {
+    pegawai: Karyawan;
+  };
 };
 type Department = {
   id: number;
@@ -20,6 +23,11 @@ type Department = {
   latitude: string;
   longitude: string;
   radius: string;
+};
+
+type Karyawan = {
+  id: number;
+  nama: string;
 };
 
 interface isLoadingProps {
@@ -43,11 +51,11 @@ const Data = ({
 
   // modal state
   const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
-  const [isModalFilterOpen, setIsModalFilterOpen] = useState(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState(false);
 
   // data state
   const [dataEdit, setDataEdit] = useState({} as SubDepartment);
+  const [listManager, setListManager] = useState([] as Karyawan[]);
 
   // filter
   const [selectDept, setSelectDept] = useState(departments[0].id.toString());
@@ -70,10 +78,26 @@ const Data = ({
       );
       const res = await response.json();
 
-      if (!response.ok) {
-        alert(res.message);
+      // list karyawan
+      const body = new FormData();
+      body.append("department", selectDept);
+      const responseKaryawan = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listkaryawan`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+          body: body,
+        }
+      );
+      const resKaryawan = await responseKaryawan.json();
+
+      if (!response.ok || !responseKaryawan.ok) {
+        alert(!response.ok ? res.message : resKaryawan.message);
       } else {
         setDataEdit(res.data);
+        setListManager(resKaryawan.data);
         setIsModalEditOpen(true);
       }
     } catch (error) {
@@ -114,7 +138,6 @@ const Data = ({
   const closeModal = () => {
     setIsModalCreateOpen(false);
     setIsModalEditOpen(false);
-    setIsModalFilterOpen(false);
     mutate(
       `${process.env.NEXT_PUBLIC_API_URL}/api/web/subdepartment?menu_url=${menu_url}&select_dept=${selectDept}`
     );
@@ -211,8 +234,11 @@ const Data = ({
                   NO
                 </th>
                 <th className="fw-semibold fs-6">SUB DEPARTMENT</th>
-                <th className="fw-semibold fs-6" style={{ width: "30%" }}>
+                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
                   DEPARTMENT
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
+                  PENANGGUNG JAWAB
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
                   ACTION
@@ -235,6 +261,9 @@ const Data = ({
                     </td>
                     <td align="left">
                       {item.department.nama_department.toUpperCase()}
+                    </td>
+                    <td align="left">
+                      {item.manager?.pegawai.nama?.toUpperCase()}
                     </td>
                     <td>
                       <div className="d-flex gap-2">
@@ -301,6 +330,7 @@ const Data = ({
           accessToken={accessToken}
           dataDepartment={departments}
           data={dataEdit}
+          dataManager={listManager}
         />
       )}
     </>

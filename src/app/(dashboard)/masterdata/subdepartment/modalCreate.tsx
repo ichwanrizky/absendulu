@@ -18,6 +18,11 @@ type Department = {
   radius: string;
 };
 
+type Karyawan = {
+  id: number;
+  nama: string;
+};
+
 const ModalCreate = (props: Props) => {
   const { isModalOpen, onClose, accessToken, dataDepartment } = props;
 
@@ -28,6 +33,8 @@ const ModalCreate = (props: Props) => {
   // lodaing state
   const [isLoading, setIsLoading] = useState(false);
 
+  const [listManager, setListManager] = useState([] as Karyawan[]);
+
   const [department, setDepartment] = useState("");
   const [namaSubDepartment, setNamaSubDepartment] = useState("");
   const [aksesIzin, setAksesIzin] = useState([
@@ -36,6 +43,34 @@ const ModalCreate = (props: Props) => {
       label: null,
     },
   ]);
+  const [manager, setManager] = useState("");
+
+  const getManager = async (department: string) => {
+    setManager("");
+    try {
+      const body = new FormData();
+      body.append("department", department);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listkaryawan`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+          body: body,
+        }
+      );
+      const res = await response.json();
+      if (!response.ok) {
+        alert(res.message);
+      } else {
+        setListManager(res.data);
+      }
+    } catch (error) {
+      alert("something went wrong");
+    }
+  };
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -47,8 +82,9 @@ const ModalCreate = (props: Props) => {
         body.append("nama_sub_department", namaSubDepartment);
         body.append(
           "akses_izin",
-          aksesIzin.map((item) => item.value).join(",")
+          aksesIzin?.map((item) => item.value).join(",")
         );
+        body.append("manager", manager);
 
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/web/subdepartment?menu_url=${menu_url}`,
@@ -108,7 +144,10 @@ const ModalCreate = (props: Props) => {
                     <select
                       className="form-select"
                       required
-                      onChange={(e) => setDepartment(e.target.value)}
+                      onChange={(e) => {
+                        setDepartment(e.target.value);
+                        getManager(e.target.value);
+                      }}
                     >
                       <option value="">--PILIH--</option>
                       {dataDepartment?.map(
@@ -132,6 +171,24 @@ const ModalCreate = (props: Props) => {
                       required
                       onChange={(e) => setNamaSubDepartment(e.target.value)}
                     />
+                  </div>
+
+                  <div className="form-group mb-3">
+                    <label className="mb-1 fw-semibold small">
+                      PENANGGUNG JAWAB
+                    </label>
+                    <select
+                      className="form-select"
+                      onChange={(e) => setManager(e.target.value)}
+                      value={manager}
+                    >
+                      <option value="">--PILIH--</option>
+                      {listManager?.map((item: Karyawan, index: number) => (
+                        <option value={item.id} key={index}>
+                          {item.nama.toUpperCase()}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="form-group mb-3">

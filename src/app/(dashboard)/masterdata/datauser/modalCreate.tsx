@@ -1,4 +1,5 @@
 "use client";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Select from "react-select";
 
@@ -20,16 +21,15 @@ type Department = {
 const ModalCreate = (props: Props) => {
   const { isModalOpen, onClose, accessToken, dataDepartment } = props;
 
+  const pathname = usePathname();
+  const lastSlashIndex = pathname.lastIndexOf("/");
+  const menu_url = pathname.substring(lastSlashIndex + 1);
+
   // lodaing state
   const [isLoading, setIsLoading] = useState(false);
 
   const [checkAll, setCheckAll] = useState(false);
-  const [optionPegawai, setOptionPegawai] = useState([
-    {
-      value: "",
-      label: "",
-    },
-  ]);
+  const [optionPegawai, setOptionPegawai] = useState([]);
   const [pegawai, setPegawai] = useState<any>([]);
 
   const handleSubmit = async (e: any) => {
@@ -41,7 +41,7 @@ const ModalCreate = (props: Props) => {
         body.append("pegawai", JSON.stringify(pegawai));
 
         const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL + "/api/web/masterdata/datauser",
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/datauser?menu_url=${menu_url}`,
           {
             method: "POST",
             headers: {
@@ -80,18 +80,16 @@ const ModalCreate = (props: Props) => {
       setPegawai([]);
       setOptionPegawai([]);
 
+      const body = new FormData();
+      body.append("department", department);
       const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL +
-          "/api/web/masterdata/datakaryawan?filter=" +
-          JSON.stringify({
-            department: department,
-            active: "1",
-            is_user: true,
-          }),
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listuser`,
         {
+          method: "POST",
           headers: {
             authorization: `Bearer ${accessToken}`,
           },
+          body: body,
         }
       );
 
@@ -120,7 +118,7 @@ const ModalCreate = (props: Props) => {
 
     if (!checkAll) {
       setPegawai(
-        optionPegawai.map((item) => ({
+        optionPegawai.map((item: any) => ({
           label: item.label,
           value: item.value,
         }))
@@ -147,7 +145,7 @@ const ModalCreate = (props: Props) => {
             <form onSubmit={handleSubmit}>
               <div className="modal-content">
                 <div className="modal-header">
-                  <h1 className="modal-title fs-5 fw-semibold">Add User</h1>
+                  <h1 className="modal-title fs-5 fw-semibold">ADD DATA</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -157,11 +155,11 @@ const ModalCreate = (props: Props) => {
                 </div>
                 <div className="modal-body">
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Department</label>
+                    <label className="mb-1 fw-semibold small">DEPARTMENT</label>
                     <select
                       className="form-select"
-                      required
                       onChange={(e) => getPegawai(e.target.value)}
+                      required
                     >
                       <option value="">--PILIH--</option>
                       {dataDepartment?.map(
@@ -175,7 +173,7 @@ const ModalCreate = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">Karyawan</label>
+                    <label className="mb-1 fw-semibold small">KARYAWAN</label>
                     <Select
                       options={optionPegawai}
                       value={pegawai}
@@ -202,7 +200,7 @@ const ModalCreate = (props: Props) => {
                     className="btn btn-dark btn-sm"
                     onClick={onClose}
                   >
-                    Close
+                    CLOSE
                   </button>
                   {isLoading ? (
                     <button
@@ -215,11 +213,11 @@ const ModalCreate = (props: Props) => {
                         role="status"
                         aria-hidden="true"
                       ></span>
-                      Loading...
+                      LOADING...
                     </button>
                   ) : (
                     <button type="submit" className="btn btn-primary btn-sm">
-                      Save changes
+                      SAVE CHANGES
                     </button>
                   )}
                 </div>
