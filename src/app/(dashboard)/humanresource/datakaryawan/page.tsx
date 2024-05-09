@@ -66,7 +66,7 @@ const Page = async () => {
 
       <div className="container-xl px-4 mt-n10">
         <div className="card mb-4">
-          <div className="card-header">Data Karyawan</div>
+          <div className="card-header">DATA KARYAWAN</div>
           <Data
             accessToken={session.user.accessToken}
             departments={departments}

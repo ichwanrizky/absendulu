@@ -314,7 +314,7 @@ const Data = ({
                 permits?.map((item: PengajuanIzin, index: number) => (
                   <tr key={index}>
                     <td align="center">{index + 1}</td>
-                    <td align="left">{item.pegawai.nama}</td>
+                    <td align="left">{item.pegawai.nama?.toUpperCase()}</td>
                     <td align="left">{jenisPengajuan(item.jenis_izin)}</td>
                     <td align="left">
                       {new Date(item.tanggal as Date).toLocaleString(
