@@ -82,7 +82,7 @@ const Data = ({
       const body = new FormData();
       body.append("department", selectDept);
       const responseKaryawan = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listkaryawan`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listmanager`,
         {
           method: "POST",
           headers: {

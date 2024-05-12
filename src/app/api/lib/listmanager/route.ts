@@ -24,23 +24,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.formData();
-    const department = body.get("department")?.toString();
-    const sub_department = body.get("sub_department")?.toString();
-
-    if (!department && !sub_department) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Data not found",
-        }),
-        {
-          status: 404,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
+    const department = body.get("department")!.toString();
 
     const data = await prisma.pegawai.findMany({
       select: {
@@ -48,8 +32,25 @@ export async function POST(req: Request) {
         nama: true,
       },
       where: {
-        department_id: department ? Number(department) : undefined,
-        sub_department_id: sub_department ? Number(sub_department) : undefined,
+        ...(department === "1"
+          ? {
+              id: {
+                in: [71, 73],
+              },
+            }
+          : {
+              OR: [
+                {
+                  id: {
+                    in: [71, 73],
+                  },
+                },
+                {
+                  department_id: Number(department),
+                  is_active: true,
+                },
+              ],
+            }),
       },
       orderBy: {
         nama: "asc",

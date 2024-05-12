@@ -75,7 +75,7 @@ const ModalEdit = (props: Props) => {
       body.append("department", department);
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listkaryawan`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listmanager`,
         {
           method: "POST",
           headers: {

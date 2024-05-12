@@ -16,18 +16,19 @@ model roles {
 }
 
 model user {
-  id             Int              @id @default(autoincrement())
-  username       String           @unique
-  password       String
-  name           String?
-  createdAt      DateTime?        @db.DateTime(0)
-  rolesId        Int?
-  session        session[]
-  roles          roles?           @relation(fields: [rolesId], references: [id])
-  pegawai_id     Int?
-  pegawai        pegawai?         @relation(fields: [pegawai_id], references: [id])
-  session_mobile session_mobile[]
-  pengajuan_izin pengajuan_izin[]
+  id                 Int                  @id @default(autoincrement())
+  username           String               @unique
+  password           String
+  name               String?
+  createdAt          DateTime?            @db.DateTime(0)
+  rolesId            Int?
+  session            session[]
+  roles              roles?               @relation(fields: [rolesId], references: [id])
+  pegawai_id         Int?
+  pegawai            pegawai?             @relation(fields: [pegawai_id], references: [id])
+  session_mobile     session_mobile[]
+  pengajuan_izin     pengajuan_izin[]
+  pengajuan_overtime pengajuan_overtime[]
 }
 
 model menu_group {
@@ -94,19 +95,21 @@ model session_mobile {
 }
 
 model department {
-  id                Int                 @id @default(autoincrement())
-  nama_department   String
-  lot               String?
-  latitude          String?
-  longitude         String?
-  radius            String?
-  access_department access_department[]
-  pegawai           pegawai[]
-  shift             shift[]
-  sub_department    sub_department[]
-  tanggal_merah     tanggal_merah[]
-  pengajuan_izin    pengajuan_izin[]
-  izin              izin[]
+  id                 Int                  @id @default(autoincrement())
+  nama_department    String
+  lot                String?
+  latitude           String?
+  longitude          String?
+  radius             String?
+  access_department  access_department[]
+  pegawai            pegawai[]
+  shift              shift[]
+  sub_department     sub_department[]
+  tanggal_merah      tanggal_merah[]
+  pengajuan_izin     pengajuan_izin[]
+  izin               izin[]
+  pengajuan_overtime pengajuan_overtime[]
+  overtime           overtime[]
 }
 
 model sub_department {
@@ -169,6 +172,7 @@ model pegawai {
   izin                 izin[]
   request_session_izin request_session_izin[]
   manager              manager[]
+  overtime             overtime[]
 }
 
 model shift {
@@ -269,4 +273,40 @@ model tanggal_merah_list {
   tanggal_merah_id Int
   tanggal_nomor    String
   tanggal_merah    tanggal_merah @relation(fields: [tanggal_merah_id], references: [id])
+}
+
+model pengajuan_overtime {
+  id            Int        @id @default(autoincrement())
+  tanggal       DateTime   @db.Date
+  jam_from      DateTime   @db.Time(0)
+  jam_to        DateTime   @db.Time(0)
+  pegawai       String?
+  department_id Int
+  department    department @relation(fields: [department_id], references: [id])
+  job_desc      String?
+  remark        String?
+  status        Int        @default(0)
+  bulan         Int
+  tahun         Int
+  approve_by    Int?
+  user          user?      @relation(fields: [approve_by], references: [id])
+  approve_date  DateTime?  @db.DateTime(0)
+  overtime      overtime[]
+}
+
+model overtime {
+  id                    Int                @id @default(autoincrement())
+  tanggal               DateTime           @db.Date
+  pegawai_id            Int
+  pegawai               pegawai            @relation(fields: [pegawai_id], references: [id])
+  department_id         Int
+  department            department         @relation(fields: [department_id], references: [id])
+  jam                   String?
+  total                 String?
+  is_holiday            Boolean            @default(false)
+  status                Int                @default(0)
+  bulan                 Int
+  tahun                 Int
+  pengajuan_overtime_id Int
+  pengajuan_overtime    pengajuan_overtime @relation(fields: [pengajuan_overtime_id], references: [id])
 }
