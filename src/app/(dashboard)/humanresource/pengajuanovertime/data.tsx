@@ -20,18 +20,23 @@ type SubDepartment = {
 
 type PengajuanOvertime = {
   id: number;
-  tanggal: string;
-  jam_from: string;
-  jam_to: string;
+  tanggal: Date;
+  jam_from: Date;
+  jam_to: Date;
   job_desc: string;
   remark: string;
   status: number;
-  pengajuan_overtime_pegawai: Array<{
-    pegawai: {
-      nama: string;
-    };
-  }>;
+  pengajuan_overtime_pegawai: OvertimeKaryawan[];
   sub_department: SubDepartment;
+};
+
+type OvertimeKaryawan = {
+  pegawai: Karyawan;
+};
+
+type Karyawan = {
+  id: number;
+  nama: string;
 };
 
 interface isLoadingProps {
@@ -97,6 +102,9 @@ const Data = ({
   const closeModal = () => {
     setIsModalCreateOpen(false);
     setSearch("");
+    mutate(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanovertime?menu_url=${menu_url}&select_dept=${selectDept}`
+    );
   };
 
   const handleDelete = async (id: number) => {
@@ -104,7 +112,7 @@ const Data = ({
       setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanizin/${id}?menu_url=${menu_url}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanovertime/${id}?menu_url=${menu_url}`,
           {
             method: "DELETE",
             headers: {
@@ -117,7 +125,7 @@ const Data = ({
         if (response.ok) {
           setSearch("");
           mutate(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanizin?menu_url=${menu_url}&select_dept=${selectDept}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanovertime?menu_url=${menu_url}&select_dept=${selectDept}`
           );
         }
       } catch (error) {
@@ -135,7 +143,7 @@ const Data = ({
         body.append("status", "1");
 
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanizin/${id}?menu_url=${menu_url}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanovertime/${id}?menu_url=${menu_url}`,
           {
             method: "POST",
             body: body,
@@ -151,7 +159,7 @@ const Data = ({
           alert(res.message);
           setSearch("");
           mutate(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanizin?menu_url=${menu_url}&select_dept=${selectDept}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanovertime?menu_url=${menu_url}&select_dept=${selectDept}`
           );
         }
       } catch (error) {
@@ -169,7 +177,7 @@ const Data = ({
         body.append("status", "2");
 
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanizin/${id}?menu_url=${menu_url}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanovertime/${id}?menu_url=${menu_url}`,
           {
             method: "POST",
             body: body,
@@ -185,7 +193,7 @@ const Data = ({
           alert(res.message);
           setSearch("");
           mutate(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanizin?menu_url=${menu_url}&select_dept=${selectDept}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanovertime?menu_url=${menu_url}&select_dept=${selectDept}`
           );
         }
       } catch (error) {
@@ -266,8 +274,6 @@ const Data = ({
     );
   }
   const overtimes = data?.data;
-  console.log(overtimes);
-
   const actions = data?.actions;
 
   return (
@@ -361,14 +367,34 @@ const Data = ({
                       {item.sub_department.nama_sub_department?.toUpperCase()}
                     </td>
                     <td align="left">
-                      {item.pengajuan_overtime_pegawai
-                        ?.map(
-                          (item: any) =>
-                            `* ${item.pegawai?.nama?.toUpperCase()}`
+                      {item.pengajuan_overtime_pegawai?.map(
+                        (item: OvertimeKaryawan) => (
+                          <>
+                            * {item.pegawai.nama?.toUpperCase()} <br />{" "}
+                          </>
                         )
-                        .join("\n")}
+                      )}
                     </td>
-                    <td>
+                    <td align="center" style={{ whiteSpace: "nowrap" }}>
+                      {new Date(item.tanggal as Date).toLocaleString(
+                        "id-ID",
+                        optionsDate
+                      )}
+                    </td>
+                    <td align="center" style={{ whiteSpace: "nowrap" }}>
+                      {new Date(item.jam_from as Date).toLocaleString(
+                        "id-ID",
+                        optionsDate2
+                      )}{" "}
+                      <br />
+                      {new Date(item.jam_to as Date).toLocaleString(
+                        "id-ID",
+                        optionsDate2
+                      )}
+                    </td>
+                    <td align="left">{item.job_desc?.toUpperCase()}</td>
+                    <td align="left">{item.remark?.toUpperCase()}</td>
+                    <td style={{ whiteSpace: "nowrap" }}>
                       <div className="d-flex gap-2 justify-content-center">
                         {actions?.includes("update") && (
                           <>
@@ -455,6 +481,21 @@ const Data = ({
       )}
     </>
   );
+};
+
+const optionsDate: any = {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  timeZone: "UTC",
+};
+
+const optionsDate2: any = {
+  hour: "numeric",
+  minute: "numeric",
+  second: "numeric",
+  timeZone: "UTC",
 };
 
 export default Data;
