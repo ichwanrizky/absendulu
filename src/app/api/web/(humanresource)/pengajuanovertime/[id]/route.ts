@@ -4,7 +4,10 @@ import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
 import { handleError } from "@/libs/handleError";
 
-export async function GET(req: Request) {
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const authorization = req.headers.get("Authorization");
 
@@ -26,7 +29,6 @@ export async function GET(req: Request) {
 
     const searchParams = new URL(req.url).searchParams;
     const menu_url = searchParams.get("menu_url");
-
     if (!menu_url) {
       return new NextResponse(
         JSON.stringify({
@@ -43,7 +45,6 @@ export async function GET(req: Request) {
     }
 
     const roleId = session[1].roleId;
-
     const roleAccess = await checkRoles(roleId, menu_url);
     if (!roleAccess) {
       return new NextResponse(
@@ -60,15 +61,15 @@ export async function GET(req: Request) {
       );
     }
 
-    const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
-    if (!actions.includes("view")) {
+    const id = params.id;
+    if (!id) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Unauthorized",
+          message: "Data not found",
         }),
         {
-          status: 401,
+          status: 404,
           headers: {
             "Content-Type": "application/json",
           },
@@ -76,45 +77,9 @@ export async function GET(req: Request) {
       );
     }
 
-    // filter
-    const select_dept = searchParams.get("select_dept");
-
-    // search
-    const search = searchParams.get("search");
-
-    const data = await prisma.pengajuan_overtime.findMany({
-      include: {
-        sub_department: {
-          select: {
-            id: true,
-            nama_sub_department: true,
-          },
-        },
-        pengajuan_overtime_pegawai: {
-          select: {
-            pegawai: {
-              select: {
-                nama: true,
-              },
-            },
-          },
-        },
-      },
+    const data = await prisma.roles.findFirst({
       where: {
-        department_id: Number(select_dept),
-        status: 0,
-        pengajuan_overtime_pegawai: {
-          some: {
-            pegawai: {
-              nama: {
-                contains: search ? search : undefined,
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        id: "desc",
+        id: Number(id),
       },
     });
 
@@ -138,7 +103,6 @@ export async function GET(req: Request) {
         status: true,
         message: "success",
         data: data,
-        actions: actions,
       }),
       {
         status: 200,
@@ -152,7 +116,10 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const authorization = req.headers.get("Authorization");
 
@@ -207,7 +174,7 @@ export async function POST(req: Request) {
     }
 
     const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
-    if (!actions.includes("insert")) {
+    if (!actions.includes("update")) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -222,36 +189,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.formData();
-    const sub_department = body.get("sub_department")!.toString();
-    const tanggal = body.get("tanggal")!.toString();
-    const jam_from = body.get("jam_from")!.toString();
-    const jam_to = body.get("jam_to")!.toString();
-    const job_desc = body.get("job_desc")?.toString();
-    const remarks = body.get("remarks")?.toString();
-
-    const karyawan = body.get("karyawan")!.toString();
-    const parseKaryawan = JSON.parse(karyawan as string);
-
-    const formattedDate = new Date(tanggal);
-    formattedDate.setHours(formattedDate.getHours() + 7);
-
-    const formattedDate2 = new Date(jam_from);
-    formattedDate2.setHours(formattedDate2.getHours() + 7);
-
-    const formattedDate3 = new Date(jam_to);
-    formattedDate3.setHours(formattedDate3.getHours() + 7);
-
-    const department = await prisma.sub_department.findFirst({
-      select: {
-        department_id: true,
-      },
-      where: {
-        id: Number(sub_department),
-      },
-    });
-
-    if (!department) {
+    const id = params.id;
+    if (!id) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -266,25 +205,23 @@ export async function POST(req: Request) {
       );
     }
 
-    const create = await prisma.pengajuan_overtime.create({
+    const body = await req.formData();
+    const role_name = body.get("role_name")!.toString();
+
+    const update = await prisma.roles.update({
       data: {
-        tanggal: formattedDate,
-        jam_from: formattedDate2,
-        jam_to: formattedDate3,
-        department_id: Number(department?.department_id),
-        sub_department_id: Number(sub_department),
-        job_desc: job_desc?.toUpperCase(),
-        remark: remarks?.toUpperCase(),
-        bulan: formattedDate.getMonth() + 1,
-        tahun: formattedDate.getFullYear(),
+        role_name: role_name?.toUpperCase(),
+      },
+      where: {
+        id: Number(id),
       },
     });
 
-    if (!create) {
+    if (!update) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to create pengajuan overtime",
+          message: "Failed to update roles",
         }),
         {
           status: 500,
@@ -295,18 +232,139 @@ export async function POST(req: Request) {
       );
     }
 
-    await prisma.pengajuan_overtime_pegawai.createMany({
-      data: parseKaryawan.map((item: any) => ({
-        pengajuan_overtime_id: create.id,
-        pegawai_id: Number(item.value),
-      })),
+    return new NextResponse(
+      JSON.stringify({
+        status: true,
+        message: "Success to update roles",
+        data: update,
+      }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const authorization = req.headers.get("Authorization");
+
+    const session = await checkSession(authorization);
+    if (!session[0]) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const searchParams = new URL(req.url).searchParams;
+    const menu_url = searchParams.get("menu_url");
+    if (!menu_url) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const roleId = session[1].roleId;
+    const roleAccess = await checkRoles(roleId, menu_url);
+    if (!roleAccess) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
+    if (!actions.includes("delete")) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const id = params.id;
+    if (!id) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Data not found",
+        }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const deletes = await prisma.roles.delete({
+      where: {
+        id: Number(id),
+      },
     });
+
+    if (!deletes) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Failed to delete roles",
+        }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
 
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to create pengajuan overtime",
-        data: create,
+        message: "Success to delete roles",
+        data: deletes,
       }),
       {
         status: 200,

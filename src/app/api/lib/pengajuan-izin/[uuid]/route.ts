@@ -94,7 +94,7 @@ export async function POST(
         jumlah_hari: jumlah_hari,
         jumlah_jam: jumlah_jam,
         keterangan: keterangan,
-        bulan: formattedDate.getMonth(),
+        bulan: formattedDate.getMonth() + 1,
         tahun: formattedDate.getFullYear(),
         pegawai_id: checkPegawai.pegawai_id,
         department_id: checkPegawai.pegawai.department_id,

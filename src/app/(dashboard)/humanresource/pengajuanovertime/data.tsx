@@ -16,9 +16,24 @@ type Department = {
 type SubDepartment = {
   id: number;
   nama_sub_department: string;
-  department_id: number;
-  department: Department;
 };
+
+type PengajuanOvertime = {
+  id: number;
+  tanggal: string;
+  jam_from: string;
+  jam_to: string;
+  job_desc: string;
+  remark: string;
+  status: number;
+  pengajuan_overtime_pegawai: Array<{
+    pegawai: {
+      nama: string;
+    };
+  }>;
+  sub_department: SubDepartment;
+};
+
 interface isLoadingProps {
   [key: number]: boolean;
 }
@@ -192,8 +207,8 @@ const Data = ({
   };
   const { data, error, isLoading } = useSWR(
     search === ""
-      ? `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanizin?menu_url=${menu_url}&select_dept=${selectDept}`
-      : `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanizin?menu_url=${menu_url}&select_dept=${selectDept}&search=${search}`,
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanovertime?menu_url=${menu_url}&select_dept=${selectDept}`
+      : `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanovertime?menu_url=${menu_url}&select_dept=${selectDept}&search=${search}`,
     fetcher
   );
 
@@ -251,6 +266,8 @@ const Data = ({
     );
   }
   const overtimes = data?.data;
+  console.log(overtimes);
+
   const actions = data?.actions;
 
   return (
@@ -306,25 +323,20 @@ const Data = ({
                   NO
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  NAMA
+                  SUB DEPARTMENT
                 </th>
-                <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  JENIS IZIN
-                </th>
+                <th className="fw-semibold fs-6">PEGAWAI</th>
                 <th className="fw-semibold fs-6" style={{ width: "15%" }}>
                   TANGGAL
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "5%" }}>
-                  JUMLAH HARI
+                  JAM
                 </th>
-                <th className="fw-semibold fs-6" style={{ width: "5%" }}>
-                  JUMLAH JAM
+                <th className="fw-semibold fs-6" style={{ width: "10%" }}>
+                  JOB DESK
                 </th>
-                <th className="fw-semibold fs-6" style={{ width: "5%" }}>
-                  MC
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  KETERANGAN
+                <th className="fw-semibold fs-6" style={{ width: "10%" }}>
+                  REMARKS
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
                   PERSETUJUAN
@@ -334,35 +346,28 @@ const Data = ({
                 </th>
               </tr>
             </thead>
-            {/* <tbody>
-              {permits?.length === 0 ? (
+            <tbody>
+              {overtimes?.length === 0 ? (
                 <tr>
-                  <td colSpan={10}>
+                  <td colSpan={9}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
               ) : (
-                permits?.map((item: PengajuanIzin, index: number) => (
+                overtimes?.map((item: PengajuanOvertime, index: number) => (
                   <tr key={index}>
                     <td align="center">{index + 1}</td>
-                    <td align="left">{item.pegawai.nama?.toUpperCase()}</td>
-                    <td align="left">{jenisPengajuan(item.jenis_izin)}</td>
                     <td align="left">
-                      {new Date(item.tanggal as Date).toLocaleString(
-                        "id-ID",
-                        optionsDate
-                      )}
+                      {item.sub_department.nama_sub_department?.toUpperCase()}
                     </td>
-                    <td align="center">{item.jumlah_hari}</td>
-                    <td align="center">{item.jumlah_jam}</td>
-                    <td align="center">
-                      {item.jenis_izin === "S" && (
-                        <a href={`/izin/${item.uuid}.png`} target="_blank">
-                          MC
-                        </a>
-                      )}
+                    <td align="left">
+                      {item.pengajuan_overtime_pegawai
+                        ?.map(
+                          (item: any) =>
+                            `* ${item.pegawai?.nama?.toUpperCase()}`
+                        )
+                        .join("\n")}
                     </td>
-                    <td align="left">{item.keterangan}</td>
                     <td>
                       <div className="d-flex gap-2 justify-content-center">
                         {actions?.includes("update") && (
@@ -434,7 +439,7 @@ const Data = ({
                   </tr>
                 ))
               )}
-            </tbody> */}
+            </tbody>
           </table>
         </div>
       </div>

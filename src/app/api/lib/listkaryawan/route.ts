@@ -50,6 +50,7 @@ export async function POST(req: Request) {
       where: {
         department_id: department ? Number(department) : undefined,
         sub_department_id: sub_department ? Number(sub_department) : undefined,
+        is_active: true,
       },
       orderBy: {
         nama: "asc",

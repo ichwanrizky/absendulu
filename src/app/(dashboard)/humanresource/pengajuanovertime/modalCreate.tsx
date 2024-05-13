@@ -38,6 +38,10 @@ const ModalCreate = (props: Props) => {
   const [subDepartment, setSubDepartment] = useState("");
   const [karyawan, setKaryawan] = useState<any>([]);
   const [tanggal, setTanggal] = useState<Date | null>(null);
+  const [jamFrom, setJamFrom] = useState<Date | null>(null);
+  const [jamTo, setJamTo] = useState<Date | null>(null);
+  const [jobDesc, setJobDesc] = useState("");
+  const [remarks, setRemarks] = useState("");
 
   const selectAll = () => {
     if (karyawan?.length > 0) {
@@ -87,39 +91,41 @@ const ModalCreate = (props: Props) => {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    // if (confirm("Add this data?")) {
-    //   setIsLoading(true);
-    //   try {
-    //     const body = new FormData();
-    //     body.append("nama_department", namaDepartment);
-    //     body.append("lot", lot);
-    //     body.append("latitude", latitude);
-    //     body.append("longitude", longitude);
-    //     body.append("radius", radius);
+    if (confirm("Add this data?")) {
+      setIsLoading(true);
+      try {
+        const body = new FormData();
+        body.append("sub_department", subDepartment);
+        body.append("karyawan", JSON.stringify(karyawan));
+        body.append("tanggal", tanggal!.toISOString());
+        body.append("jam_from", jamFrom!.toISOString());
+        body.append("jam_to", jamTo!.toISOString());
+        body.append("job_desc", jobDesc);
+        body.append("remarks", remarks);
 
-    //     const response = await fetch(
-    //       `${process.env.NEXT_PUBLIC_API_URL}/api/web/department?menu_url=${menu_url}`,
-    //       {
-    //         method: "POST",
-    //         headers: {
-    //           authorization: `Bearer ${accessToken}`,
-    //         },
-    //         body: body,
-    //       }
-    //     );
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/pengajuanovertime?menu_url=${menu_url}`,
+          {
+            method: "POST",
+            headers: {
+              authorization: `Bearer ${accessToken}`,
+            },
+            body: body,
+          }
+        );
 
-    //     const res = await response.json();
-    //     if (!response.ok) {
-    //       alert(res.message);
-    //     } else {
-    //       alert(res.message);
-    //       onClose();
-    //     }
-    //   } catch (error) {
-    //     alert("something went wrong");
-    //   }
-    //   setIsLoading(false);
-    // }
+        const res = await response.json();
+        if (!response.ok) {
+          alert(res.message);
+        } else {
+          alert(res.message);
+          onClose();
+        }
+      } catch (error) {
+        alert("something went wrong");
+      }
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -158,6 +164,7 @@ const ModalCreate = (props: Props) => {
                       className="form-select"
                       onChange={(e) => {
                         handlePegawai(Number(e.target.value));
+                        setSubDepartment(e.target.value);
                       }}
                     >
                       <option value="">--SELECT--</option>
@@ -221,7 +228,69 @@ const ModalCreate = (props: Props) => {
                     >
                       FROM
                     </label>
-                    <input type="text" className="form-control" required />
+                    <Datepicker
+                      wrapperClassName={styles.datePicker}
+                      className="form-select"
+                      selected={jamFrom}
+                      onChange={(e: Date) => setJamFrom(e)}
+                      showTimeSelect
+                      showTimeSelectOnly
+                      timeIntervals={30}
+                      timeCaption="Time"
+                      timeFormat="HH:mm"
+                      dateFormat="HH:mm"
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label
+                      className="mb-1 fw-semibold small"
+                      htmlFor="inputUsername"
+                    >
+                      TO
+                    </label>
+                    <Datepicker
+                      wrapperClassName={styles.datePicker}
+                      className="form-select"
+                      selected={jamTo}
+                      onChange={(e: Date) => setJamTo(e)}
+                      showTimeSelect
+                      showTimeSelectOnly
+                      timeIntervals={30}
+                      timeCaption="Time"
+                      timeFormat="HH:mm"
+                      dateFormat="HH:mm"
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label
+                      className="mb-1 fw-semibold small"
+                      htmlFor="inputUsername"
+                    >
+                      JOB DESC
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      style={{ textTransform: "uppercase" }}
+                      onChange={(e) => setJobDesc(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label
+                      className="mb-1 fw-semibold small"
+                      htmlFor="inputUsername"
+                    >
+                      REMARKS
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      style={{ textTransform: "uppercase" }}
+                      onChange={(e) => setRemarks(e.target.value)}
+                    />
                   </div>
                 </div>
                 <div className="modal-footer">
