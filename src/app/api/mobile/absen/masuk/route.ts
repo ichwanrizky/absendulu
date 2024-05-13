@@ -68,21 +68,73 @@ export async function POST(req: Request) {
       longitude
     );
 
-    if (distance > Number(dataDepartment.radius)) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Gagal, Anda belum berada di dalam zona absen",
-        }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
+    const lokasiTambahan = await prisma.izin_lokasi_tambahan.findMany({
+      select: {
+        lokasi_tambahan: true,
+      },
+      where: {
+        pegawai_id: Number(session[1].pegawaiId),
+      },
+      orderBy: {
+        id: "desc",
+      },
+    });
 
+    if (lokasiTambahan.length > 0) {
+      let inZone = false;
+      let shouldContinue = true;
+      if (distance > Number(dataDepartment.radius)) {
+        inZone = false;
+      }
+
+      lokasiTambahan?.map((item: any) => {
+        if (!shouldContinue) return;
+
+        const newDistance = calculateDistance(
+          item.lokasi_tambahan.latitude,
+          item.lokasi_tambahan.longitude,
+          latitude,
+          longitude
+        );
+
+        if (newDistance > Number(item.lokasi_tambahan.radius)) {
+          inZone = false;
+        } else {
+          inZone = true;
+          shouldContinue = false;
+        }
+      });
+
+      if (!inZone) {
+        return new NextResponse(
+          JSON.stringify({
+            status: false,
+            message: "Gagal, Anda belum berada di dalam zona absen",
+          }),
+          {
+            status: 401,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+    } else {
+      if (distance > Number(dataDepartment.radius)) {
+        return new NextResponse(
+          JSON.stringify({
+            status: false,
+            message: "Gagal, Anda belum berada di dalam zona absen",
+          }),
+          {
+            status: 401,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+    }
     // format date
     const currendDate = new Date();
     const formattedDate = new Date(currendDate);

@@ -3,7 +3,7 @@ import { checkSession } from "@/libs/checkSession";
 import prisma from "@/libs/db";
 import { handleError } from "@/libs/handleError";
 
-export async function POST(req: Request) {
+export async function GET(req: Request) {
   try {
     const authorization = req.headers.get("Authorization");
 
@@ -23,37 +23,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.formData();
-    const department = body.get("department")?.toString();
-    const sub_department = body.get("sub_department")?.toString();
-
-    if (!department && !sub_department) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Data not found",
-        }),
-        {
-          status: 404,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
-
-    const data = await prisma.pegawai.findMany({
-      select: {
-        id: true,
-        nama: true,
-      },
-      where: {
-        department_id: department ? Number(department) : undefined,
-        sub_department_id: sub_department ? Number(sub_department) : undefined,
-        is_active: true,
-      },
+    const data = await prisma.lokasi_tambahan.findMany({
       orderBy: {
-        nama: "asc",
+        lokasi: "asc",
       },
     });
 

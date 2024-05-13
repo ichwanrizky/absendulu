@@ -4,6 +4,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import styles from "./styles.module.css";
 import { usePathname } from "next/navigation";
+import Select from "react-select";
 
 type Props = {
   isModalOpen: any;
@@ -12,6 +13,7 @@ type Props = {
   data: Karyawan;
   dataDepartment?: Department[];
   dataSubDepartment: SubDepartment[];
+  dataLocation: Location[];
 };
 
 type Karyawan = {
@@ -48,6 +50,7 @@ type Karyawan = {
   is_overtime: boolean;
   department: Department;
   sub_department: SubDepartment;
+  izin_lokasi_tambahan: IzinLokasiTambahan[];
 };
 type Department = {
   id: number;
@@ -65,6 +68,15 @@ type SubDepartment = {
   department: Department;
 };
 
+type Location = {
+  id: number;
+  lokasi: string;
+};
+
+interface IzinLokasiTambahan {
+  lokasi_tambahan: Location;
+}
+
 const ModalEdit = (props: Props) => {
   const {
     isModalOpen,
@@ -73,6 +85,7 @@ const ModalEdit = (props: Props) => {
     data,
     dataDepartment,
     dataSubDepartment,
+    dataLocation,
   } = props;
 
   const pathname = usePathname();
@@ -119,6 +132,12 @@ const ModalEdit = (props: Props) => {
   const [noRekening, setNoRekening] = useState(data.no_rek);
   const [bpjstk, setBpjstk] = useState(data.bpjs_tk);
   const [bpjkskes, setBpjkskes] = useState(data.bpjs_kes);
+  const [izinLokasi, setIzinLokasi] = useState(
+    data.izin_lokasi_tambahan?.map((item: IzinLokasiTambahan) => ({
+      value: item.lokasi_tambahan.id,
+      label: item.lokasi_tambahan.lokasi?.toUpperCase(),
+    })) || []
+  );
 
   const changeDepartment = async (department: number) => {
     if (department === 0) {
@@ -185,6 +204,8 @@ const ModalEdit = (props: Props) => {
 
         body.append("tanggal_lahir", tanggalLahir?.toISOString() || "");
         body.append("tanggal_join", tanggalJoin?.toISOString() || "");
+
+        body.append("izin_lokasi", JSON.stringify(izinLokasi));
 
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/web/datakaryawan/${data.id}?menu_url=${menu_url}`,
@@ -632,6 +653,27 @@ const ModalEdit = (props: Props) => {
                           className="form-control"
                           onChange={(e) => setBpjkskes(e.target.value)}
                           value={bpjkskes}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="form-group mb-3">
+                    <div className="row">
+                      <div className="col-sm-12">
+                        <label className="mb-1 fw-semibold small">
+                          IZIN LOKASI TAMBAHAN
+                        </label>
+                        <Select
+                          options={dataLocation?.map((item: Location) => ({
+                            value: item.id,
+                            label: item.lokasi?.toUpperCase(),
+                          }))}
+                          onChange={(e: any) => setIzinLokasi(e)}
+                          value={izinLokasi}
+                          closeMenuOnSelect={false}
+                          isMulti
+                          isClearable
                         />
                       </div>
                     </div>

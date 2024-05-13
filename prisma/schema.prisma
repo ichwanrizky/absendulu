@@ -16,18 +16,19 @@ model roles {
 }
 
 model user {
-  id             Int              @id @default(autoincrement())
-  username       String           @unique
-  password       String
-  name           String?
-  createdAt      DateTime?        @db.DateTime(0)
-  rolesId        Int?
-  session        session[]
-  roles          roles?           @relation(fields: [rolesId], references: [id])
-  pegawai_id     Int?
-  pegawai        pegawai?         @relation(fields: [pegawai_id], references: [id])
-  session_mobile session_mobile[]
-  pengajuan_izin pengajuan_izin[]
+  id                 Int                  @id @default(autoincrement())
+  username           String               @unique
+  password           String
+  name               String?
+  createdAt          DateTime?            @db.DateTime(0)
+  rolesId            Int?
+  session            session[]
+  roles              roles?               @relation(fields: [rolesId], references: [id])
+  pegawai_id         Int?
+  pegawai            pegawai?             @relation(fields: [pegawai_id], references: [id])
+  session_mobile     session_mobile[]
+  pengajuan_izin     pengajuan_izin[]
+  pengajuan_overtime pengajuan_overtime[]
 }
 
 model menu_group {
@@ -94,30 +95,33 @@ model session_mobile {
 }
 
 model department {
-  id                Int                 @id @default(autoincrement())
-  nama_department   String
-  lot               String?
-  latitude          String?
-  longitude         String?
-  radius            String?
-  access_department access_department[]
-  pegawai           pegawai[]
-  shift             shift[]
-  sub_department    sub_department[]
-  tanggal_merah     tanggal_merah[]
-  pengajuan_izin    pengajuan_izin[]
-  izin              izin[]
+  id                 Int                  @id @default(autoincrement())
+  nama_department    String
+  lot                String?
+  latitude           String?
+  longitude          String?
+  radius             String?
+  access_department  access_department[]
+  pegawai            pegawai[]
+  shift              shift[]
+  sub_department     sub_department[]
+  tanggal_merah      tanggal_merah[]
+  pengajuan_izin     pengajuan_izin[]
+  izin               izin[]
+  pengajuan_overtime pengajuan_overtime[]
+  overtime           overtime[]
 }
 
 model sub_department {
-  id                  Int        @id @default(autoincrement())
+  id                  Int                  @id @default(autoincrement())
   nama_sub_department String
   department_id       Int
-  pegawai             pegawai[]  @relation("PegawaiSubDept")
-  department          department @relation(fields: [department_id], references: [id])
+  pegawai             pegawai[]            @relation("PegawaiSubDept")
+  department          department           @relation(fields: [department_id], references: [id])
   akses_izin          String?
   manager_id          Int?
-  manager             manager?   @relation(fields: [manager_id], references: [id])
+  manager             manager?             @relation(fields: [manager_id], references: [id])
+  pengajuan_overtime  pengajuan_overtime[]
 }
 
 model manager {
@@ -128,47 +132,50 @@ model manager {
 }
 
 model pegawai {
-  id                   Int                    @id @default(autoincrement())
-  panji_id             String?
-  nama                 String
-  nik_ktp              String
-  tmp_lahir            String?
-  tgl_lahir            DateTime?              @db.Date
-  jk                   String
-  agama                String?
-  kebangsaan           String?
-  alamat               String?
-  rt                   String?
-  rw                   String?
-  kel                  String?
-  kec                  String?
-  kota                 String?
-  telp                 String?
-  status_nikah         String
-  tgl_join             DateTime?              @db.Date
-  tgl_selesai          DateTime?              @db.Date
-  tgl_reset            DateTime?              @db.Date
-  email                String?
-  position             String?
-  npwp                 String?
-  jenis_bank           String?
-  no_rek               String?
-  bpjs_tk              String?
-  bpjs_kes             String?
-  department_id        Int
-  sub_department_id    Int
-  is_active            Boolean                @default(true)
-  is_overtime          Boolean                @default(false)
-  department           department             @relation(fields: [department_id], references: [id])
-  sub_department       sub_department         @relation("PegawaiSubDept", fields: [sub_department_id], references: [id])
-  shift_id             Int?
-  shift                shift?                 @relation(fields: [shift_id], references: [id])
-  absen                absen[]
-  user                 user[]
-  pengajuan_izin       pengajuan_izin[]
-  izin                 izin[]
-  request_session_izin request_session_izin[]
-  manager              manager[]
+  id                         Int                          @id @default(autoincrement())
+  panji_id                   String?
+  nama                       String
+  nik_ktp                    String
+  tmp_lahir                  String?
+  tgl_lahir                  DateTime?                    @db.Date
+  jk                         String
+  agama                      String?
+  kebangsaan                 String?
+  alamat                     String?
+  rt                         String?
+  rw                         String?
+  kel                        String?
+  kec                        String?
+  kota                       String?
+  telp                       String?
+  status_nikah               String
+  tgl_join                   DateTime?                    @db.Date
+  tgl_selesai                DateTime?                    @db.Date
+  tgl_reset                  DateTime?                    @db.Date
+  email                      String?
+  position                   String?
+  npwp                       String?
+  jenis_bank                 String?
+  no_rek                     String?
+  bpjs_tk                    String?
+  bpjs_kes                   String?
+  department_id              Int
+  sub_department_id          Int
+  is_active                  Boolean                      @default(true)
+  is_overtime                Boolean                      @default(false)
+  department                 department                   @relation(fields: [department_id], references: [id])
+  sub_department             sub_department               @relation("PegawaiSubDept", fields: [sub_department_id], references: [id])
+  shift_id                   Int?
+  shift                      shift?                       @relation(fields: [shift_id], references: [id])
+  absen                      absen[]
+  user                       user[]
+  pengajuan_izin             pengajuan_izin[]
+  izin                       izin[]
+  request_session_izin       request_session_izin[]
+  manager                    manager[]
+  overtime                   overtime[]
+  izin_lokasi_tambahan       izin_lokasi_tambahan[]
+  pengajuan_overtime_pegawai pengajuan_overtime_pegawai[]
 }
 
 model shift {
@@ -269,4 +276,71 @@ model tanggal_merah_list {
   tanggal_merah_id Int
   tanggal_nomor    String
   tanggal_merah    tanggal_merah @relation(fields: [tanggal_merah_id], references: [id])
+}
+
+model pengajuan_overtime {
+  id                         Int                          @id @default(autoincrement())
+  tanggal                    DateTime                     @db.Date
+  jam_from                   DateTime                     @db.Time(0)
+  jam_to                     DateTime                     @db.Time(0)
+  department_id              Int
+  department                 department                   @relation(fields: [department_id], references: [id])
+  sub_department_id          Int
+  sub_department             sub_department               @relation(fields: [sub_department_id], references: [id])
+  job_desc                   String?
+  remark                     String?
+  status                     Int                          @default(0)
+  bulan                      Int
+  tahun                      Int
+  approve_by                 Int?
+  user                       user?                        @relation(fields: [approve_by], references: [id])
+  approve_date               DateTime?                    @db.DateTime(0)
+  overtime                   overtime[]
+  pengajuan_overtime_pegawai pengajuan_overtime_pegawai[]
+}
+
+model pengajuan_overtime_pegawai {
+  id                    Int                @id @default(autoincrement())
+  pengajuan_overtime_id Int
+  pengajuan_overtime    pengajuan_overtime @relation(fields: [pengajuan_overtime_id], references: [id])
+  pegawai_id            Int
+  pegawai               pegawai            @relation(fields: [pegawai_id], references: [id])
+
+  @@unique([pengajuan_overtime_id, pegawai_id])
+}
+
+model overtime {
+  id                    Int                @id @default(autoincrement())
+  tanggal               DateTime           @db.Date
+  pegawai_id            Int
+  pegawai               pegawai            @relation(fields: [pegawai_id], references: [id])
+  department_id         Int
+  department            department         @relation(fields: [department_id], references: [id])
+  jam                   String?
+  total                 String?
+  is_holiday            Boolean            @default(false)
+  status                Int                @default(0)
+  bulan                 Int
+  tahun                 Int
+  pengajuan_overtime_id Int
+  pengajuan_overtime    pengajuan_overtime @relation(fields: [pengajuan_overtime_id], references: [id])
+}
+
+model lokasi_tambahan {
+  id                   Int                    @id @default(autoincrement())
+  lokasi               String?
+  latitude             String?
+  longitude            String?
+  radius               String?
+  izin_lokasi_tambahan izin_lokasi_tambahan[]
+}
+
+model izin_lokasi_tambahan {
+  id                 Int             @id @default(autoincrement())
+  pegawai_id         Int
+  pegawai            pegawai         @relation(fields: [pegawai_id], references: [id])
+  lokasi_tambahan_id Int
+  lokasi_tambahan    lokasi_tambahan @relation(fields: [lokasi_tambahan_id], references: [id])
+
+  @@unique([pegawai_id, lokasi_tambahan_id])
 }

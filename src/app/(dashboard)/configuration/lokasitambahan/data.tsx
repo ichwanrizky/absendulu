@@ -5,42 +5,19 @@ import ModalCreate from "./modalCreate";
 import ModalEdit from "./modalEdit";
 import { usePathname } from "next/navigation";
 
-type SubDepartment = {
+type Location = {
   id: number;
-  nama_sub_department: string;
-  department_id: number;
-  department: Department;
-  akses_izin: string;
-  manager_id: number;
-  manager: {
-    pegawai: Karyawan;
-  };
-};
-type Department = {
-  id: number;
-  nama_department: string;
-  lot: string;
+  lokasi: string;
   latitude: string;
   longitude: string;
   radius: string;
-};
-
-type Karyawan = {
-  id: number;
-  nama: string;
 };
 
 interface isLoadingProps {
   [key: number]: boolean;
 }
 
-const Data = ({
-  accessToken,
-  departments,
-}: {
-  accessToken: string;
-  departments: Department[];
-}) => {
+const Data = ({ accessToken }: { accessToken: string }) => {
   const pathname = usePathname();
   const lastSlashIndex = pathname.lastIndexOf("/");
   const menu_url = pathname.substring(lastSlashIndex + 1);
@@ -54,22 +31,17 @@ const Data = ({
   const [isModalEditOpen, setIsModalEditOpen] = useState(false);
 
   // data state
-  const [dataEdit, setDataEdit] = useState({} as SubDepartment);
-  const [listManager, setListManager] = useState([] as Karyawan[]);
+  const [dataEdit, setDataEdit] = useState({} as Location);
 
-  // filter
-  const [selectDept, setSelectDept] = useState(departments[0].id.toString());
-
-  const handleCreate = async () => {
+  const handleCreate = () => {
     setIsModalCreateOpen(true);
   };
 
   const handleEdit = async (id: number) => {
     setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
     try {
-      // get edit data
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/web/subdepartment/${id}?menu_url=${menu_url}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/web/lokasitambahan/${id}?menu_url=${menu_url}`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -78,26 +50,10 @@ const Data = ({
       );
       const res = await response.json();
 
-      // list karyawan
-      const body = new FormData();
-      body.append("department", selectDept);
-      const responseKaryawan = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listmanager`,
-        {
-          method: "POST",
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-          },
-          body: body,
-        }
-      );
-      const resKaryawan = await responseKaryawan.json();
-
-      if (!response.ok || !responseKaryawan.ok) {
-        alert(!response.ok ? res.message : resKaryawan.message);
+      if (!response.ok) {
+        alert(res.message);
       } else {
         setDataEdit(res.data);
-        setListManager(resKaryawan.data);
         setIsModalEditOpen(true);
       }
     } catch (error) {
@@ -111,8 +67,7 @@ const Data = ({
       setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/web/subdepartment/${id}?menu_url=${menu_url}`,
-
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/lokasitambahan/${id}?menu_url=${menu_url}`,
           {
             method: "DELETE",
             headers: {
@@ -125,7 +80,7 @@ const Data = ({
         alert(res.message);
         if (response.ok) {
           mutate(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/web/subdepartment?menu_url=${menu_url}&select_dept=${selectDept}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/lokasitambahan?menu_url=${menu_url}`
           );
         }
       } catch (error) {
@@ -139,7 +94,7 @@ const Data = ({
     setIsModalCreateOpen(false);
     setIsModalEditOpen(false);
     mutate(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/web/subdepartment?menu_url=${menu_url}&select_dept=${selectDept}`
+      `${process.env.NEXT_PUBLIC_API_URL}/api/web/lokasitambahan?menu_url=${menu_url}`
     );
   };
 
@@ -155,7 +110,7 @@ const Data = ({
   };
 
   const { data, error, isLoading } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/web/subdepartment?menu_url=${menu_url}&select_dept=${selectDept}`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/web/lokasitambahan?menu_url=${menu_url}`,
     fetcher
   );
 
@@ -194,7 +149,7 @@ const Data = ({
     );
   }
 
-  const subDepartments = data?.data;
+  const locations = data?.data;
   const actions = data?.actions;
 
   return (
@@ -211,18 +166,6 @@ const Data = ({
                 ADD DATA
               </button>
             )}
-
-            <select
-              className="form-select-sm ms-2"
-              value={selectDept}
-              onChange={(e) => setSelectDept(e.target.value)}
-            >
-              {departments?.map((item: Department, index: number) => (
-                <option value={item.id} key={index}>
-                  {item.nama_department?.toUpperCase()}
-                </option>
-              ))}
-            </select>
           </div>
         </div>
 
@@ -233,12 +176,15 @@ const Data = ({
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
                   NO
                 </th>
-                <th className="fw-semibold fs-6">SUB DEPARTMENT</th>
+                <th className="fw-semibold fs-6">LOKASI</th>
                 <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  DEPARTMENT
+                  LATITUDE
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  PENANGGUNG JAWAB
+                  LONGITUDE
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "10%" }}>
+                  RADIUS (m)
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
                   ACTION
@@ -246,25 +192,20 @@ const Data = ({
               </tr>
             </thead>
             <tbody>
-              {subDepartments?.length === 0 ? (
+              {locations?.length === 0 ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
               ) : (
-                subDepartments?.map((item: SubDepartment, index: number) => (
+                locations?.map((item: Location, index: number) => (
                   <tr key={index}>
                     <td align="center">{index + 1}</td>
-                    <td align="left">
-                      {item.nama_sub_department.toUpperCase()}
-                    </td>
-                    <td align="left">
-                      {item.department.nama_department.toUpperCase()}
-                    </td>
-                    <td align="left">
-                      {item.manager?.pegawai.nama?.toUpperCase()}
-                    </td>
+                    <td>{item.lokasi?.toUpperCase()}</td>
+                    <td align="center">{item.latitude}</td>
+                    <td align="center">{item.longitude}</td>
+                    <td align="center">{item.radius}</td>
                     <td>
                       <div className="d-flex gap-2">
                         {actions?.includes("update") &&
@@ -318,7 +259,6 @@ const Data = ({
           isModalOpen={isModalCreateOpen}
           onClose={closeModal}
           accessToken={accessToken}
-          dataDepartment={departments}
         />
       )}
 
@@ -328,9 +268,7 @@ const Data = ({
           isModalOpen={isModalEditOpen}
           onClose={closeModal}
           accessToken={accessToken}
-          dataDepartment={departments}
           data={dataEdit}
-          dataManager={listManager}
         />
       )}
     </>
