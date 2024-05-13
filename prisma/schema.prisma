@@ -327,4 +327,6 @@ model izin_lokasi_tambahan {
   pegawai            pegawai         @relation(fields: [pegawai_id], references: [id])
   lokasi_tambahan_id Int
   lokasi_tambahan    lokasi_tambahan @relation(fields: [lokasi_tambahan_id], references: [id])
+
+  @@unique([pegawai_id, lokasi_tambahan_id])
 }

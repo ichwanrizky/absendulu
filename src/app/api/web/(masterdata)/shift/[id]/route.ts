@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { checkSession } from "@/libs/checkSession";
 import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
-import { checkDepartments } from "@/libs/checkDepartments";
 import { handleError } from "@/libs/handleError";
 
 export async function GET(

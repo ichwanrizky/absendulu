@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { checkSession } from "@/libs/checkSession";
 import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
-import { checkDepartments } from "@/libs/checkDepartments";
 import { handleError } from "@/libs/handleError";
 
 export async function GET(req: Request) {
@@ -298,25 +297,6 @@ export async function POST(req: Request) {
 
     const tanggalLahir = body.get("tanggal_lahir")!.toString();
     const tanggalJoin = body.get("tanggal_join")?.toString();
-
-    const departmentAccess = await checkDepartments(roleId);
-    const checkDepartmentAccess = departmentAccess.find(
-      (item) => item.department_id === Number(department)
-    );
-    if (!checkDepartmentAccess) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Unauthorized",
-        }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
 
     const create = await prisma.pegawai.create({
       data: {

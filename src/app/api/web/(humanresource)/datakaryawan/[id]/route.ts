@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { checkSession } from "@/libs/checkSession";
 import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
-import { checkDepartments } from "@/libs/checkDepartments";
 import { handleError } from "@/libs/handleError";
 
 export async function GET(
@@ -79,14 +78,21 @@ export async function GET(
       );
     }
 
-    const departmentAccess = await checkDepartments(roleId);
-
     const data = await prisma.pegawai.findFirst({
+      include: {
+        izin_lokasi_tambahan: {
+          select: {
+            lokasi_tambahan: {
+              select: {
+                id: true,
+                lokasi: true,
+              },
+            },
+          },
+        },
+      },
       where: {
         id: Number(id),
-        department_id: {
-          in: departmentAccess.map((item) => item.department_id),
-        },
       },
     });
 
@@ -242,52 +248,67 @@ export async function POST(
     const tanggalLahir = body.get("tanggal_lahir")!.toString();
     const tanggalJoin = body.get("tanggal_join")?.toString();
 
-    const departmentAccess = await checkDepartments(roleId);
+    const izinLokasi = body.get("izin_lokasi");
+    const parseIzinLokasi = izinLokasi ? JSON.parse(izinLokasi as string) : [];
 
-    const update = await prisma.pegawai.update({
-      data: {
-        panji_id: idKaryawan ? idKaryawan.toUpperCase() : null,
-        nama: nama.toUpperCase(),
-        nik_ktp: nik,
-        tmp_lahir: tempatLahir,
-        tgl_lahir: new Date(tanggalLahir),
-        tgl_join: tanggalJoin ? new Date(tanggalJoin) : null,
-        jk: jenisKelamin,
-        agama: agama,
-        kebangsaan: kebangsaan,
-        alamat: alamat,
-        rt: rt,
-        rw: rw,
-        kel: kelurahan,
-        kec: kecamatan,
-        kota: kota,
-        telp: telp,
-        status_nikah: statusNikah,
-        email: email,
-        position: posisi,
-        npwp: npwp,
-        jenis_bank: jenisBank,
-        no_rek: noRekening,
-        bpjs_tk: bpjstk,
-        bpjs_kes: bpjkskes,
-        department: {
-          connect: {
-            id: Number(department),
+    const update = await prisma.$transaction([
+      prisma.pegawai.update({
+        data: {
+          panji_id: idKaryawan ? idKaryawan.toUpperCase() : null,
+          nama: nama.toUpperCase(),
+          nik_ktp: nik,
+          tmp_lahir: tempatLahir,
+          tgl_lahir: new Date(tanggalLahir),
+          tgl_join: tanggalJoin ? new Date(tanggalJoin) : null,
+          jk: jenisKelamin,
+          agama: agama,
+          kebangsaan: kebangsaan,
+          alamat: alamat,
+          rt: rt,
+          rw: rw,
+          kel: kelurahan,
+          kec: kecamatan,
+          kota: kota,
+          telp: telp,
+          status_nikah: statusNikah,
+          email: email,
+          position: posisi,
+          npwp: npwp,
+          jenis_bank: jenisBank,
+          no_rek: noRekening,
+          bpjs_tk: bpjstk,
+          bpjs_kes: bpjkskes,
+          department: {
+            connect: {
+              id: Number(department),
+            },
+          },
+          sub_department: {
+            connect: {
+              id: Number(subDepartment),
+            },
           },
         },
-        sub_department: {
-          connect: {
-            id: Number(subDepartment),
-          },
+        where: {
+          id: Number(id),
         },
-      },
-      where: {
-        id: Number(id),
-        department_id: {
-          in: departmentAccess.map((item) => item.department_id),
+      }),
+
+      prisma.izin_lokasi_tambahan.deleteMany({
+        where: {
+          pegawai_id: Number(id),
         },
-      },
-    });
+      }),
+    ]);
+
+    if (parseIzinLokasi.length > 0) {
+      await prisma.izin_lokasi_tambahan.createMany({
+        data: parseIzinLokasi.map((item: any) => ({
+          pegawai_id: Number(id),
+          lokasi_tambahan_id: item.value,
+        })),
+      });
+    }
 
     if (!update) {
       return new NextResponse(
@@ -412,13 +433,9 @@ export async function DELETE(
       );
     }
 
-    const departmentAccess = await checkDepartments(roleId);
     const deletes = await prisma.pegawai.delete({
       where: {
         id: Number(id),
-        department_id: {
-          in: departmentAccess.map((item) => item.department_id),
-        },
       },
     });
 

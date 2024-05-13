@@ -41,6 +41,7 @@ type Karyawan = {
   is_overtime: boolean;
   department: Department;
   sub_department: SubDepartment;
+  izin_lokasi_tambahan: IzinLokasiTambahan[];
 };
 type Department = {
   id: number;
@@ -56,6 +57,15 @@ type SubDepartment = {
   department_id: number;
   department: Department;
 };
+
+type Location = {
+  id: number;
+  lokasi: string;
+};
+
+interface IzinLokasiTambahan {
+  lokasi_tambahan: Location;
+}
 interface isLoadingProps {
   [key: number]: boolean;
 }
@@ -87,6 +97,7 @@ const Data = ({
   // data state
   const [dataEdit, setDataEdit] = useState({} as Karyawan);
   const [subDepartments, setSubDepartments] = useState([] as SubDepartment[]);
+  const [locations, setLocations] = useState([] as Location[]);
 
   // filter state
   const [filter, setFilter] = useState({
@@ -132,11 +143,27 @@ const Data = ({
       );
       const resSubDepartment = await responseSubDepartment.json();
 
-      if (!response.ok || !responseSubDepartment.ok) {
-        alert(!response.ok ? res.message : resSubDepartment.message);
+      const responseLokasi = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listlokasi`,
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const resLokasi = await responseLokasi.json();
+
+      if (!response.ok || !responseSubDepartment.ok || !responseLokasi.ok) {
+        let message = !response.ok
+          ? res.message
+          : !responseSubDepartment.ok
+          ? resSubDepartment.message
+          : resLokasi.message;
+        alert(message);
       } else {
         setDataEdit(res.data);
         setSubDepartments(resSubDepartment.data);
+        setLocations(resLokasi.data);
         setIsModalEditOpen(true);
       }
     } catch (error) {
@@ -582,6 +609,7 @@ const Data = ({
           data={dataEdit}
           dataDepartment={departments}
           dataSubDepartment={subDepartments}
+          dataLocation={locations}
         />
       )}
 
