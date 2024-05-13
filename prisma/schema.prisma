@@ -173,6 +173,7 @@ model pegawai {
   request_session_izin request_session_izin[]
   manager              manager[]
   overtime             overtime[]
+  izin_lokasi_tambahan izin_lokasi_tambahan[]
 }
 
 model shift {
@@ -309,4 +310,21 @@ model overtime {
   tahun                 Int
   pengajuan_overtime_id Int
   pengajuan_overtime    pengajuan_overtime @relation(fields: [pengajuan_overtime_id], references: [id])
+}
+
+model lokasi_tambahan {
+  id                   Int                    @id @default(autoincrement())
+  lokasi               String?
+  latitude             String?
+  longitude            String?
+  radius               String?
+  izin_lokasi_tambahan izin_lokasi_tambahan[]
+}
+
+model izin_lokasi_tambahan {
+  id                 Int             @id @default(autoincrement())
+  pegawai_id         Int
+  pegawai            pegawai         @relation(fields: [pegawai_id], references: [id])
+  lokasi_tambahan_id Int
+  lokasi_tambahan    lokasi_tambahan @relation(fields: [lokasi_tambahan_id], references: [id])
 }
