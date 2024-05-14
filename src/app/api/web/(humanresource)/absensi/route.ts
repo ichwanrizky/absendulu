@@ -75,6 +75,9 @@ export async function GET(req: Request) {
       );
     }
 
+    // search
+    const search = searchParams.get("search");
+
     // filter
     const select_dept = searchParams.get("select_dept");
     const tanggal_absen = searchParams.get("tanggal_absen");
@@ -108,6 +111,9 @@ export async function GET(req: Request) {
           not: 1,
         },
         department_id: Number(select_dept),
+        nama: {
+          contains: search ? search : undefined,
+        },
       },
       orderBy: {
         nama: "asc",
