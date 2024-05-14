@@ -94,7 +94,7 @@ export async function POST(
         jenis_izin: jenis_izin,
         tanggal: formattedDate,
         jumlah_hari: jumlah_hari,
-        jumlah_jam: jumlah_jam,
+        jumlah_jam: jumlah_jam === "" ? null : jumlah_jam,
         keterangan: keterangan,
         bulan: formattedDate.getMonth() + 1,
         tahun: formattedDate.getFullYear(),

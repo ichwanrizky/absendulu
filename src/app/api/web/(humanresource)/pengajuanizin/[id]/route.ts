@@ -180,6 +180,8 @@ export async function POST(
             keterangan: update.keterangan,
             pengajuan_izin_id: update.id,
             department_id: update.department_id,
+            jumlah_hari: update.jumlah_hari,
+            jumlah_jam: update.jumlah_jam,
           };
 
           izinData.push(izinEntry);
