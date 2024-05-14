@@ -84,7 +84,7 @@ const Data = ({
         if (response.ok) {
           setSearch("");
           mutate(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin?menu_url=${menu_url}&select_dept=${selectDept}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}`
           );
         }
       } catch (error) {

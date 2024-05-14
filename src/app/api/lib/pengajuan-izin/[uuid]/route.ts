@@ -77,11 +77,13 @@ export async function POST(
       jenis_izin == "G1" ||
       jenis_izin == "G2" ||
       jenis_izin == "G3" ||
-      jenis_izin == "CS" ||
-      jenis_izin == "IS" ||
       jenis_izin == "P/M"
     ) {
       jumlah_hari = "1";
+    }
+
+    if (jenis_izin == "CS" || jenis_izin == "IS") {
+      jumlah_hari = "0.5";
     }
 
     const formattedDate = new Date(tanggal);
