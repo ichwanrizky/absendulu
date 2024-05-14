@@ -66,6 +66,9 @@ const Data = ({
   //search state
   const [search, setSearch] = useState("");
 
+  const [bulan, setBulan] = useState((new Date().getMonth() + 1).toString());
+  const [tahun, setTahun] = useState(new Date().getFullYear().toString());
+
   const handleDelete = async (id: number) => {
     if (confirm("Delete this data?")) {
       setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
@@ -84,7 +87,7 @@ const Data = ({
         if (response.ok) {
           setSearch("");
           mutate(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin?menu_url=${menu_url}&select_dept=${selectDept}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}`
           );
         }
       } catch (error) {
@@ -106,8 +109,8 @@ const Data = ({
   };
   const { data, error, isLoading } = useSWR(
     search === ""
-      ? `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}`
-      : `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}&search=${search}`,
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
+      : `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}&search=${search}`,
     fetcher
   );
 
@@ -229,6 +232,47 @@ const Data = ({
                 {departments?.map((item: Department, index: number) => (
                   <option value={item.id} key={index}>
                     {item.nama_department?.toUpperCase()}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                className="form-select-sm ms-2"
+                value={bulan}
+                onChange={(e) => setBulan(e.target.value)}
+              >
+                {Array.from({ length: 12 }, (_, i) => {
+                  const monthNames = [
+                    "Januari",
+                    "Februari",
+                    "Maret",
+                    "April",
+                    "Mei",
+                    "Juni",
+                    "Juli",
+                    "Augustus",
+                    "September",
+                    "Oktober",
+                    "November",
+                    "Desember",
+                  ];
+                  return (
+                    <option value={i + 1} key={i}>
+                      {monthNames[i]}
+                    </option>
+                  );
+                })}
+              </select>
+
+              <select
+                className="form-select-sm ms-2"
+                required
+                value={tahun}
+                onChange={(e) => setTahun(e.target.value)}
+              >
+                {Array.from({ length: 2 }, (_, i) => (
+                  <option value={new Date().getFullYear() + i} key={i}>
+                    {new Date().getFullYear() + i}
                   </option>
                 ))}
               </select>

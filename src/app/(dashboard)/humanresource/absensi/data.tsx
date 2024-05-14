@@ -45,6 +45,8 @@ const Data = ({
   const [selectDept, setSelectDept] = useState(departments[0].id.toString());
   const [tanggalAbsen, setTanggalAbsen] = useState(currentDate as Date);
 
+  const [search, setSearch] = useState("");
+
   const fetcher = (url: RequestInfo) => {
     return fetch(url, {
       headers: {
@@ -57,15 +59,38 @@ const Data = ({
   };
 
   const { data, error, isLoading } = useSWR(
-    `${
-      process.env.NEXT_PUBLIC_API_URL
-    }/api/web/absensi?menu_url=${menu_url}&select_dept=${selectDept}&tanggal_absen=${tanggalAbsen.toISOString()}`,
+    search === ""
+      ? `${
+          process.env.NEXT_PUBLIC_API_URL
+        }/api/web/absensi?menu_url=${menu_url}&select_dept=${selectDept}&tanggal_absen=${tanggalAbsen.toISOString()}`
+      : `${
+          process.env.NEXT_PUBLIC_API_URL
+        }/api/web/absensi?menu_url=${menu_url}&select_dept=${selectDept}&tanggal_absen=${tanggalAbsen.toISOString()}&search=${search}`,
     fetcher
   );
 
   if (isLoading) {
     return (
       <div className="card-body">
+        <div className="row">
+          <div className="col-sm-12 d-flex justify-content-between align-items-center">
+            <div></div>
+            <input
+              type="text"
+              placeholder="Search..."
+              aria-label="Search"
+              onChange={(e) => setSearch(e.target.value)}
+              value={search}
+              className="form-control-sm ms-2"
+              style={{
+                width: "200px",
+                float: "right",
+                border: "1px solid #ced4da",
+              }}
+            />
+          </div>
+        </div>
+
         <div className="text-center">
           <span
             className="spinner-border spinner-border-sm me-2"
@@ -104,38 +129,55 @@ const Data = ({
     <>
       <div className="card-body">
         <div className="row">
-          <div className="col-sm-12" style={{ display: "flex" }}>
-            <div
-              className="date-picker-container"
-              style={{
-                position: "relative",
-                zIndex: "2",
-              }}
-            >
-              <DatePicker
-                className="form-select-sm"
-                selected={tanggalAbsen}
-                onChange={(e: Date) => setTanggalAbsen(e)}
-                dateFormat={"yyyy-MM-dd"}
-                showMonthDropdown
-                showYearDropdown
-                scrollableYearDropdown
-                dropdownMode="select"
-                required
-              />
+          <div className="col-sm-12 d-flex justify-content-between align-items-center">
+            <div style={{ display: "flex" }}>
+              <div
+                className="date-picker-container"
+                style={{
+                  position: "relative",
+                  zIndex: "2",
+                }}
+              >
+                <DatePicker
+                  className="form-select-sm"
+                  selected={tanggalAbsen}
+                  onChange={(e: Date) => setTanggalAbsen(e)}
+                  dateFormat={"yyyy-MM-dd"}
+                  showMonthDropdown
+                  showYearDropdown
+                  scrollableYearDropdown
+                  dropdownMode="select"
+                  required
+                />
+              </div>
+
+              <select
+                className="form-select-sm ms-2"
+                value={selectDept}
+                onChange={(e) => setSelectDept(e.target.value)}
+              >
+                {departments?.map((item: Department, index: number) => (
+                  <option value={item.id} key={index}>
+                    {item.nama_department?.toUpperCase()}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <select
-              className="form-select-sm ms-2"
-              value={selectDept}
-              onChange={(e) => setSelectDept(e.target.value)}
-            >
-              {departments?.map((item: Department, index: number) => (
-                <option value={item.id} key={index}>
-                  {item.nama_department?.toUpperCase()}
-                </option>
-              ))}
-            </select>
+            <input
+              type="text"
+              placeholder="Search..."
+              aria-label="Search"
+              onChange={(e) => setSearch(e.target.value)}
+              value={search}
+              className="form-control-sm ms-2"
+              id="search"
+              style={{
+                width: "200px",
+                float: "right",
+                border: "1px solid #ced4da",
+              }}
+            />
           </div>
         </div>
 

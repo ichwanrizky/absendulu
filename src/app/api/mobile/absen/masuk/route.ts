@@ -182,7 +182,11 @@ export async function POST(req: Request) {
       jam_masuk_department.getSeconds()
     );
 
-    const difference = (formattedDate2 as any) - (jam_masuk as any);
+    const withoutSecond = new Date(formattedDate2);
+    withoutSecond.setSeconds(0, 0);
+
+    const difference = (withoutSecond as any) - (jam_masuk as any);
+
     const differenceInMinutes = Math.round(difference / 60000);
 
     if (differenceInMinutes >= 300) {
