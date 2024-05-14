@@ -83,6 +83,8 @@ export async function GET(req: Request) {
 
     // filter
     const select_dept = searchParams.get("select_dept");
+    const bulan = searchParams.get("bulan");
+    const tahun = searchParams.get("tahun");
 
     const condition = {
       where: {
@@ -95,6 +97,8 @@ export async function GET(req: Request) {
             contains: search ? search : undefined,
           },
         },
+        bulan: Number(bulan),
+        tahun: Number(tahun),
       },
     };
 
