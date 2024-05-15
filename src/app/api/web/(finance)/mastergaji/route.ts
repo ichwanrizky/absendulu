@@ -4,10 +4,7 @@ import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
 import { handleError } from "@/libs/handleError";
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: Request) {
   try {
     const authorization = req.headers.get("Authorization");
 
@@ -29,7 +26,6 @@ export async function DELETE(
 
     const searchParams = new URL(req.url).searchParams;
     const menu_url = searchParams.get("menu_url");
-
     if (!menu_url) {
       return new NextResponse(
         JSON.stringify({
@@ -62,24 +58,56 @@ export async function DELETE(
       );
     }
 
-    const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
-    if (!actions.includes("delete")) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Unauthorized",
-        }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
+    // const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
+    // if (!actions.includes("view")) {
+    //   return new NextResponse(
+    //     JSON.stringify({
+    //       status: false,
+    //       message: "Unauthorized",
+    //     }),
+    //     {
+    //       status: 401,
+    //       headers: {
+    //         "Content-Type": "application/json",
+    //       },
+    //     }
+    //   );
+    // }
 
-    const id = params.id;
-    if (!id) {
+    const data = await prisma.pegawai.findMany({
+      select: {
+        id: true,
+        nama: true,
+        status_nikah: true,
+        master_gaji_pegawai: {
+          select: {
+            id: true,
+            nominal: true,
+            komponen: {
+              select: {
+                id: true,
+                komponen: true,
+              },
+            },
+          },
+          orderBy: {
+            komponen: {
+              urut: "asc",
+            },
+          },
+        },
+      },
+      where: {
+        is_active: true,
+        department_id: 1,
+        id: 403,
+      },
+      orderBy: {
+        nama: "asc",
+      },
+    });
+
+    if (!data) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -94,46 +122,11 @@ export async function DELETE(
       );
     }
 
-    const deletes = await prisma.$transaction([
-      prisma.overtime.deleteMany({
-        where: {
-          pengajuan_overtime_id: Number(id),
-        },
-      }),
-
-      prisma.pengajuan_overtime_pegawai.deleteMany({
-        where: {
-          pengajuan_overtime_id: Number(id),
-        },
-      }),
-
-      prisma.pengajuan_overtime.delete({
-        where: {
-          id: Number(id),
-        },
-      }),
-    ]);
-
-    if (!deletes) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Failed to delete data pengajuan overtime",
-        }),
-        {
-          status: 404,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
-
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to delete pengajuan overtime",
-        data: deletes,
+        message: "success",
+        data: data,
       }),
       {
         status: 200,
