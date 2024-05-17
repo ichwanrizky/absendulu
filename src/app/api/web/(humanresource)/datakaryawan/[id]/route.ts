@@ -299,6 +299,19 @@ export async function POST(
           pegawai_id: Number(id),
         },
       }),
+
+      prisma.user.updateMany({
+        data: {
+          name: nama,
+          telp: telp,
+        },
+        where: {
+          pegawai_id: Number(id),
+          rolesId: {
+            not: null,
+          },
+        },
+      }),
     ]);
 
     if (parseIzinLokasi.length > 0) {

@@ -3,6 +3,7 @@ import { checkSession } from "@/libs/checkSession";
 import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
 import { handleError } from "@/libs/handleError";
+const bcrypt = require("bcrypt");
 
 export async function GET(
   req: Request,
@@ -77,22 +78,22 @@ export async function GET(
       );
     }
 
-    const data = await prisma.sub_department.findFirst({
-      include: {
-        manager: {
+    const data = await prisma.user.findFirst({
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        telp: true,
+        roles: {
           select: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                telp: true,
-              },
-            },
+            id: true,
+            role_name: true,
           },
         },
       },
       where: {
         id: Number(id),
+        is_userluar: true,
       },
     });
 
@@ -219,67 +220,49 @@ export async function POST(
     }
 
     const body = await req.formData();
-    const nama_sub_department = body.get("nama_sub_department")!.toString();
-    const department = body.get("department")!.toString();
-    const akses_izin = body.get("akses_izin")?.toString();
-    const manager = body.get("manager")?.toString();
+    const username = body.get("username")!.toString();
+    const password = body.get("password")?.toString();
+    const roles = body.get("roles")!.toString();
+    const name = body.get("name")!.toString();
+    const telp = body.get("telp")?.toString();
 
-    let createManager;
-    if (manager) {
-      createManager = await prisma.$transaction([
-        prisma.manager.deleteMany({
-          where: {
-            sub_department: {
-              some: {
-                id: Number(id),
-              },
+    if (password) {
+      var hashPassword = await bcrypt.hash(password, 10);
+      if (!hashPassword) {
+        return new NextResponse(
+          JSON.stringify({
+            status: false,
+            message: "Something went wrong",
+          }),
+          {
+            status: 500,
+            headers: {
+              "Content-Type": "application/json",
             },
-          },
-        }),
-
-        prisma.manager.create({
-          data: {
-            user_id: Number(manager),
-          },
-        }),
-      ]);
-    } else {
-      await prisma.manager.deleteMany({
-        where: {
-          sub_department: {
-            some: {
-              id: Number(id),
-            },
-          },
-        },
-      });
+          }
+        );
+      }
     }
 
-    const update = await prisma.$transaction([
-      prisma.sub_department.update({
-        data: {
-          nama_sub_department: nama_sub_department?.toUpperCase(),
-          department_id: Number(department),
-          akses_izin: akses_izin === "" ? null : akses_izin,
-          ...(manager
-            ? {
-                manager_id: createManager![1].id as number,
-              }
-            : {
-                manager_id: null,
-              }),
-        },
-        where: {
-          id: Number(id),
-        },
-      }),
-    ]);
+    const update = await prisma.user.update({
+      data: {
+        name: name.toUpperCase(),
+        username: username?.toLowerCase(),
+        password: password ? hashPassword : undefined,
+        rolesId: Number(roles),
+        telp: telp,
+      },
+      where: {
+        id: Number(id),
+        is_userluar: true,
+      },
+    });
 
     if (!update) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to update sub department",
+          message: "Failed to update user",
         }),
         {
           status: 500,
@@ -293,7 +276,7 @@ export async function POST(
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to update sub department",
+        message: "Success to update user",
         data: update,
       }),
       {
@@ -397,29 +380,18 @@ export async function DELETE(
       );
     }
 
-    const deletes = await prisma.$transaction([
-      prisma.manager.deleteMany({
-        where: {
-          sub_department: {
-            some: {
-              id: Number(id),
-            },
-          },
-        },
-      }),
-
-      prisma.sub_department.delete({
-        where: {
-          id: Number(id),
-        },
-      }),
-    ]);
+    const deletes = await prisma.user.delete({
+      where: {
+        id: Number(id),
+        is_userluar: true,
+      },
+    });
 
     if (!deletes) {
       return new NextResponse(
         JSON.stringify({
           status: false,
-          message: "Failed to delete sub department",
+          message: "Failed to delete user",
         }),
         {
           status: 404,
@@ -433,7 +405,7 @@ export async function DELETE(
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "Success to delete sub department",
+        message: "Success to delete user",
         data: deletes,
       }),
       {

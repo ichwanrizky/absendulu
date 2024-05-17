@@ -9,7 +9,7 @@ type Props = {
   accessToken?: string;
   dataDepartment: Department[];
   data: SubDepartment;
-  dataManager: Karyawan[];
+  dataManager: User[];
 };
 
 type SubDepartment = {
@@ -20,7 +20,7 @@ type SubDepartment = {
   akses_izin: string;
   manager_id: number;
   manager: {
-    pegawai: Karyawan;
+    user: User;
   };
 };
 
@@ -33,9 +33,9 @@ type Department = {
   radius: string;
 };
 
-type Karyawan = {
+type User = {
   id: number;
-  nama: string;
+  name: string;
 };
 
 const ModalEdit = (props: Props) => {
@@ -55,7 +55,7 @@ const ModalEdit = (props: Props) => {
   // loading state
   const [isLoading, setIsLoading] = useState(false);
 
-  const [listManager, setListManager] = useState(dataManager as Karyawan[]);
+  const [listManager, setListManager] = useState(dataManager as User[]);
 
   const [department, setDepartment] = useState(data.department_id.toString());
   const [namaSubDepartment, setNamaSubDepartment] = useState(
@@ -66,7 +66,7 @@ const ModalEdit = (props: Props) => {
       ?.split(",")
       .map((item) => ({ value: item, label: jenisPengajuan(item) }))
   );
-  const [manager, setManager] = useState(data.manager?.pegawai.id?.toString());
+  const [manager, setManager] = useState(data.manager?.user.id?.toString());
 
   const getManager = async (department: string) => {
     setManager("");
@@ -208,9 +208,9 @@ const ModalEdit = (props: Props) => {
                       value={manager}
                     >
                       <option value="">--PILIH--</option>
-                      {listManager?.map((item: Karyawan, index: number) => (
+                      {listManager?.map((item: User, index: number) => (
                         <option value={item.id} key={index}>
-                          {item.nama.toUpperCase()}
+                          {item.name.toUpperCase()}
                         </option>
                       ))}
                     </select>

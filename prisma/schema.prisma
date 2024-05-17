@@ -22,6 +22,7 @@ model user {
   name               String?
   createdAt          DateTime?            @db.DateTime(0)
   rolesId            Int?
+  telp               String?
   session            session[]
   roles              roles?               @relation(fields: [rolesId], references: [id])
   pegawai_id         Int?
@@ -29,6 +30,8 @@ model user {
   session_mobile     session_mobile[]
   pengajuan_izin     pengajuan_izin[]
   pengajuan_overtime pengajuan_overtime[]
+  manager            manager[]
+  is_userluar        Boolean              @default(false)
 }
 
 model menu_group {
@@ -127,8 +130,8 @@ model sub_department {
 
 model manager {
   id             Int              @id @default(autoincrement())
-  pegawai_id     Int
-  pegawai        pegawai          @relation(fields: [pegawai_id], references: [id])
+  user_id        Int
+  user           user             @relation(fields: [user_id], references: [id])
   sub_department sub_department[]
 }
 
@@ -173,7 +176,6 @@ model pegawai {
   pengajuan_izin             pengajuan_izin[]
   izin                       izin[]
   request_session_izin       request_session_izin[]
-  manager                    manager[]
   overtime                   overtime[]
   izin_lokasi_tambahan       izin_lokasi_tambahan[]
   pengajuan_overtime_pegawai pengajuan_overtime_pegawai[]

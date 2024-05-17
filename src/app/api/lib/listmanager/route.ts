@@ -26,34 +26,18 @@ export async function POST(req: Request) {
     const body = await req.formData();
     const department = body.get("department")!.toString();
 
-    const data = await prisma.pegawai.findMany({
+    const data = await prisma.user.findMany({
       select: {
         id: true,
-        nama: true,
+        name: true,
       },
       where: {
-        ...(department === "1"
-          ? {
-              id: {
-                in: [71, 73],
-              },
-            }
-          : {
-              OR: [
-                {
-                  id: {
-                    in: [71, 73],
-                  },
-                },
-                {
-                  department_id: Number(department),
-                  is_active: true,
-                },
-              ],
-            }),
+        roles: {
+          isNot: null,
+        },
       },
       orderBy: {
-        nama: "asc",
+        name: "asc",
       },
     });
 

@@ -86,10 +86,10 @@ export async function GET(req: Request) {
         },
         manager: {
           select: {
-            pegawai: {
+            user: {
               select: {
                 id: true,
-                nama: true,
+                name: true,
                 telp: true,
               },
             },
@@ -220,7 +220,7 @@ export async function POST(req: Request) {
     if (manager) {
       createManager = await prisma.manager.create({
         data: {
-          pegawai_id: Number(manager),
+          user_id: Number(manager),
         },
       });
     }
@@ -229,7 +229,7 @@ export async function POST(req: Request) {
       data: {
         nama_sub_department: nama_sub_department?.toUpperCase(),
         department_id: Number(department),
-        akses_izin: akses_izin === "" ? akses_izin : null,
+        akses_izin: akses_izin === "" ? null : akses_izin,
         ...(manager && {
           manager_id: createManager!.id as number,
         }),

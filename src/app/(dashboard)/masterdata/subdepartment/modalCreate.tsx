@@ -18,9 +18,9 @@ type Department = {
   radius: string;
 };
 
-type Karyawan = {
+type User = {
   id: number;
-  nama: string;
+  name: string;
 };
 
 const ModalCreate = (props: Props) => {
@@ -33,7 +33,7 @@ const ModalCreate = (props: Props) => {
   // lodaing state
   const [isLoading, setIsLoading] = useState(false);
 
-  const [listManager, setListManager] = useState([] as Karyawan[]);
+  const [listManager, setListManager] = useState([] as User[]);
 
   const [department, setDepartment] = useState("");
   const [namaSubDepartment, setNamaSubDepartment] = useState("");
@@ -183,9 +183,9 @@ const ModalCreate = (props: Props) => {
                       value={manager}
                     >
                       <option value="">--PILIH--</option>
-                      {listManager?.map((item: Karyawan, index: number) => (
+                      {listManager?.map((item: User, index: number) => (
                         <option value={item.id} key={index}>
-                          {item.nama.toUpperCase()}
+                          {item.name.toUpperCase()}
                         </option>
                       ))}
                     </select>

@@ -13,7 +13,7 @@ type SubDepartment = {
   akses_izin: string;
   manager_id: number;
   manager: {
-    pegawai: Karyawan;
+    user: User;
   };
 };
 type Department = {
@@ -25,9 +25,9 @@ type Department = {
   radius: string;
 };
 
-type Karyawan = {
+type User = {
   id: number;
-  nama: string;
+  name: string;
 };
 
 interface isLoadingProps {
@@ -55,7 +55,7 @@ const Data = ({
 
   // data state
   const [dataEdit, setDataEdit] = useState({} as SubDepartment);
-  const [listManager, setListManager] = useState([] as Karyawan[]);
+  const [listManager, setListManager] = useState([] as User[]);
 
   // filter
   const [selectDept, setSelectDept] = useState(departments[0].id.toString());
@@ -263,7 +263,7 @@ const Data = ({
                       {item.department.nama_department.toUpperCase()}
                     </td>
                     <td align="left">
-                      {item.manager?.pegawai.nama?.toUpperCase()}
+                      {item.manager?.user.name?.toUpperCase()}
                     </td>
                     <td>
                       <div className="d-flex gap-2">

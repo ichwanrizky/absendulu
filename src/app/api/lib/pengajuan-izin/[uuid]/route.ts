@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/libs/db";
 import { handleError } from "@/libs/handleError";
+import sendWhatsappMessage from "@/libs/WhatsAppService";
 const path = require("path");
 const fs = require("fs");
 
@@ -31,6 +32,20 @@ export async function POST(
         pegawai: {
           select: {
             department_id: true,
+            sub_department: {
+              select: {
+                manager: {
+                  select: {
+                    user: {
+                      select: {
+                        name: true,
+                        telp: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -118,6 +133,47 @@ export async function POST(
       );
     }
 
+    if (checkPegawai.pegawai.sub_department.manager?.user.telp) {
+      const managerTelp =
+        checkPegawai.pegawai.sub_department.manager?.user.telp;
+      const managerName =
+        checkPegawai.pegawai.sub_department.manager?.user.name;
+
+      let keteranganJumlah = "";
+
+      if (jenis_izin == "C" || jenis_izin == "I" || jenis_izin == "S") {
+        keteranganJumlah = `Selama ${jumlah_hari} Hari`;
+      } else if (jenis_izin == "CS" || jenis_izin == "IS") {
+        keteranganJumlah = `Selama Setengah Hari`;
+      } else if (
+        jenis_izin == "G1" ||
+        jenis_izin == "G2" ||
+        jenis_izin == "G3"
+      ) {
+        keteranganJumlah = `Selama ${jumlah_jam} Jam`;
+      } else if (jenis_izin == "P/M") {
+        keteranganJumlah = ``;
+      }
+      const message =
+        `*Notifikasi Pengajuan Cuti & Izin | EMS PANJI JAYA*\n\n` +
+        `Halo Bapak/Ibu ${managerName?.toUpperCase()},\n\n` +
+        `Dengan ini saya mengajukan *${jenisPengajuan(
+          jenis_izin
+        )?.toUpperCase()}* untuk tanggal *${new Date(
+          formattedDate as Date
+        ).toLocaleString(
+          "id-ID",
+          optionsDate
+        )} ${keteranganJumlah}*. Alasan pengajuan saya adalah *${keterangan?.toUpperCase()}*.\n\n` +
+        `Untuk melihat status pengajuan saya, Bapak/Ibu dapat mengklik link berikut: ${process.env.IZIN_URL}/approval-izin/${create.uuid} \n\n` +
+        `Terima kasih atas perhatian dan pengertiannya.\n` +
+        `Pesan ini dikirim secara otomatis oleh sistem dan tidak perlu direspon.\n` +
+        `Salam,\n` +
+        `EMS PANJI JAYA`;
+
+      await sendWhatsappMessage(managerTelp, message);
+    }
+
     if (create.jenis_izin === "S") {
       // save mc base64 to public folder
 
@@ -172,3 +228,42 @@ export async function POST(
     return handleError(error);
   }
 }
+
+const jenisPengajuan = (jenis: string) => {
+  switch (jenis) {
+    case "C":
+      return "Cuti";
+
+    case "CS":
+      return "Cuti Setengah Hari";
+
+    case "I":
+      return "Izin";
+
+    case "IS":
+      return "Izin Setengah Hari";
+
+    case "S":
+      return "Sakit";
+
+    case "G1":
+      return "Gatepass";
+
+    case "G2":
+      return "Datang Terlambat";
+
+    case "G3":
+      return "Pulang Awal";
+
+    case "P/M":
+      return "Lupa Absen";
+  }
+};
+
+const optionsDate: any = {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  timeZone: "UTC",
+};

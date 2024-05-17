@@ -1,55 +1,31 @@
 "use client";
 import { useState } from "react";
 import useSWR, { mutate } from "swr";
+import ModalCreate from "./modalCreate";
+import ModalEdit from "./modalEdit";
 import { usePathname } from "next/navigation";
 
-type PengajuanIzin = {
+type User = {
   number: number;
   id: number;
-  jenis_izin: string;
-  tanggal: Date;
-  pegawai_id: number;
-  status: number;
-  bulan: number;
-  tahun: number;
-  keterangan: string;
-  jumlah_hari: string;
-  jumlah_jam: string;
-  mc: null;
-  approve_by: null;
-  approve_date: null;
-  pegawai: Pegawai;
-  user: User;
+  username: string;
+  password: string;
+  name: null | string;
+  createdAt: Date;
+  roles: Roles;
+  telp: string;
 };
 
-type Pegawai = {
-  nama: string;
-};
-
-type User = {
-  name: string;
-};
-
-type Department = {
+type Roles = {
   id: number;
-  nama_department: string;
-  lot: string;
-  latitude: string;
-  longitude: string;
-  radius: string;
+  role_name: string;
 };
 
 interface isLoadingProps {
   [key: number]: boolean;
 }
 
-const Data = ({
-  accessToken,
-  departments,
-}: {
-  accessToken: string;
-  departments: Department[];
-}) => {
+const Data = ({ accessToken }: { accessToken: string }) => {
   const pathname = usePathname();
   const lastSlashIndex = pathname.lastIndexOf("/");
   const menu_url = pathname.substring(lastSlashIndex + 1);
@@ -58,23 +34,90 @@ const Data = ({
   const [currentPage, setCurrentPage] = useState(1);
 
   // loading state
+  const [isLoadingCreate, setIsLoadingCreate] = useState(false);
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
+  const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
 
-  // filter state
-  const [selectDept, setSelectDept] = useState(departments[0].id.toString());
+  // modal state
+  const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
+  const [isModalEditOpen, setIsModalEditOpen] = useState(false);
+
+  // data state
+  const [dataEdit, setDataEdit] = useState({} as User);
+  const [dataRoles, setDataRoles] = useState<Roles[]>();
 
   //search state
   const [search, setSearch] = useState("");
 
-  const [bulan, setBulan] = useState((new Date().getMonth() + 1).toString());
-  const [tahun, setTahun] = useState(new Date().getFullYear().toString());
+  const handleCreate = async () => {
+    setIsLoadingCreate(true);
+    try {
+      // get roles
+      const responseRoles = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listroles`,
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const resRoles = await responseRoles.json();
+      if (!responseRoles.ok) {
+        alert(resRoles.message);
+      } else {
+        setDataRoles(resRoles.data);
+        setIsModalCreateOpen(true);
+      }
+    } catch (error) {
+      alert("something went wrong");
+    }
+    setIsLoadingCreate(true);
+  };
+
+  const handleEdit = async (id: number) => {
+    setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
+    try {
+      // get edit data
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/web/datauserluar/${id}?menu_url=${menu_url}`,
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const res = await response.json();
+
+      // get roles
+      const responseRoles = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listroles`,
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const resRoles = await responseRoles.json();
+
+      if (!response.ok || !responseRoles.ok) {
+        alert(!response.ok ? res.message : resRoles.message);
+      } else {
+        setDataEdit(res.data);
+        setDataRoles(resRoles.data);
+        setIsModalEditOpen(true);
+      }
+    } catch (error) {
+      alert("something went wrong");
+    }
+    setIsLoadingEdit((prev) => ({ ...prev, [id]: false }));
+  };
 
   const handleDelete = async (id: number) => {
     if (confirm("Delete this data?")) {
       setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin/${id}?menu_url=${menu_url}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/datauserluar/${id}?menu_url=${menu_url}`,
           {
             method: "DELETE",
             headers: {
@@ -82,12 +125,13 @@ const Data = ({
             },
           }
         );
+
         const res = await response.json();
         alert(res.message);
         if (response.ok) {
           setSearch("");
           mutate(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/datauserluar?menu_url=${menu_url}&page=${currentPage}`
           );
         }
       } catch (error) {
@@ -95,6 +139,15 @@ const Data = ({
       }
       setIsLoadingDelete((prev) => ({ ...prev, [id]: false }));
     }
+  };
+
+  const closeModal = () => {
+    setIsModalCreateOpen(false);
+    setIsModalEditOpen(false);
+    setSearch("");
+    mutate(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/web/datauserluar?menu_url=${menu_url}&page=${currentPage}`
+    );
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -107,10 +160,11 @@ const Data = ({
       },
     }).then((res) => res.json());
   };
+
   const { data, error, isLoading } = useSWR(
     search === ""
-      ? `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
-      : `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}&search=${search}`,
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/web/datauserluar?menu_url=${menu_url}&page=${currentPage}`
+      : `${process.env.NEXT_PUBLIC_API_URL}/api/web/datauserluar?menu_url=${menu_url}&page=${currentPage}&search=${search}`,
     fetcher
   );
 
@@ -120,7 +174,6 @@ const Data = ({
         <div className="row">
           <div className="col-sm-12 d-flex justify-content-between align-items-center">
             <div></div>
-
             <input
               type="text"
               placeholder="Search..."
@@ -137,6 +190,7 @@ const Data = ({
             />
           </div>
         </div>
+
         <div className="text-center">
           <span
             className="spinner-border spinner-border-sm me-2"
@@ -169,7 +223,7 @@ const Data = ({
     );
   }
 
-  const permits = data?.data;
+  const users = data?.data;
   const actions = data?.actions;
 
   const ITEMS_PER_PAGE = data?.itemsPerPage;
@@ -223,59 +277,31 @@ const Data = ({
       <div className="card-body">
         <div className="row">
           <div className="col-sm-12 d-flex justify-content-between align-items-center">
+            {/* button */}
             <div>
-              <select
-                className="form-select-sm"
-                value={selectDept}
-                onChange={(e) => setSelectDept(e.target.value)}
-              >
-                {departments?.map((item: Department, index: number) => (
-                  <option value={item.id} key={index}>
-                    {item.nama_department?.toUpperCase()}
-                  </option>
+              {actions?.includes("insert") &&
+                (isLoadingCreate ? (
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm fw-bold"
+                    disabled
+                  >
+                    <span
+                      className="spinner-border spinner-border-sm me-2"
+                      role="status"
+                      aria-hidden="true"
+                    />{" "}
+                    LOADING...
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm fw-bold"
+                    onClick={() => handleCreate()}
+                  >
+                    ADD DATA
+                  </button>
                 ))}
-              </select>
-
-              <select
-                className="form-select-sm ms-2"
-                value={bulan}
-                onChange={(e) => setBulan(e.target.value)}
-              >
-                {Array.from({ length: 12 }, (_, i) => {
-                  const monthNames = [
-                    "Januari",
-                    "Februari",
-                    "Maret",
-                    "April",
-                    "Mei",
-                    "Juni",
-                    "Juli",
-                    "Augustus",
-                    "September",
-                    "Oktober",
-                    "November",
-                    "Desember",
-                  ];
-                  return (
-                    <option value={i + 1} key={i}>
-                      {monthNames[i]}
-                    </option>
-                  );
-                })}
-              </select>
-
-              <select
-                className="form-select-sm ms-2"
-                required
-                value={tahun}
-                onChange={(e) => setTahun(e.target.value)}
-              >
-                {Array.from({ length: 2 }, (_, i) => (
-                  <option value={new Date().getFullYear() + i} key={i}>
-                    {new Date().getFullYear() + i}
-                  </option>
-                ))}
-              </select>
             </div>
 
             <input
@@ -302,89 +328,70 @@ const Data = ({
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
                   NO
                 </th>
+                <th className="fw-semibold fs-6">NAMA</th>
                 <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  NAMA
+                  USERNAME
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
+                  ROLE
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  JENIS IZIN
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  TANGGAL
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "5%" }}>
-                  JUMLAH HARI
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "5%" }}>
-                  JUMLAH JAM
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "5%" }}>
-                  MC
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  KETERANGAN
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  STATUS
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "5%" }}>
                   ACTION
                 </th>
               </tr>
             </thead>
             <tbody>
-              {permits?.length === 0 ? (
+              {users?.length === 0 ? (
                 <tr>
-                  <td colSpan={10}>
+                  <td colSpan={5}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
               ) : (
-                permits?.map((item: PengajuanIzin, index: number) => (
-                  <tr key={index} style={{ verticalAlign: "middle" }}>
+                users?.map((item: User, index: number) => (
+                  <tr key={index}>
                     <td align="center">{item.number}</td>
-                    <td align="left">{item.pegawai.nama?.toUpperCase()}</td>
-                    <td align="left">{jenisPengajuan(item.jenis_izin)}</td>
-                    <td align="left">
-                      {new Date(item.tanggal as Date).toLocaleString(
-                        "id-ID",
-                        optionsDate
-                      )}
-                    </td>
-                    <td align="center">{item.jumlah_hari}</td>
-                    <td align="center">{item.jumlah_jam}</td>
-                    <td align="center"></td>
-                    <td align="left">{item.keterangan}</td>
-                    <td align="center">
-                      {item.status === 1 ? (
-                        <>
-                          <span className="badge bg-success">Approved By</span>
-                          <strong>{item.user.name}</strong>
-                        </>
-                      ) : (
-                        <>
-                          <span className="badge bg-danger">Rejected By</span>
-                          <strong>{item.user.name}</strong>
-                        </>
-                      )}
-                    </td>
-                    <td align="center">
-                      {actions?.includes("delete") &&
-                        (isLoadingDelete[item.id] ? (
-                          <button className="btn btn-danger btn-sm" disabled>
-                            <span
-                              className="spinner-border spinner-border-sm"
-                              role="status"
-                              aria-hidden="true"
-                            />
-                          </button>
-                        ) : (
-                          <button
-                            className="btn btn-danger btn-sm"
-                            onClick={() => handleDelete(item.id)}
-                          >
-                            DELETE
-                          </button>
-                        ))}
+                    <td align="left">{item.name?.toUpperCase()}</td>
+                    <td align="left">{item.username.toLowerCase()}</td>
+                    <td align="left">{item.roles?.role_name.toUpperCase()}</td>
+                    <td>
+                      <div className="d-flex gap-2">
+                        {actions?.includes("update") &&
+                          (isLoadingEdit[item.id] ? (
+                            <button className="btn btn-success btn-sm" disabled>
+                              <span
+                                className="spinner-border spinner-border-sm"
+                                role="status"
+                                aria-hidden="true"
+                              />
+                            </button>
+                          ) : (
+                            <button
+                              className="btn btn-success btn-sm"
+                              onClick={() => handleEdit(item.id)}
+                            >
+                              EDIT
+                            </button>
+                          ))}
+
+                        {actions?.includes("delete") &&
+                          (isLoadingDelete[item.id] ? (
+                            <button className="btn btn-danger btn-sm" disabled>
+                              <span
+                                className="spinner-border spinner-border-sm"
+                                role="status"
+                                aria-hidden="true"
+                              />
+                            </button>
+                          ) : (
+                            <button
+                              className="btn btn-danger btn-sm"
+                              onClick={() => handleDelete(item.id)}
+                            >
+                              DELETE
+                            </button>
+                          ))}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -422,47 +429,29 @@ const Data = ({
           )}
         </div>
       </div>
+
+      {/* modal create */}
+      {isModalCreateOpen && (
+        <ModalCreate
+          isModalOpen={isModalCreateOpen}
+          onClose={closeModal}
+          accessToken={accessToken}
+          dataRoles={dataRoles}
+        />
+      )}
+
+      {/* modal edit */}
+      {isModalEditOpen && (
+        <ModalEdit
+          isModalOpen={isModalEditOpen}
+          onClose={closeModal}
+          accessToken={accessToken}
+          data={dataEdit}
+          dataRoles={dataRoles}
+        />
+      )}
     </>
   );
-};
-
-const jenisPengajuan = (jenis: string) => {
-  switch (jenis) {
-    case "C":
-      return "Cuti";
-
-    case "CS":
-      return "Cuti Setengah Hari";
-
-    case "I":
-      return "Izin";
-
-    case "IS":
-      return "Izin Setengah Hari";
-
-    case "S":
-      return "Sakit";
-
-    case "G1":
-      return "Gatepass";
-
-    case "G2":
-      return "Datang Terlambat";
-
-    case "G3":
-      return "Pulang Awal";
-
-    case "P/M":
-      return "Lupa Absen";
-  }
-};
-
-const optionsDate: any = {
-  weekday: "long",
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-  timeZone: "UTC",
 };
 
 export default Data;

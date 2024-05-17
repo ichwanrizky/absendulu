@@ -81,18 +81,12 @@ export async function GET(req: Request) {
     // page
     const page = searchParams.get("page");
 
-    // filter
-    const select_dept = searchParams.get("select_dept");
-
     const condition = {
       where: {
         name: {
           contains: search ? search : undefined,
         },
-        pegawai: {
-          department_id: Number(select_dept),
-        },
-        is_userluar: false,
+        is_userluar: true,
       },
     };
 
@@ -102,16 +96,14 @@ export async function GET(req: Request) {
 
     const ITEMS_PER_PAGE = page ? 10 : totalData;
     var data = await prisma.user.findMany({
-      include: {
-        pegawai: {
-          select: {
-            id: true,
-            nama: true,
-            tgl_lahir: true,
-          },
-        },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        telp: true,
         roles: {
           select: {
+            id: true,
             role_name: true,
           },
         },
@@ -244,47 +236,29 @@ export async function POST(req: Request) {
     }
 
     const body = await req.formData();
-    const pegawai = body.get("pegawai")!.toString();
-    const parsePegawai = pegawai ? JSON.parse(pegawai) : {};
+    const username = body.get("username")!.toString();
+    const password = body.get("password")!.toString();
+    const roles = body.get("roles")!.toString();
+    const name = body.get("name")!.toString();
+    const telp = body.get("telp")?.toString();
 
-    const dataPegawai = await prisma.pegawai.findMany({
-      select: {
-        id: true,
-        nama: true,
-        tgl_lahir: true,
-      },
-      where: {
-        id: {
-          in: parsePegawai?.map((item: any) => Number(item.value)),
-        },
-      },
-    });
+    const newPassword = await bcrypt.hash(password, 10);
 
     // format date
     const currendDate = new Date();
     const formattedDate = new Date(currendDate);
     formattedDate.setHours(formattedDate.getHours() + 7);
 
-    const formattedPegawai = await Promise.all(
-      dataPegawai.map(async (item) => {
-        const username = item.nama?.toLowerCase().split(" ")[0] + item.id;
-        const rawPassword =
-          item.nama?.toLowerCase().split(" ")[0] +
-          (item.tgl_lahir?.getFullYear() || "");
-        const password = await bcrypt.hash(rawPassword, 10);
-
-        return {
-          username,
-          password,
-          createdAt: formattedDate,
-          pegawai_id: item.id,
-          name: item.nama.toUpperCase(),
-        };
-      })
-    );
-
-    const create = await prisma.user.createMany({
-      data: formattedPegawai,
+    const create = await prisma.user.create({
+      data: {
+        name: name.toUpperCase(),
+        username: username?.toLowerCase(),
+        password: newPassword,
+        telp: telp,
+        rolesId: Number(roles),
+        is_userluar: true,
+        createdAt: formattedDate,
+      },
     });
 
     if (!create) {
