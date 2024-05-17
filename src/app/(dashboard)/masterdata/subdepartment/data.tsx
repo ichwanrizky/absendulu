@@ -15,6 +15,10 @@ type SubDepartment = {
   manager: {
     user: User;
   };
+  supervisor_id: number;
+  supervisor: {
+    user: User;
+  };
 };
 type Department = {
   id: number;
@@ -28,6 +32,9 @@ type Department = {
 type User = {
   id: number;
   name: string;
+  roles: {
+    role_name: string;
+  };
 };
 
 interface isLoadingProps {
@@ -37,9 +44,11 @@ interface isLoadingProps {
 const Data = ({
   accessToken,
   departments,
+  managers,
 }: {
   accessToken: string;
   departments: Department[];
+  managers: User[];
 }) => {
   const pathname = usePathname();
   const lastSlashIndex = pathname.lastIndexOf("/");
@@ -55,7 +64,6 @@ const Data = ({
 
   // data state
   const [dataEdit, setDataEdit] = useState({} as SubDepartment);
-  const [listManager, setListManager] = useState([] as User[]);
 
   // filter
   const [selectDept, setSelectDept] = useState(departments[0].id.toString());
@@ -78,26 +86,10 @@ const Data = ({
       );
       const res = await response.json();
 
-      // list karyawan
-      const body = new FormData();
-      body.append("department", selectDept);
-      const responseKaryawan = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listmanager`,
-        {
-          method: "POST",
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-          },
-          body: body,
-        }
-      );
-      const resKaryawan = await responseKaryawan.json();
-
-      if (!response.ok || !responseKaryawan.ok) {
-        alert(!response.ok ? res.message : resKaryawan.message);
+      if (!response.ok) {
+        alert(res.message);
       } else {
         setDataEdit(res.data);
-        setListManager(resKaryawan.data);
         setIsModalEditOpen(true);
       }
     } catch (error) {
@@ -237,8 +229,11 @@ const Data = ({
                 <th className="fw-semibold fs-6" style={{ width: "15%" }}>
                   DEPARTMENT
                 </th>
-                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  PENANGGUNG JAWAB
+                <th className="fw-semibold fs-6" style={{ width: "20%" }}>
+                  SUPERVISOR
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "20%" }}>
+                  ATASAN
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
                   ACTION
@@ -248,7 +243,7 @@ const Data = ({
             <tbody>
               {subDepartments?.length === 0 ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
@@ -261,6 +256,9 @@ const Data = ({
                     </td>
                     <td align="left">
                       {item.department.nama_department.toUpperCase()}
+                    </td>
+                    <td align="left">
+                      {item.supervisor?.user.name?.toUpperCase()}
                     </td>
                     <td align="left">
                       {item.manager?.user.name?.toUpperCase()}
@@ -319,6 +317,7 @@ const Data = ({
           onClose={closeModal}
           accessToken={accessToken}
           dataDepartment={departments}
+          dataManager={managers}
         />
       )}
 
@@ -330,7 +329,7 @@ const Data = ({
           accessToken={accessToken}
           dataDepartment={departments}
           data={dataEdit}
-          dataManager={listManager}
+          dataManager={managers}
         />
       )}
     </>

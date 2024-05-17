@@ -8,6 +8,7 @@ type Props = {
   onClose: any;
   accessToken?: string;
   dataDepartment: Department[];
+  dataManager: User[];
 };
 type Department = {
   id: number;
@@ -21,10 +22,14 @@ type Department = {
 type User = {
   id: number;
   name: string;
+  roles: {
+    role_name: string;
+  };
 };
 
 const ModalCreate = (props: Props) => {
-  const { isModalOpen, onClose, accessToken, dataDepartment } = props;
+  const { isModalOpen, onClose, accessToken, dataDepartment, dataManager } =
+    props;
 
   const pathname = usePathname();
   const lastSlashIndex = pathname.lastIndexOf("/");
@@ -32,8 +37,6 @@ const ModalCreate = (props: Props) => {
 
   // lodaing state
   const [isLoading, setIsLoading] = useState(false);
-
-  const [listManager, setListManager] = useState([] as User[]);
 
   const [department, setDepartment] = useState("");
   const [namaSubDepartment, setNamaSubDepartment] = useState("");
@@ -44,33 +47,7 @@ const ModalCreate = (props: Props) => {
     },
   ]);
   const [manager, setManager] = useState("");
-
-  const getManager = async (department: string) => {
-    setManager("");
-    try {
-      const body = new FormData();
-      body.append("department", department);
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listmanager`,
-        {
-          method: "POST",
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-          },
-          body: body,
-        }
-      );
-      const res = await response.json();
-      if (!response.ok) {
-        alert(res.message);
-      } else {
-        setListManager(res.data);
-      }
-    } catch (error) {
-      alert("something went wrong");
-    }
-  };
+  const [supervisor, setSupervisor] = useState("");
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -85,6 +62,7 @@ const ModalCreate = (props: Props) => {
           aksesIzin?.map((item) => item.value).join(",")
         );
         body.append("manager", manager);
+        body.append("supervisor", supervisor);
 
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/web/subdepartment?menu_url=${menu_url}`,
@@ -146,7 +124,6 @@ const ModalCreate = (props: Props) => {
                       required
                       onChange={(e) => {
                         setDepartment(e.target.value);
-                        getManager(e.target.value);
                       }}
                     >
                       <option value="">--PILIH--</option>
@@ -174,16 +151,30 @@ const ModalCreate = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">
-                      PENANGGUNG JAWAB
-                    </label>
+                    <label className="mb-1 fw-semibold small">SUPERVISOR</label>
+                    <select
+                      className="form-select"
+                      onChange={(e) => setSupervisor(e.target.value)}
+                      value={supervisor}
+                    >
+                      <option value="">--PILIH--</option>
+                      {dataManager?.map((item: User, index: number) => (
+                        <option value={item.id} key={index}>
+                          {item.name.toUpperCase()}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group mb-3">
+                    <label className="mb-1 fw-semibold small">ATASAN</label>
                     <select
                       className="form-select"
                       onChange={(e) => setManager(e.target.value)}
                       value={manager}
                     >
                       <option value="">--PILIH--</option>
-                      {listManager?.map((item: User, index: number) => (
+                      {dataManager?.map((item: User, index: number) => (
                         <option value={item.id} key={index}>
                           {item.name.toUpperCase()}
                         </option>

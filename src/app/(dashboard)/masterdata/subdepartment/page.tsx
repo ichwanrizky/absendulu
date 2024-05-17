@@ -39,6 +39,30 @@ const getDepartments = async (token: string) => {
   }
 };
 
+const getManager = async (token: string) => {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listmanager`,
+      {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+        next: {
+          revalidate: 60,
+        },
+      }
+    );
+    const res = await response.json();
+    if (response.ok) {
+      return res.data;
+    }
+
+    return [];
+  } catch (error) {
+    return [];
+  }
+};
+
 const Page = async () => {
   const session = (await getServerSession(authOptions)) as Session | null;
 
@@ -47,6 +71,7 @@ const Page = async () => {
   }
 
   const departments = await getDepartments(session.user.accessToken);
+  const managers = await getManager(session.user.accessToken);
 
   return (
     <main>
@@ -71,6 +96,7 @@ const Page = async () => {
           <Data
             accessToken={session.user.accessToken}
             departments={departments}
+            managers={managers}
           />
         </div>
       </div>

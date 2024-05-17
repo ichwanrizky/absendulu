@@ -95,6 +95,17 @@ export async function GET(req: Request) {
             },
           },
         },
+        supervisor: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                telp: true,
+              },
+            },
+          },
+        },
       },
       where: {
         department: {
@@ -215,10 +226,20 @@ export async function POST(req: Request) {
     const department = body.get("department")!.toString();
     const akses_izin = body.get("akses_izin")?.toString();
     const manager = body.get("manager")?.toString();
+    const supervisor = body.get("supervisor")?.toString();
 
     let createManager;
     if (manager) {
       createManager = await prisma.manager.create({
+        data: {
+          user_id: Number(manager),
+        },
+      });
+    }
+
+    let createSupervisor;
+    if (supervisor) {
+      createSupervisor = await prisma.supervisor.create({
         data: {
           user_id: Number(manager),
         },
@@ -232,6 +253,9 @@ export async function POST(req: Request) {
         akses_izin: akses_izin === "" ? null : akses_izin,
         ...(manager && {
           manager_id: createManager!.id as number,
+        }),
+        ...(supervisor && {
+          supervisor_id: createSupervisor!.id as number,
         }),
       },
     });
