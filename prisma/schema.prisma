@@ -242,6 +242,7 @@ model pengajuan_izin {
   approve_by    Int?
   user          user?      @relation("PengajuanIzinApproveBy", fields: [approve_by], references: [id])
   approve_date  DateTime?  @db.DateTime(0)
+  known_status  Int        @default(0)
   known_by      Int?
   user_known    user?      @relation("PengajuanIzinKnownBy", fields: [known_by], references: [id])
   known_date    DateTime?  @db.DateTime(0)

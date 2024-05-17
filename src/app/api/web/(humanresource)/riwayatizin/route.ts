@@ -120,6 +120,11 @@ export async function GET(req: Request) {
             name: true,
           },
         },
+        user_known: {
+          select: {
+            name: true,
+          },
+        },
       },
       ...condition,
       orderBy: {

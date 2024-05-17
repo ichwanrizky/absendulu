@@ -55,6 +55,28 @@ export async function GET(
             sub_department: {
               select: {
                 nama_sub_department: true,
+                manager: {
+                  select: {
+                    user: {
+                      select: {
+                        id: true,
+                        name: true,
+                        telp: true,
+                      },
+                    },
+                  },
+                },
+                supervisor: {
+                  select: {
+                    user: {
+                      select: {
+                        id: true,
+                        name: true,
+                        telp: true,
+                      },
+                    },
+                  },
+                },
               },
             },
           },

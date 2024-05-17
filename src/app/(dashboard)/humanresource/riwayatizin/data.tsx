@@ -324,7 +324,10 @@ const Data = ({
                   KETERANGAN
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  STATUS
+                  STATUS KNOWN
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "10%" }}>
+                  STATUS APPROVE
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "5%" }}>
                   ACTION
@@ -334,7 +337,7 @@ const Data = ({
             <tbody>
               {permits?.length === 0 ? (
                 <tr>
-                  <td colSpan={10}>
+                  <td colSpan={11}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
@@ -354,6 +357,19 @@ const Data = ({
                     <td align="center">{item.jumlah_jam}</td>
                     <td align="center"></td>
                     <td align="left">{item.keterangan}</td>
+                    <td align="center">
+                      {item.status === 1 ? (
+                        <>
+                          <span className="badge bg-success">Approved By</span>
+                          <strong>{item.user.name}</strong>
+                        </>
+                      ) : (
+                        <>
+                          <span className="badge bg-danger">Rejected By</span>
+                          <strong>{item.user.name}</strong>
+                        </>
+                      )}
+                    </td>
                     <td align="center">
                       {item.status === 1 ? (
                         <>

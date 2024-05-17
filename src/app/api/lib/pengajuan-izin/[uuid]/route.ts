@@ -44,6 +44,16 @@ export async function POST(
                     },
                   },
                 },
+                supervisor: {
+                  select: {
+                    user: {
+                      select: {
+                        name: true,
+                        telp: true,
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -133,11 +143,16 @@ export async function POST(
       );
     }
 
-    if (checkPegawai.pegawai.sub_department.manager?.user.telp) {
-      const managerTelp =
-        checkPegawai.pegawai.sub_department.manager?.user.telp;
-      const managerName =
-        checkPegawai.pegawai.sub_department.manager?.user.name;
+    const managerTelp = checkPegawai.pegawai.sub_department?.manager?.user.telp;
+    const managerName = checkPegawai.pegawai.sub_department?.manager?.user.name;
+    const supervisorTelp =
+      checkPegawai.pegawai.sub_department?.supervisor?.user.telp;
+    const supervisorName =
+      checkPegawai.pegawai.sub_department?.supervisor?.user.name;
+
+    if (managerTelp || supervisorTelp) {
+      const waTelp = supervisorTelp ? supervisorTelp : managerTelp;
+      const waName = supervisorName ? "supervisor" : managerName;
 
       let keteranganJumlah = "";
 
@@ -156,7 +171,7 @@ export async function POST(
       }
       const message =
         `*Notifikasi Pengajuan Cuti & Izin | EMS PANJI JAYA*\n\n` +
-        `Halo Bapak/Ibu ${managerName?.toUpperCase()},\n\n` +
+        `Halo Bapak/Ibu ${waName?.toUpperCase()},\n\n` +
         `Dengan ini saya mengajukan *${jenisPengajuan(
           jenis_izin
         )?.toUpperCase()}* untuk tanggal *${new Date(
@@ -171,7 +186,7 @@ export async function POST(
         `Salam,\n` +
         `EMS PANJI JAYA`;
 
-      await sendWhatsappMessage(managerTelp, message);
+      await sendWhatsappMessage(waTelp!, message);
     }
 
     if (create.jenis_izin === "S") {
