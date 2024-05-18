@@ -27,6 +27,7 @@ export async function POST(req: Request) {
     const body = await req.formData();
     const status = body.get("status")!.toString();
     const id = body.get("id")!.toString();
+    const metode = body.get("metode")!.toString();
 
     if (!id) {
       return new NextResponse(
@@ -48,57 +49,13 @@ export async function POST(req: Request) {
     const formattedDate = new Date(currendDate);
     formattedDate.setHours(formattedDate.getHours() + 7);
 
-    const checkPengajuan = await prisma.pengajuan_izin.findFirst({
-      include: {
-        pegawai: {
-          select: {
-            nama: true,
-            department: {
-              select: {
-                nama_department: true,
-              },
-            },
-            sub_department: {
-              select: {
-                nama_sub_department: true,
-                manager: {
-                  select: {
-                    user: {
-                      select: {
-                        id: true,
-                        name: true,
-                        telp: true,
-                      },
-                    },
-                  },
-                },
-                supervisor: {
-                  select: {
-                    user: {
-                      select: {
-                        id: true,
-                        name: true,
-                        telp: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      where: {
-        id: Number(id),
-      },
-    });
-
-    if (checkPengajuan?.known_by === null) {
+    if (metode === "supervisor") {
       const update = await prisma.pengajuan_izin.update({
         data: {
           known_status: Number(status),
           known_by: session[1].id,
           known_date: formattedDate,
+          ...(status === "2" && { status: 2 }),
         },
         where: {
           id: Number(id),
@@ -121,6 +78,51 @@ export async function POST(req: Request) {
       }
 
       if (status === "1") {
+        const checkPengajuan = await prisma.pengajuan_izin.findFirst({
+          include: {
+            pegawai: {
+              select: {
+                nama: true,
+                department: {
+                  select: {
+                    nama_department: true,
+                  },
+                },
+                sub_department: {
+                  select: {
+                    nama_sub_department: true,
+                    manager: {
+                      select: {
+                        user: {
+                          select: {
+                            id: true,
+                            name: true,
+                            telp: true,
+                          },
+                        },
+                      },
+                    },
+                    supervisor: {
+                      select: {
+                        user: {
+                          select: {
+                            id: true,
+                            name: true,
+                            telp: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          where: {
+            id: Number(id),
+          },
+        });
+
         const waName =
           checkPengajuan?.pegawai?.sub_department?.manager?.user?.name;
         const waTelp =
@@ -128,10 +130,10 @@ export async function POST(req: Request) {
 
         let keteranganJumlah = "";
 
-        const jenis_izin = checkPengajuan.jenis_izin;
+        const jenis_izin = checkPengajuan!.jenis_izin;
 
         if (jenis_izin == "C" || jenis_izin == "I" || jenis_izin == "S") {
-          keteranganJumlah = `Selama ${checkPengajuan.jumlah_hari} Hari`;
+          keteranganJumlah = `Selama ${checkPengajuan!.jumlah_hari} Hari`;
         } else if (jenis_izin == "CS" || jenis_izin == "IS") {
           keteranganJumlah = `Selama Setengah Hari`;
         } else if (
@@ -139,7 +141,7 @@ export async function POST(req: Request) {
           jenis_izin == "G2" ||
           jenis_izin == "G3"
         ) {
-          keteranganJumlah = `Selama ${checkPengajuan.jumlah_jam} Jam`;
+          keteranganJumlah = `Selama ${checkPengajuan!.jumlah_jam} Jam`;
         } else if (jenis_izin == "P/M") {
           keteranganJumlah = ``;
         }
@@ -150,11 +152,14 @@ export async function POST(req: Request) {
           `Dengan ini saya mengajukan *${jenisPengajuan(
             jenis_izin
           )?.toUpperCase()}* untuk tanggal *${new Date(
-            checkPengajuan.tanggal as Date
-          ).toLocaleString("id-ID", optionsDate)} ${
-            checkPengajuan.keterangan
-          }*. Alasan pengajuan saya adalah *${checkPengajuan.keterangan?.toUpperCase()}*.\n\n` +
-          `Untuk melihat status pengajuan saya, Bapak/Ibu dapat mengklik link berikut: ${process.env.IZIN_URL}/approval-izin/${checkPengajuan.uuid} \n\n` +
+            checkPengajuan!.tanggal as Date
+          ).toLocaleString(
+            "id-ID",
+            optionsDate
+          )} ${keteranganJumlah}*. Alasan pengajuan saya adalah *${checkPengajuan!.keterangan?.toUpperCase()}*.\n\n` +
+          `Untuk melihat status pengajuan saya, Bapak/Ibu dapat mengklik link berikut: ${
+            process.env.IZIN_URL
+          }/approval-izin/manager/${checkPengajuan!.uuid} \n\n` +
           `Terima kasih atas perhatian dan pengertiannya.\n` +
           `Pesan ini dikirim secara otomatis oleh sistem dan tidak perlu direspon.\n` +
           `Salam,\n` +

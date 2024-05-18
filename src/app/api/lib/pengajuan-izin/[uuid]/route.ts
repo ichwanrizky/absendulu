@@ -153,6 +153,9 @@ export async function POST(
     if (managerTelp || supervisorTelp) {
       const waTelp = supervisorTelp ? supervisorTelp : managerTelp;
       const waName = supervisorName ? "supervisor" : managerName;
+      const link = supervisorTelp
+        ? `${process.env.IZIN_URL}/approval-izin/supervisor/${create.uuid}`
+        : `${process.env.IZIN_URL}/approval-izin/manager/${create.uuid}`;
 
       let keteranganJumlah = "";
 
@@ -180,7 +183,7 @@ export async function POST(
           "id-ID",
           optionsDate
         )} ${keteranganJumlah}*. Alasan pengajuan saya adalah *${keterangan?.toUpperCase()}*.\n\n` +
-        `Untuk melihat status pengajuan saya, Bapak/Ibu dapat mengklik link berikut: ${process.env.IZIN_URL}/approval-izin/${create.uuid} \n\n` +
+        `Untuk melihat status pengajuan saya, Bapak/Ibu dapat mengklik link berikut: ${link} \n\n` +
         `Terima kasih atas perhatian dan pengertiannya.\n` +
         `Pesan ini dikirim secara otomatis oleh sistem dan tidak perlu direspon.\n` +
         `Salam,\n` +

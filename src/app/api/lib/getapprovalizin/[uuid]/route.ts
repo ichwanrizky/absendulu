@@ -3,7 +3,7 @@ import prisma from "@/libs/db";
 import { checkSession } from "@/libs/checkSession";
 import { handleError } from "@/libs/handleError";
 
-export async function GET(
+export async function POST(
   req: Request,
   { params }: { params: { uuid: string } }
 ) {
@@ -41,6 +41,9 @@ export async function GET(
         }
       );
     }
+
+    const body = await req.formData();
+    const metode = body.get("metode")?.toString();
 
     const getData = await prisma.pengajuan_izin.findFirst({
       include: {
@@ -81,9 +84,46 @@ export async function GET(
             },
           },
         },
+        user: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        user_known: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
       where: {
         uuid: uuid,
+        ...(metode === "supervisor"
+          ? {
+              known_status: 0,
+              pegawai: {
+                sub_department: {
+                  supervisor: {
+                    user: {
+                      id: session[1].id,
+                    },
+                  },
+                },
+              },
+            }
+          : {
+              status: 0,
+              pegawai: {
+                sub_department: {
+                  manager: {
+                    user: {
+                      id: session[1].id,
+                    },
+                  },
+                },
+              },
+            }),
       },
     });
 

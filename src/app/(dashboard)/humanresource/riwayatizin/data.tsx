@@ -6,20 +6,25 @@ import { usePathname } from "next/navigation";
 type PengajuanIzin = {
   number: number;
   id: number;
+  uuid: string;
   jenis_izin: string;
-  tanggal: Date;
+  tanggal: string;
   pegawai_id: number;
   status: number;
   bulan: number;
   tahun: number;
   keterangan: string;
   jumlah_hari: string;
-  jumlah_jam: string;
-  mc: null;
-  approve_by: null;
-  approve_date: null;
+  jumlah_jam: null;
+  approve_by: number;
+  approve_date: string;
+  known_status: number;
+  known_by: number;
+  known_date: string;
+  department_id: number;
   pegawai: Pegawai;
   user: User;
+  user_known: User;
 };
 
 type Pegawai = {
@@ -348,7 +353,7 @@ const Data = ({
                     <td align="left">{item.pegawai.nama?.toUpperCase()}</td>
                     <td align="left">{jenisPengajuan(item.jenis_izin)}</td>
                     <td align="left">
-                      {new Date(item.tanggal as Date).toLocaleString(
+                      {new Date(item.tanggal).toLocaleString(
                         "id-ID",
                         optionsDate
                       )}
@@ -358,30 +363,43 @@ const Data = ({
                     <td align="center"></td>
                     <td align="left">{item.keterangan}</td>
                     <td align="center">
-                      {item.status === 1 ? (
+                      {item.known_status === 1 ? (
                         <>
-                          <span className="badge bg-success">Approved By</span>
-                          <strong>{item.user.name}</strong>
+                          <span className="badge bg-success">Known By</span>
+                          <strong>
+                            {item.user_known?.name?.toUpperCase()}
+                          </strong>
                         </>
                       ) : (
-                        <>
-                          <span className="badge bg-danger">Rejected By</span>
-                          <strong>{item.user.name}</strong>
-                        </>
+                        item.known_status === 2 && (
+                          <>
+                            <span className="badge bg-danger">Rejected By</span>
+                            <strong>
+                              {item.user_known?.name?.toUpperCase()}
+                            </strong>
+                          </>
+                        )
                       )}
                     </td>
                     <td align="center">
-                      {item.status === 1 ? (
-                        <>
-                          <span className="badge bg-success">Approved By</span>
-                          <strong>{item.user.name}</strong>
-                        </>
-                      ) : (
-                        <>
-                          <span className="badge bg-danger">Rejected By</span>
-                          <strong>{item.user.name}</strong>
-                        </>
-                      )}
+                      {item.known_status !== 2 &&
+                        (item.status === 1 ? (
+                          <>
+                            <span className="badge bg-success">
+                              Approved By
+                            </span>
+                            <strong>{item.user?.name?.toUpperCase()}</strong>
+                          </>
+                        ) : (
+                          item.status === 2 && (
+                            <>
+                              <span className="badge bg-danger">
+                                Rejected By
+                              </span>
+                              <strong>{item.user?.name?.toUpperCase()}</strong>
+                            </>
+                          )
+                        ))}
                     </td>
                     <td align="center">
                       {actions?.includes("delete") &&

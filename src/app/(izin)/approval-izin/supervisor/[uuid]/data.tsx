@@ -51,6 +51,7 @@ const Data = ({
 
         body.append("id", dataIzin.id.toString());
         body.append("status", "1");
+        body.append("metode", "supervisor");
 
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/lib/approval_izin`,
@@ -83,6 +84,7 @@ const Data = ({
         const body = new FormData();
         body.append("id", dataIzin.id.toString());
         body.append("status", "2");
+        body.append("metode", "supervisor");
 
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/lib/approval_izin`,
@@ -206,7 +208,7 @@ const Data = ({
               <input
                 className="form-control"
                 type="text"
-                value={dataIzin.jumlah_jam}
+                value={dataIzin.jumlah_jam || undefined}
                 readOnly
               />
             </div>

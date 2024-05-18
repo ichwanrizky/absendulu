@@ -4,13 +4,16 @@ import Data from "./data";
 
 const getDataIzin = async (uuid: string, token: string) => {
   try {
+    const body = new FormData();
+    body.append("metode", "manager");
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/api/lib/getapprovalizin/${uuid}`,
       {
-        method: "GET",
+        method: "POST",
         headers: {
           authorization: `Bearer ${token}`,
         },
+        body: body,
       }
     );
     if (!response.ok) {
