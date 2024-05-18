@@ -30,6 +30,9 @@ export async function POST(req: Request) {
     const getData = await prisma.user.findFirst({
       where: {
         username: username,
+        rolesId: {
+          not: null,
+        },
       },
       include: {
         roles: {

@@ -43,6 +43,7 @@ const ModalEdit = (props: Props) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const [name, setName] = useState(data.name ? data.name : "");
+  const [username, setUsername] = useState(data.username);
   const [password, setPassword] = useState("");
   const [roles, setRoles] = useState(data.rolesId?.toString());
 
@@ -53,6 +54,7 @@ const ModalEdit = (props: Props) => {
       try {
         const body = new FormData();
         body.append("name", name);
+        body.append("username", username);
         body.append("password", password);
         body.append("roles", roles);
 
@@ -116,6 +118,17 @@ const ModalEdit = (props: Props) => {
                       disabled={data.pegawai_id ? true : false}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group mb-3">
+                    <label className="mb-1 fw-semibold small">USERNAME</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      onChange={(e) => setUsername(e.target.value)}
+                      value={username}
                       required
                     />
                   </div>
