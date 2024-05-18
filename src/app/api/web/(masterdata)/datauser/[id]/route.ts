@@ -247,6 +247,9 @@ export async function POST(
     const checkData = await prisma.user.findFirst({
       where: {
         username: username,
+        id: {
+          not: Number(id),
+        },
       },
     });
 
