@@ -3,38 +3,6 @@ import { useState } from "react";
 import useSWR, { mutate } from "swr";
 import { usePathname } from "next/navigation";
 
-type PengajuanIzin = {
-  number: number;
-  id: number;
-  uuid: string;
-  jenis_izin: string;
-  tanggal: string;
-  pegawai_id: number;
-  status: number;
-  bulan: number;
-  tahun: number;
-  keterangan: string;
-  jumlah_hari: string;
-  jumlah_jam: null;
-  approve_by: number;
-  approve_date: string;
-  known_status: number;
-  known_by: number;
-  known_date: string;
-  department_id: number;
-  pegawai: Pegawai;
-  user: User;
-  user_known: User;
-};
-
-type Pegawai = {
-  nama: string;
-};
-
-type User = {
-  name: string;
-};
-
 type Department = {
   id: number;
   nama_department: string;
@@ -42,6 +10,38 @@ type Department = {
   latitude: string;
   longitude: string;
   radius: string;
+};
+
+type SubDepartment = {
+  id: number;
+  nama_sub_department: string;
+};
+
+type PengajuanOvertime = {
+  number: number;
+  id: number;
+  tanggal: Date;
+  jam_from: Date;
+  jam_to: Date;
+  job_desc: string;
+  remark: string;
+  status: number;
+  pengajuan_overtime_pegawai: OvertimeKaryawan[];
+  sub_department: SubDepartment;
+  user: User;
+};
+
+type OvertimeKaryawan = {
+  pegawai: Karyawan;
+};
+
+type Karyawan = {
+  id: number;
+  nama: string;
+};
+
+type User = {
+  name: string;
 };
 
 interface isLoadingProps {
@@ -79,7 +79,7 @@ const Data = ({
       setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin/${id}?menu_url=${menu_url}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatovertime/${id}?menu_url=${menu_url}`,
           {
             method: "DELETE",
             headers: {
@@ -92,7 +92,7 @@ const Data = ({
         if (response.ok) {
           setSearch("");
           mutate(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatovertime?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
           );
         }
       } catch (error) {
@@ -114,8 +114,8 @@ const Data = ({
   };
   const { data, error, isLoading } = useSWR(
     search === ""
-      ? `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
-      : `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatizin?menu_url=${menu_url}&page=${currentPage}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}&search=${search}`,
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatovertime?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
+      : `${process.env.NEXT_PUBLIC_API_URL}/api/web/riwayatovertime?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}&search=${search}`,
     fetcher
   );
 
@@ -174,7 +174,7 @@ const Data = ({
     );
   }
 
-  const permits = data?.data;
+  const overtimes = data?.data;
   const actions = data?.actions;
 
   const ITEMS_PER_PAGE = data?.itemsPerPage;
@@ -308,31 +308,23 @@ const Data = ({
                   NO
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  NAMA
+                  SUB DEPARTMENT
                 </th>
-                <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  JENIS IZIN
-                </th>
+                <th className="fw-semibold fs-6">PEGAWAI</th>
                 <th className="fw-semibold fs-6" style={{ width: "15%" }}>
                   TANGGAL
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "5%" }}>
-                  JUMLAH HARI
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "5%" }}>
-                  JUMLAH JAM
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "5%" }}>
-                  MC
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  KETERANGAN
+                  JAM
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  STATUS KNOWN
+                  JOB DESK
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  STATUS APPROVE
+                  REMARKS
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "10%" }}>
+                  STATUS
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "5%" }}>
                   ACTION
@@ -340,66 +332,59 @@ const Data = ({
               </tr>
             </thead>
             <tbody>
-              {permits?.length === 0 ? (
+              {overtimes?.length === 0 ? (
                 <tr>
-                  <td colSpan={11}>
+                  <td colSpan={9}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
               ) : (
-                permits?.map((item: PengajuanIzin, index: number) => (
-                  <tr key={index} style={{ verticalAlign: "middle" }}>
-                    <td align="center">{item.number}</td>
-                    <td align="left">{item.pegawai.nama?.toUpperCase()}</td>
-                    <td align="left">{jenisPengajuan(item.jenis_izin)}</td>
+                overtimes?.map((item: PengajuanOvertime, index: number) => (
+                  <tr key={index}>
+                    <td align="center">{index + 1}</td>
                     <td align="left">
-                      {new Date(item.tanggal).toLocaleString(
-                        "id-ID",
-                        optionsDate
-                      )}
+                      {item.sub_department.nama_sub_department?.toUpperCase()}
                     </td>
-                    <td align="center">{item.jumlah_hari}</td>
-                    <td align="center">{item.jumlah_jam}</td>
-                    <td align="center"></td>
-                    <td align="left">{item.keterangan}</td>
-                    <td align="center">
-                      {item.known_status === 1 ? (
-                        <>
-                          <span className="badge bg-success">Known By</span>
-                          <strong>
-                            {item.user_known?.name?.toUpperCase()}
-                          </strong>
-                        </>
-                      ) : (
-                        item.known_status === 2 && (
+                    <td align="left">
+                      {item.pengajuan_overtime_pegawai?.map(
+                        (item: OvertimeKaryawan) => (
                           <>
-                            <span className="badge bg-danger">Rejected By</span>
-                            <strong>
-                              {item.user_known?.name?.toUpperCase()}
-                            </strong>
+                            * {item.pegawai.nama?.toUpperCase()} <br />{" "}
                           </>
                         )
                       )}
                     </td>
+                    <td align="center" style={{ whiteSpace: "nowrap" }}>
+                      {new Date(item.tanggal as Date).toLocaleString(
+                        "id-ID",
+                        optionsDate
+                      )}
+                    </td>
+                    <td align="center" style={{ whiteSpace: "nowrap" }}>
+                      {new Date(item.jam_from as Date).toLocaleString(
+                        "id-ID",
+                        optionsDate2
+                      )}{" "}
+                      <br />
+                      {new Date(item.jam_to as Date).toLocaleString(
+                        "id-ID",
+                        optionsDate2
+                      )}
+                    </td>
+                    <td align="left">{item.job_desc?.toUpperCase()}</td>
+                    <td align="left">{item.remark?.toUpperCase()}</td>
                     <td align="center">
-                      {item.known_status !== 2 &&
-                        (item.status === 1 ? (
-                          <>
-                            <span className="badge bg-success">
-                              Approved By
-                            </span>
-                            <strong>{item.user?.name?.toUpperCase()}</strong>
-                          </>
-                        ) : (
-                          item.status === 2 && (
-                            <>
-                              <span className="badge bg-danger">
-                                Rejected By
-                              </span>
-                              <strong>{item.user?.name?.toUpperCase()}</strong>
-                            </>
-                          )
-                        ))}
+                      {item.status === 1 ? (
+                        <>
+                          <span className="badge bg-success">Approved By</span>
+                          <strong>{item.user.name}</strong>
+                        </>
+                      ) : (
+                        <>
+                          <span className="badge bg-danger">Rejected By</span>
+                          <strong>{item.user.name}</strong>
+                        </>
+                      )}
                     </td>
                     <td align="center">
                       {actions?.includes("delete") &&
@@ -416,7 +401,7 @@ const Data = ({
                             className="btn btn-danger btn-sm"
                             onClick={() => handleDelete(item.id)}
                           >
-                            DELETE
+                            Delete
                           </button>
                         ))}
                     </td>
@@ -460,42 +445,18 @@ const Data = ({
   );
 };
 
-const jenisPengajuan = (jenis: string) => {
-  switch (jenis) {
-    case "C":
-      return "Cuti";
-
-    case "CS":
-      return "Cuti Setengah Hari";
-
-    case "I":
-      return "Izin";
-
-    case "IS":
-      return "Izin Setengah Hari";
-
-    case "S":
-      return "Sakit";
-
-    case "G1":
-      return "Gatepass";
-
-    case "G2":
-      return "Datang Terlambat";
-
-    case "G3":
-      return "Pulang Awal";
-
-    case "P/M":
-      return "Lupa Absen";
-  }
-};
-
 const optionsDate: any = {
   weekday: "long",
   year: "numeric",
   month: "long",
   day: "numeric",
+  timeZone: "UTC",
+};
+
+const optionsDate2: any = {
+  hour: "numeric",
+  minute: "numeric",
+  second: "numeric",
   timeZone: "UTC",
 };
 

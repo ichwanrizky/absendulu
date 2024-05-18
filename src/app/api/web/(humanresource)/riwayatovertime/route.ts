@@ -43,6 +43,7 @@ export async function GET(req: Request) {
     }
 
     const roleId = session[1].roleId;
+
     const roleAccess = await checkRoles(roleId, menu_url);
     if (!roleAccess) {
       return new NextResponse(
@@ -92,9 +93,13 @@ export async function GET(req: Request) {
         status: {
           not: 0,
         },
-        pegawai: {
-          nama: {
-            contains: search ? search : undefined,
+        pengajuan_overtime_pegawai: {
+          some: {
+            pegawai: {
+              nama: {
+                contains: search ? search : undefined,
+              },
+            },
           },
         },
         bulan: Number(bulan),
@@ -102,25 +107,30 @@ export async function GET(req: Request) {
       },
     };
 
-    const totalData = await prisma.pengajuan_izin.count({
+    const totalData = await prisma.pengajuan_overtime.count({
       ...condition,
     });
 
     const ITEMS_PER_PAGE = page ? 10 : totalData;
 
-    var data = await prisma.pengajuan_izin.findMany({
+    var data = await prisma.pengajuan_overtime.findMany({
       include: {
-        pegawai: {
+        sub_department: {
           select: {
-            nama: true,
+            id: true,
+            nama_sub_department: true,
+          },
+        },
+        pengajuan_overtime_pegawai: {
+          select: {
+            pegawai: {
+              select: {
+                nama: true,
+              },
+            },
           },
         },
         user: {
-          select: {
-            name: true,
-          },
-        },
-        user_known: {
           select: {
             name: true,
           },

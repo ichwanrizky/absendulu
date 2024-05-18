@@ -26,7 +26,6 @@ export async function GET(req: Request) {
 
     const searchParams = new URL(req.url).searchParams;
     const menu_url = searchParams.get("menu_url");
-
     if (!menu_url) {
       return new NextResponse(
         JSON.stringify({
@@ -59,88 +58,53 @@ export async function GET(req: Request) {
       );
     }
 
-    const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
-    if (!actions.includes("view")) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Unauthorized",
-        }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
+    // const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
+    // if (!actions.includes("view")) {
+    //   return new NextResponse(
+    //     JSON.stringify({
+    //       status: false,
+    //       message: "Unauthorized",
+    //     }),
+    //     {
+    //       status: 401,
+    //       headers: {
+    //         "Content-Type": "application/json",
+    //       },
+    //     }
+    //   );
+    // }
+
+    const data = await prisma.pegawai.findMany({
+      select: {
+        id: true,
+        nama: true,
+        status_nikah: true,
+        master_gaji_pegawai: {
+          select: {
+            id: true,
+            nominal: true,
+            komponen: {
+              select: {
+                id: true,
+                komponen: true,
+              },
+            },
           },
-        }
-      );
-    }
-
-    // page
-    const page = searchParams.get("page");
-
-    // search
-    const search = searchParams.get("search");
-
-    // filter
-    const select_dept = searchParams.get("select_dept");
-    const bulan = searchParams.get("bulan");
-    const tahun = searchParams.get("tahun");
-
-    const condition = {
+          orderBy: {
+            komponen: {
+              urut: "asc",
+            },
+          },
+        },
+      },
       where: {
-        department_id: Number(select_dept),
-        status: {
-          not: 0,
-        },
-        pegawai: {
-          nama: {
-            contains: search ? search : undefined,
-          },
-        },
-        bulan: Number(bulan),
-        tahun: Number(tahun),
+        is_active: true,
+        department_id: 1,
+        id: 403,
       },
-    };
-
-    const totalData = await prisma.pengajuan_izin.count({
-      ...condition,
-    });
-
-    const ITEMS_PER_PAGE = page ? 10 : totalData;
-
-    var data = await prisma.pengajuan_izin.findMany({
-      include: {
-        pegawai: {
-          select: {
-            nama: true,
-          },
-        },
-        user: {
-          select: {
-            name: true,
-          },
-        },
-        user_known: {
-          select: {
-            name: true,
-          },
-        },
-      },
-      ...condition,
       orderBy: {
-        id: "desc",
+        nama: "asc",
       },
-      skip: page ? (parseInt(page) - 1) * ITEMS_PER_PAGE : 0,
-      take: ITEMS_PER_PAGE,
-    });
-
-    data = data.map((data, index) => {
-      return {
-        number: page
-          ? (Number(page) - 1) * ITEMS_PER_PAGE + index + 1
-          : index + 1,
-        ...data,
-      };
     });
 
     if (!data) {
@@ -163,9 +127,6 @@ export async function GET(req: Request) {
         status: true,
         message: "success",
         data: data,
-        actions: actions,
-        itemsPerPage: ITEMS_PER_PAGE,
-        total: totalData,
       }),
       {
         status: 200,

@@ -27,32 +27,8 @@ const getDepartments = async (token: string) => {
         },
       }
     );
-
     const res = await response.json();
 
-    if (response.ok) {
-      return res.data;
-    }
-    return [];
-  } catch (error) {
-    return [];
-  }
-};
-
-const getManager = async (token: string) => {
-  try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listmanager`,
-      {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-        next: {
-          revalidate: 60,
-        },
-      }
-    );
-    const res = await response.json();
     if (response.ok) {
       return res.data;
     }
@@ -62,7 +38,6 @@ const getManager = async (token: string) => {
     return [];
   }
 };
-
 const Page = async () => {
   const session = (await getServerSession(authOptions)) as Session | null;
 
@@ -71,7 +46,6 @@ const Page = async () => {
   }
 
   const departments = await getDepartments(session.user.accessToken);
-  const managers = await getManager(session.user.accessToken);
 
   return (
     <main>
@@ -82,7 +56,7 @@ const Page = async () => {
               <div className="col-auto mt-4">
                 <h1 className="page-header-title">
                   <div className="page-header-icon"></div>
-                  <span style={{ fontSize: "1.8rem" }}>SUB DEPARTMENTS</span>
+                  <span style={{ fontSize: "1.8rem" }}>OVERTIMES </span>
                 </h1>
               </div>
             </div>
@@ -92,11 +66,10 @@ const Page = async () => {
 
       <div className="container-xl px-4 mt-n10">
         <div className="card mb-4">
-          <div className="card-header">DATA SUB DEPARTMENT</div>
+          <div className="card-header">RIWAYAT OVERTIME</div>
           <Data
             accessToken={session.user.accessToken}
             departments={departments}
-            managers={managers}
           />
         </div>
       </div>

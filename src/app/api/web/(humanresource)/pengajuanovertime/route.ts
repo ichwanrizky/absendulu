@@ -242,6 +242,21 @@ export async function POST(req: Request) {
     const formattedDate3 = new Date(jam_to);
     formattedDate3.setHours(formattedDate3.getHours() + 7);
 
+    if (formattedDate2 >= formattedDate3) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Jam Overtime Tidak Valid",
+        }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
     const department = await prisma.sub_department.findFirst({
       select: {
         department_id: true,

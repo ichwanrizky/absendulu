@@ -4,7 +4,10 @@ import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
 import { handleError } from "@/libs/handleError";
 
-export async function GET(req: Request) {
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const authorization = req.headers.get("Authorization");
 
@@ -60,7 +63,7 @@ export async function GET(req: Request) {
     }
 
     const actions = roleAccess?.action ? roleAccess?.action.split(",") : [];
-    if (!actions.includes("view")) {
+    if (!actions.includes("delete")) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -75,75 +78,8 @@ export async function GET(req: Request) {
       );
     }
 
-    // page
-    const page = searchParams.get("page");
-
-    // search
-    const search = searchParams.get("search");
-
-    // filter
-    const select_dept = searchParams.get("select_dept");
-    const bulan = searchParams.get("bulan");
-    const tahun = searchParams.get("tahun");
-
-    const condition = {
-      where: {
-        department_id: Number(select_dept),
-        status: {
-          not: 0,
-        },
-        pegawai: {
-          nama: {
-            contains: search ? search : undefined,
-          },
-        },
-        bulan: Number(bulan),
-        tahun: Number(tahun),
-      },
-    };
-
-    const totalData = await prisma.pengajuan_izin.count({
-      ...condition,
-    });
-
-    const ITEMS_PER_PAGE = page ? 10 : totalData;
-
-    var data = await prisma.pengajuan_izin.findMany({
-      include: {
-        pegawai: {
-          select: {
-            nama: true,
-          },
-        },
-        user: {
-          select: {
-            name: true,
-          },
-        },
-        user_known: {
-          select: {
-            name: true,
-          },
-        },
-      },
-      ...condition,
-      orderBy: {
-        id: "desc",
-      },
-      skip: page ? (parseInt(page) - 1) * ITEMS_PER_PAGE : 0,
-      take: ITEMS_PER_PAGE,
-    });
-
-    data = data.map((data, index) => {
-      return {
-        number: page
-          ? (Number(page) - 1) * ITEMS_PER_PAGE + index + 1
-          : index + 1,
-        ...data,
-      };
-    });
-
-    if (!data) {
+    const id = params.id;
+    if (!id) {
       return new NextResponse(
         JSON.stringify({
           status: false,
@@ -158,14 +94,46 @@ export async function GET(req: Request) {
       );
     }
 
+    const deletes = await prisma.$transaction([
+      prisma.overtime.deleteMany({
+        where: {
+          pengajuan_overtime_id: Number(id),
+        },
+      }),
+
+      prisma.pengajuan_overtime_pegawai.deleteMany({
+        where: {
+          pengajuan_overtime_id: Number(id),
+        },
+      }),
+
+      prisma.pengajuan_overtime.delete({
+        where: {
+          id: Number(id),
+        },
+      }),
+    ]);
+
+    if (!deletes) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Failed to delete data pengajuan overtime",
+        }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
     return new NextResponse(
       JSON.stringify({
         status: true,
-        message: "success",
-        data: data,
-        actions: actions,
-        itemsPerPage: ITEMS_PER_PAGE,
-        total: totalData,
+        message: "Success to delete pengajuan overtime",
+        data: deletes,
       }),
       {
         status: 200,

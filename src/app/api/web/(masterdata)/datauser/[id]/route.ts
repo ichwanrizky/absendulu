@@ -94,6 +94,7 @@ export async function GET(
       },
       where: {
         id: Number(id),
+        is_userluar: false,
       },
     });
 
@@ -250,6 +251,7 @@ export async function POST(
       },
       where: {
         id: Number(id),
+        is_userluar: false,
       },
     });
 
@@ -378,6 +380,7 @@ export async function DELETE(
     const deletes = await prisma.user.delete({
       where: {
         id: Number(id),
+        is_userluar: false,
       },
     });
 

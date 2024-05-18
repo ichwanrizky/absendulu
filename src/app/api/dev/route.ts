@@ -1,45 +1,54 @@
 import { NextResponse } from "next/server";
 import { checkSession } from "@/libs/checkSession";
+import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
 import { handleError } from "@/libs/handleError";
 
 export async function GET(req: Request) {
   try {
-    const authorization = req.headers.get("Authorization");
+    // const authorization = req.headers.get("Authorization");
 
-    const session = await checkSession(authorization);
-    if (!session[0]) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: "Unauthorized",
-        }),
-        {
-          status: 401,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
+    // const session = await checkSession(authorization);
+    // if (!session[0]) {
+    //   return new NextResponse(
+    //     JSON.stringify({
+    //       status: false,
+    //       message: "Unauthorized",
+    //     }),
+    //     {
+    //       status: 401,
+    //       headers: {
+    //         "Content-Type": "application/json",
+    //       },
+    //     }
+    //   );
+    // }
 
-    const data = await prisma.user.findMany({
+    const data = await prisma.pegawai.findMany({
       select: {
         id: true,
-        name: true,
-        roles: {
+        nama: true,
+        master_gaji_pegawai: {
           select: {
-            role_name: true,
+            id: true,
+            nominal: true,
+            komponen_id: true,
+            komponen: {
+              select: {
+                komponen: true,
+              },
+            },
           },
         },
       },
       where: {
-        roles: {
-          isNot: null,
-        },
+        is_active: true,
+        department_id: 1,
+        id: 403,
       },
       orderBy: {
-        name: "asc",
+        // nama: "asc",
+        master_gaji_pegawai: {},
       },
     });
 

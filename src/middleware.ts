@@ -12,4 +12,6 @@ export default withAuth(mainMiddleware, [
   "/configuration/",
   "/masterdata/",
   "/humanresource",
+  "/finance",
+  "/approval-izin",
 ]);

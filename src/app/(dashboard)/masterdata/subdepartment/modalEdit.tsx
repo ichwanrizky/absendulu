@@ -9,7 +9,7 @@ type Props = {
   accessToken?: string;
   dataDepartment: Department[];
   data: SubDepartment;
-  dataManager: Karyawan[];
+  dataManager: User[];
 };
 
 type SubDepartment = {
@@ -20,7 +20,11 @@ type SubDepartment = {
   akses_izin: string;
   manager_id: number;
   manager: {
-    pegawai: Karyawan;
+    user: User;
+  };
+  supervisor_id: number;
+  supervisor: {
+    user: User;
   };
 };
 
@@ -33,9 +37,12 @@ type Department = {
   radius: string;
 };
 
-type Karyawan = {
+type User = {
   id: number;
-  nama: string;
+  name: string;
+  roles: {
+    role_name: string;
+  };
 };
 
 const ModalEdit = (props: Props) => {
@@ -55,7 +62,7 @@ const ModalEdit = (props: Props) => {
   // loading state
   const [isLoading, setIsLoading] = useState(false);
 
-  const [listManager, setListManager] = useState(dataManager as Karyawan[]);
+  const [listManager, setListManager] = useState(dataManager as User[]);
 
   const [department, setDepartment] = useState(data.department_id.toString());
   const [namaSubDepartment, setNamaSubDepartment] = useState(
@@ -66,34 +73,10 @@ const ModalEdit = (props: Props) => {
       ?.split(",")
       .map((item) => ({ value: item, label: jenisPengajuan(item) }))
   );
-  const [manager, setManager] = useState(data.manager?.pegawai.id?.toString());
-
-  const getManager = async (department: string) => {
-    setManager("");
-    try {
-      const body = new FormData();
-      body.append("department", department);
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listmanager`,
-        {
-          method: "POST",
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-          },
-          body: body,
-        }
-      );
-      const res = await response.json();
-      if (!response.ok) {
-        alert(res.message);
-      } else {
-        setListManager(res.data);
-      }
-    } catch (error) {
-      alert("something went wrong");
-    }
-  };
+  const [manager, setManager] = useState(data.manager?.user.id?.toString());
+  const [supervisor, setSupervisor] = useState(
+    data.supervisor?.user.id?.toString()
+  );
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -108,6 +91,7 @@ const ModalEdit = (props: Props) => {
           aksesIzin?.map((item) => item.value).join(",")
         );
         body.append("manager", manager);
+        body.append("supervisor", supervisor);
 
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/web/subdepartment/${data.id}?menu_url=${menu_url}`,
@@ -168,7 +152,6 @@ const ModalEdit = (props: Props) => {
                       className="form-select"
                       onChange={(e) => {
                         setDepartment(e.target.value);
-                        getManager(e.target.value);
                       }}
                       value={department}
                       required
@@ -199,18 +182,32 @@ const ModalEdit = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">
-                      PENANGGUNG JAWAB
-                    </label>
+                    <label className="mb-1 fw-semibold small">SUPERVISOR</label>
+                    <select
+                      className="form-select"
+                      onChange={(e) => setSupervisor(e.target.value)}
+                      value={supervisor}
+                    >
+                      <option value="">--PILIH--</option>
+                      {dataManager?.map((item: User, index: number) => (
+                        <option value={item.id} key={index}>
+                          {item.name.toUpperCase()}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group mb-3">
+                    <label className="mb-1 fw-semibold small">ATASAN</label>
                     <select
                       className="form-select"
                       onChange={(e) => setManager(e.target.value)}
                       value={manager}
                     >
                       <option value="">--PILIH--</option>
-                      {listManager?.map((item: Karyawan, index: number) => (
+                      {dataManager?.map((item: User, index: number) => (
                         <option value={item.id} key={index}>
-                          {item.nama.toUpperCase()}
+                          {item.name.toUpperCase()}
                         </option>
                       ))}
                     </select>

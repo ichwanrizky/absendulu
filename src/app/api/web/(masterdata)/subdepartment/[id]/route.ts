@@ -79,12 +79,29 @@ export async function GET(
 
     const data = await prisma.sub_department.findFirst({
       include: {
+        department: {
+          select: {
+            nama_department: true,
+          },
+        },
         manager: {
           select: {
-            pegawai: {
+            user: {
               select: {
                 id: true,
-                nama: true,
+                name: true,
+                telp: true,
+              },
+            },
+          },
+        },
+        supervisor: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                telp: true,
               },
             },
           },
@@ -222,6 +239,7 @@ export async function POST(
     const department = body.get("department")!.toString();
     const akses_izin = body.get("akses_izin")?.toString();
     const manager = body.get("manager")?.toString();
+    const supervisor = body.get("supervisor")?.toString();
 
     let createManager;
     if (manager) {
@@ -238,10 +256,51 @@ export async function POST(
 
         prisma.manager.create({
           data: {
-            pegawai_id: Number(manager),
+            user_id: Number(manager),
           },
         }),
       ]);
+    } else {
+      await prisma.manager.deleteMany({
+        where: {
+          sub_department: {
+            some: {
+              id: Number(id),
+            },
+          },
+        },
+      });
+    }
+
+    let createSupervisor;
+    if (supervisor) {
+      createSupervisor = await prisma.$transaction([
+        prisma.supervisor.deleteMany({
+          where: {
+            sub_department: {
+              some: {
+                id: Number(id),
+              },
+            },
+          },
+        }),
+
+        prisma.supervisor.create({
+          data: {
+            user_id: Number(manager),
+          },
+        }),
+      ]);
+    } else {
+      await prisma.supervisor.deleteMany({
+        where: {
+          sub_department: {
+            some: {
+              id: Number(id),
+            },
+          },
+        },
+      });
     }
 
     const update = await prisma.$transaction([
@@ -249,10 +308,22 @@ export async function POST(
         data: {
           nama_sub_department: nama_sub_department?.toUpperCase(),
           department_id: Number(department),
-          akses_izin: akses_izin === "" ? akses_izin : null,
-          ...(manager && {
-            manager_id: createManager![1].id as number,
-          }),
+          akses_izin: akses_izin === "" ? null : akses_izin,
+          ...(manager
+            ? {
+                manager_id: createManager![1].id as number,
+              }
+            : {
+                manager_id: null,
+              }),
+
+          ...(supervisor
+            ? {
+                supervisor_id: createSupervisor![1].id as number,
+              }
+            : {
+                supervisor_id: null,
+              }),
         },
         where: {
           id: Number(id),
@@ -392,7 +463,15 @@ export async function DELETE(
           },
         },
       }),
-
+      prisma.supervisor.deleteMany({
+        where: {
+          sub_department: {
+            some: {
+              id: Number(id),
+            },
+          },
+        },
+      }),
       prisma.sub_department.delete({
         where: {
           id: Number(id),
