@@ -307,9 +307,6 @@ export async function POST(
         },
         where: {
           pegawai_id: Number(id),
-          rolesId: {
-            not: null,
-          },
         },
       }),
     ]);
