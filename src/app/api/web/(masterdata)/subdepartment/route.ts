@@ -241,7 +241,7 @@ export async function POST(req: Request) {
     if (supervisor) {
       createSupervisor = await prisma.supervisor.create({
         data: {
-          user_id: Number(manager),
+          user_id: Number(supervisor),
         },
       });
     }

@@ -16,6 +16,7 @@ type User = {
   pegawai_id: number;
   pegawai: Pegawai;
   roles: Roles;
+  telp: string;
 };
 
 type Pegawai = {
@@ -333,6 +334,9 @@ const Data = ({
                   USERNAME
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "15%" }}>
+                  TELP
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
                   ROLE
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
@@ -343,7 +347,7 @@ const Data = ({
             <tbody>
               {users?.length === 0 ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
@@ -353,6 +357,7 @@ const Data = ({
                     <td align="center">{item.number}</td>
                     <td align="left">{item.name?.toUpperCase()}</td>
                     <td align="left">{item.username.toLowerCase()}</td>
+                    <td align="left">{item.telp}</td>
                     <td align="left">{item.roles?.role_name.toUpperCase()}</td>
                     <td>
                       <div className="d-flex gap-2">

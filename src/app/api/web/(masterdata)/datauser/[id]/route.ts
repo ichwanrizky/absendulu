@@ -222,6 +222,7 @@ export async function POST(
 
     const body = await req.formData();
     const name = body.get("name")!.toString();
+    const username = body.get("username")!.toString();
     const password = body.get("password")?.toString();
     const roles = body.get("roles")?.toString();
 
@@ -243,11 +244,33 @@ export async function POST(
       }
     }
 
+    const checkData = await prisma.user.findFirst({
+      where: {
+        username: username,
+      },
+    });
+
+    if (checkData) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Username already exists",
+        }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
     const update = await prisma.user.update({
       data: {
         name: name.toUpperCase(),
         password: password ? hashPassword : undefined,
         rolesId: roles ? Number(roles) : null,
+        username: username,
       },
       where: {
         id: Number(id),
