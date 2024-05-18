@@ -88,6 +88,12 @@ export async function GET(req: Request) {
             nama: true,
           },
         },
+        user_known: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
       where: {
         department_id: Number(select_dept),

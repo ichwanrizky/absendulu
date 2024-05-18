@@ -31,6 +31,7 @@ export async function POST(
       include: {
         pegawai: {
           select: {
+            nama: true,
             department_id: true,
             sub_department: {
               select: {
@@ -150,9 +151,9 @@ export async function POST(
     const supervisorName =
       checkPegawai.pegawai.sub_department?.supervisor?.user.name;
 
-    if (managerTelp || supervisorTelp) {
+    if ((managerTelp || supervisorTelp) && jenis_izin != "P/M") {
       const waTelp = supervisorTelp ? supervisorTelp : managerTelp;
-      const waName = supervisorName ? "supervisor" : managerName;
+      const waName = supervisorName ? supervisorName : managerName;
       const link = supervisorTelp
         ? `${process.env.IZIN_URL}/approval-izin/supervisor/${create.uuid}`
         : `${process.env.IZIN_URL}/approval-izin/manager/${create.uuid}`;
@@ -169,13 +170,12 @@ export async function POST(
         jenis_izin == "G3"
       ) {
         keteranganJumlah = `Selama ${jumlah_jam} Jam`;
-      } else if (jenis_izin == "P/M") {
-        keteranganJumlah = ``;
       }
+
       const message =
         `*Notifikasi Pengajuan Cuti & Izin | EMS PANJI JAYA*\n\n` +
         `Halo Bapak/Ibu ${waName?.toUpperCase()},\n\n` +
-        `Dengan ini saya mengajukan *${jenisPengajuan(
+        `Dengan ini saya ${checkPegawai?.pegawai?.nama?.toUpperCase()} mengajukan *${jenisPengajuan(
           jenis_izin
         )?.toUpperCase()}* untuk tanggal *${new Date(
           formattedDate as Date

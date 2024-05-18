@@ -142,14 +142,12 @@ export async function POST(req: Request) {
           jenis_izin == "G3"
         ) {
           keteranganJumlah = `Selama ${checkPengajuan!.jumlah_jam} Jam`;
-        } else if (jenis_izin == "P/M") {
-          keteranganJumlah = ``;
         }
 
         const message =
           `*Notifikasi Pengajuan Cuti & Izin | EMS PANJI JAYA*\n\n` +
           `Halo Bapak/Ibu ${waName?.toUpperCase()},\n\n` +
-          `Dengan ini saya mengajukan *${jenisPengajuan(
+          `Dengan ini saya ${checkPengajuan?.pegawai?.nama?.toUpperCase()} mengajukan *${jenisPengajuan(
             jenis_izin
           )?.toUpperCase()}* untuk tanggal *${new Date(
             checkPengajuan!.tanggal as Date

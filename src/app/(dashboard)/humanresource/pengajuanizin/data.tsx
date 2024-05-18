@@ -14,14 +14,24 @@ type PengajuanIzin = {
   tahun: number;
   keterangan: string;
   jumlah_hari: string;
-  jumlah_jam: string;
+  jumlah_jam: null;
   approve_by: null;
   approve_date: null;
+  known_status: number;
+  known_by: number;
+  known_date: Date;
+  department_id: number;
   pegawai: Pegawai;
+  user_known: UserKnown;
 };
 
 type Pegawai = {
   nama: string;
+};
+
+type UserKnown = {
+  id: number;
+  name: string;
 };
 
 type Department = {
@@ -32,12 +42,7 @@ type Department = {
   longitude: string;
   radius: string;
 };
-type SubDepartment = {
-  id: number;
-  nama_sub_department: string;
-  department_id: number;
-  department: Department;
-};
+
 interface isLoadingProps {
   [key: number]: boolean;
 }
@@ -296,6 +301,9 @@ const Data = ({
                   KETERANGAN
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
+                  STATUS SUPERVISOR
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "10%" }}>
                   PERSETUJUAN
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "5%" }}>
@@ -306,7 +314,7 @@ const Data = ({
             <tbody>
               {permits?.length === 0 ? (
                 <tr>
-                  <td colSpan={10}>
+                  <td colSpan={11}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
@@ -332,6 +340,25 @@ const Data = ({
                       )}
                     </td>
                     <td align="left">{item.keterangan}</td>
+                    <td align="center">
+                      {item.known_status === 1 ? (
+                        <>
+                          <span className="badge bg-success">Known By</span>
+                          <strong>
+                            {item.user_known?.name?.toUpperCase()}
+                          </strong>
+                        </>
+                      ) : (
+                        item.known_status === 2 && (
+                          <>
+                            <span className="badge bg-danger">Rejected By</span>
+                            <strong>
+                              {item.user_known?.name?.toUpperCase()}
+                            </strong>
+                          </>
+                        )
+                      )}
+                    </td>
                     <td>
                       <div className="d-flex gap-2 justify-content-center">
                         {actions?.includes("update") && (

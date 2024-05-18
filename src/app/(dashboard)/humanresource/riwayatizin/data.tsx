@@ -329,10 +329,10 @@ const Data = ({
                   KETERANGAN
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  STATUS KNOWN
+                  STATUS SUPERVISOR
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  STATUS APPROVE
+                  STATUS
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "5%" }}>
                   ACTION
