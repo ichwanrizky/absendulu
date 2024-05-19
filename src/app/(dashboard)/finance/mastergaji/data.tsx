@@ -1,9 +1,9 @@
 "use client";
 
+import { pegawai } from "@prisma/client";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { isErrored } from "stream";
-import useSWR from "swr";
+import { useEffect, useState } from "react";
+import useSWR, { mutate } from "swr";
 
 type Department = {
   id: number;
@@ -46,9 +46,89 @@ const Data = ({
   const lastSlashIndex = pathname.lastIndexOf("/");
   const menu_url = pathname.substring(lastSlashIndex + 1);
 
-  const [newListKomponenGaji, setNewListKomponenGaji] = useState(
-    listKomponenGaji as KomponenGaji[]
-  );
+  // loading state
+  const [isLoadingCreate, setIsLoadingCreate] = useState(false);
+
+  const newListKomponenGaji = listKomponenGaji as KomponenGaji[];
+
+  const [nominalMasterGaji, setNominalMasterGaji] = useState<any>([]);
+  const [selectedPegawai, setSelectedPegawai] = useState<any>([]);
+
+  const handleChangeData = (
+    pegawaiId: number,
+    komponenId: number,
+    value: number
+  ) => {
+    setNominalMasterGaji(
+      nominalMasterGaji.map((item: Pegawai) => {
+        return {
+          ...item,
+          master_gaji_pegawai: newListKomponenGaji?.map(
+            (item2: KomponenGaji, index: number) => {
+              if (item2.id === komponenId && item.id === pegawaiId) {
+                return {
+                  ...item2,
+                  nominal: value,
+                };
+              } else {
+                return {
+                  ...item2,
+                  nominal: item?.master_gaji_pegawai[index]?.nominal
+                    ? item.master_gaji_pegawai[index].nominal
+                    : 0,
+                };
+              }
+            }
+          ),
+        };
+      })
+    );
+  };
+
+  const handleSelectPegawai = (pegawaiId: number) => {
+    if (selectedPegawai.find((item: any) => item.pegawai === pegawaiId)) {
+      setSelectedPegawai(
+        selectedPegawai.filter((item: any) => item.pegawai !== pegawaiId)
+      );
+    } else {
+      setSelectedPegawai([...selectedPegawai, { pegawai: pegawaiId }]);
+    }
+  };
+
+  const handleCreate = async () => {
+    if (confirm("Save this data?")) {
+      setIsLoadingCreate(true);
+      try {
+        const body = new FormData();
+        body.append("selected_pegawai", JSON.stringify(selectedPegawai));
+        body.append("data_master_gaji", JSON.stringify(nominalMasterGaji));
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/mastergaji?menu_url=${menu_url}`,
+          {
+            method: "POST",
+            headers: {
+              authorization: `Bearer ${accessToken}`,
+            },
+            body: body,
+          }
+        );
+
+        const res = await response.json();
+        if (!response.ok) {
+          alert(res.message);
+        } else {
+          alert(res.message);
+          mutate(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/mastergaji?menu_url=${menu_url}`
+          );
+        }
+      } catch (error) {
+        alert("something went wrong");
+      }
+      setIsLoadingCreate(false);
+    }
+  };
 
   const fetcher = (url: RequestInfo) => {
     return fetch(url, {
@@ -64,89 +144,91 @@ const Data = ({
     `${process.env.NEXT_PUBLIC_API_URL}/api/web/mastergaji?menu_url=${menu_url}`,
     fetcher
   );
+  useEffect(() => {
+    if (data?.data) {
+      setNominalMasterGaji(
+        data?.data.map((item: Pegawai) => ({
+          id: item.id,
+          nama: item.nama,
+          status_nikah: item.status_nikah,
+          master_gaji_pegawai:
+            item.master_gaji_pegawai.length > 0
+              ? item.master_gaji_pegawai.map((item2: MasterGajiPegawai) => ({
+                  komponen_id: item2.id,
+                  nominal: item2.nominal,
+                }))
+              : newListKomponenGaji.map((item2: KomponenGaji) => ({
+                  komponen_id: item2.id,
+                  nominal: 0,
+                })),
+        }))
+      );
+    }
+  }, [data]);
 
   if (isLoading) return <div></div>;
   if (error) return <div></div>;
 
   const masterGaji = data?.data;
+  const actions = data?.actions;
 
   return (
     <>
       <div className="card-body">
         <div className="row">
-          {/* <div className="col-sm-12">
-            {actions?.includes("insert") && (
-              <button
-                type="button"
-                className="btn btn-primary btn-sm fw-bold"
-                onClick={() => handleCreate()}
-              >
-                ADD DATA
-              </button>
-            )}
-
-            <button
-              type="button"
-              className="btn btn-dark btn-sm fw-bold ms-2"
-              onClick={() => handleFilter()}
-            >
-              FILTER DATA
-            </button>
-            {filter.filter && (
-              <button
-                type="button"
-                className="btn btn-outline-dark btn-sm fw-bold ms-1"
-                onClick={() =>
-                  setFilter({
-                    filter: false,
-                    tahun: new Date().getFullYear(),
-                  })
-                }
-              >
-                RESET
-              </button>
-            )}
-            <select
-              className="form-select-sm ms-2"
-              value={selectDept}
-              onChange={(e) => setSelectDept(e.target.value)}
-            >
-              {departments?.map((item: Department, index: number) => (
-                <option value={item.id} key={index}>
-                  {item.nama_department?.toUpperCase()}
-                </option>
+          <div className="col-sm-12">
+            {actions?.includes("insert") &&
+              (isLoadingCreate ? (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm fw-bold"
+                  disabled
+                >
+                  <span
+                    className="spinner-border spinner-border-sm me-2"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                  LOADING...
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm fw-bold"
+                  onClick={() => handleCreate()}
+                >
+                  SAVE CHANGES
+                </button>
               ))}
-            </select>
-          </div> */}
+          </div>
         </div>
 
-        <div className="table-responsive mt-3">
+        <div className="table-responsive mt-3" style={{ maxHeight: "500px" }}>
           <table className="table table-bordered">
             <thead>
               <tr>
                 <th
                   className="fw-semibold fs-6 sticky-col"
-                  style={{ width: "50px" }}
+                  style={{ width: "1px" }}
                 >
                   NO
                 </th>
                 <th
                   className="fw-semibold fs-6 sticky-col"
-                  style={{ width: "50px" }}
+                  style={{ width: "1px" }}
                 >
                   <input type="checkbox" />
                 </th>
-                <th
-                  className="fw-semibold fs-6 sticky-col"
-                  style={{ width: "200px" }}
-                >
-                  NAMA
-                </th>
+                <th className="fw-semibold fs-6 sticky-col">NAMA</th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
                   PTKP
                 </th>
                 {newListKomponenGaji?.map((item, index) => (
-                  <th className="fs-10" style={{ width: "15%" }} key={index}>
+                  <th
+                    className="fw-semibold"
+                    style={{ width: "15%", fontSize: "8pt" }}
+                    key={index}
+                  >
                     {item.komponen?.toUpperCase()}
                   </th>
                 ))}
@@ -158,83 +240,64 @@ const Data = ({
             <tbody>
               {masterGaji?.length === 0 ? (
                 <tr>
-                  <td colSpan={2}>
+                  <td colSpan={5 + newListKomponenGaji?.length}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
               ) : (
-                masterGaji?.map((item: Pegawai, index: number) => (
-                  <tr key={index}>
-                    <td
-                      className="sticky-col"
-                      align="center"
-                      style={{ width: "50px" }}
-                    >
-                      {index + 1}
-                    </td>
-                    <td
-                      className="sticky-col"
-                      align="center"
-                      style={{ width: "50px" }}
-                    >
-                      <input type="checkbox" />
-                    </td>
-                    <td
-                      className="sticky-col"
-                      align="left"
-                      style={{ whiteSpace: "nowrap", width: "200px" }}
-                    >
-                      {item.nama.toUpperCase()}
-                    </td>
-                    <td align="left">{item.status_nikah.toUpperCase()}</td>
-                    {newListKomponenGaji?.map(
-                      (item2: KomponenGaji, index: number) => (
-                        <td align="left" key={index}>
-                          <input type="text" />
-                        </td>
-                      )
-                    )}
-                  </tr>
-                ))
+                nominalMasterGaji?.map((item: Pegawai, index: number) => {
+                  return (
+                    <tr key={index}>
+                      <td
+                        className="sticky-col"
+                        align="center"
+                        style={{ width: "50px" }}
+                      >
+                        {index + 1}
+                      </td>
+                      <td
+                        className="sticky-col"
+                        align="center"
+                        style={{ width: "50px" }}
+                      >
+                        <input
+                          type="checkbox"
+                          onChange={() => handleSelectPegawai(item.id)}
+                        />
+                      </td>
+                      <td
+                        className="sticky-col"
+                        align="left"
+                        style={{ whiteSpace: "nowrap", width: "200px" }}
+                      >
+                        {item.nama.toUpperCase()}
+                      </td>
+                      <td align="center">{item.status_nikah.toUpperCase()}</td>
+                      {item.master_gaji_pegawai?.map(
+                        (item2: MasterGajiPegawai, index: number) => (
+                          <td align="left" key={index}>
+                            <input
+                              type="number"
+                              onChange={(e) => {
+                                handleChangeData(
+                                  item.id,
+                                  item2.id,
+                                  Number(e.target.value)
+                                );
+                              }}
+                              value={item2.nominal}
+                            />
+                          </td>
+                        )
+                      )}
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
       </div>
-
-      <style jsx>{`
-        .sticky-col {
-          position: -webkit-sticky; /* For Safari */
-          position: sticky;
-          background-color: white; /* Optional: to avoid overlap issues */
-          z-index: 2; /* Ensure it stays on top */
-        }
-
-        /* Adjust left position for each sticky column */
-        .sticky-col:nth-child(1) {
-          left: 0;
-        }
-
-        .sticky-col:nth-child(2) {
-          left: 50px; /* Width of the first column */
-        }
-
-        .sticky-col:nth-child(3) {
-          left: 100px; /* Width of the first two columns combined */
-        }
-
-        /* Optional: Add some styles for a better visual distinction */
-        .table-bordered th,
-        .table-bordered td {
-          border: 1px solid #dee2e6;
-          background-clip: padding-box;
-        }
-
-        .table-bordered {
-          border-collapse: separate;
-          border-spacing: 0;
-        }
-      `}</style>
     </>
   );
 };

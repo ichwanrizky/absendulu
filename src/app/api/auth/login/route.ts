@@ -136,7 +136,7 @@ export async function POST(req: Request) {
 
     // generate token
     const token = await jwt.sign({ data: newDataUser }, process.env.JWT, {
-      expiresIn: "1h",
+      expiresIn: "8h",
     });
 
     // format date
