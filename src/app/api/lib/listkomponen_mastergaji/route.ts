@@ -39,7 +39,6 @@ export async function POST(req: Request) {
         urut: "asc",
       },
     });
-    console.log(data);
 
     if (!data) {
       return new NextResponse(

@@ -220,9 +220,6 @@ export async function POST(req: Request) {
     const selecedPegawai = parseSelectedPegawai?.map(
       (item: any) => item.pegawai
     );
-    const filteredMasterGaji = parseDataMasterGaji.filter((item: any) =>
-      selecedPegawai.includes(item.id)
-    );
 
     const update = await prisma.$transaction([
       prisma.master_gaji_pegawai.deleteMany({
@@ -234,7 +231,7 @@ export async function POST(req: Request) {
       }),
 
       prisma.master_gaji_pegawai.createMany({
-        data: filteredMasterGaji.flatMap((item: any) =>
+        data: parseDataMasterGaji.flatMap((item: any) =>
           item.master_gaji_pegawai.map((item2: any) => ({
             pegawai_id: item.id,
             komponen_id: item2.id,

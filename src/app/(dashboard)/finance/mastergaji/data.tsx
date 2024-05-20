@@ -1,6 +1,6 @@
 "use client";
 
-import { pegawai } from "@prisma/client";
+import { NumericFormat } from "react-number-format";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import useSWR, { mutate } from "swr";
@@ -99,9 +99,17 @@ const Data = ({
     if (confirm("Save this data?")) {
       setIsLoadingCreate(true);
       try {
+        const selecedPegawai = selectedPegawai?.map(
+          (item: any) => item.pegawai
+        );
+
+        const filteredMasterGaji = nominalMasterGaji.filter((item: any) =>
+          selecedPegawai.includes(item.id)
+        );
+
         const body = new FormData();
         body.append("selected_pegawai", JSON.stringify(selectedPegawai));
-        body.append("data_master_gaji", JSON.stringify(nominalMasterGaji));
+        body.append("data_master_gaji", JSON.stringify(filteredMasterGaji));
 
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/web/mastergaji?menu_url=${menu_url}`,
@@ -208,31 +216,39 @@ const Data = ({
             <thead>
               <tr>
                 <th
-                  className="fw-semibold fs-6 sticky-col"
-                  style={{ width: "1px" }}
+                  className="fw-semibold fs-6 sticky-col sticky-header"
+                  style={{ width: "50px" }}
                 >
                   NO
                 </th>
                 <th
-                  className="fw-semibold fs-6 sticky-col"
-                  style={{ width: "1px" }}
+                  className="fw-semibold fs-6 sticky-col sticky-header"
+                  style={{ width: "50px" }}
                 >
                   <input type="checkbox" />
                 </th>
-                <th className="fw-semibold fs-6 sticky-col">NAMA</th>
-                <th className="fw-semibold fs-6" style={{ width: "10%" }}>
+                <th className="fw-semibold fs-6 sticky-col sticky-header">
+                  NAMA
+                </th>
+                <th
+                  className="fw-semibold fs-6 sticky-col sticky-header"
+                  style={{ width: "10%" }}
+                >
                   PTKP
                 </th>
                 {newListKomponenGaji?.map((item, index) => (
                   <th
-                    className="fw-semibold"
+                    className="fw-semibold sticky-header"
                     style={{ width: "15%", fontSize: "8pt" }}
                     key={index}
                   >
                     {item.komponen?.toUpperCase()}
                   </th>
                 ))}
-                <th className="fw-semibold fs-6" style={{ width: "10%" }}>
+                <th
+                  className="fw-semibold fs-6 sticky-header"
+                  style={{ width: "10%" }}
+                >
                   ACTION
                 </th>
               </tr>
@@ -245,59 +261,90 @@ const Data = ({
                   </td>
                 </tr>
               ) : (
-                nominalMasterGaji?.map((item: Pegawai, index: number) => {
-                  return (
-                    <tr key={index}>
-                      <td
-                        className="sticky-col"
-                        align="center"
-                        style={{ width: "50px" }}
-                      >
-                        {index + 1}
-                      </td>
-                      <td
-                        className="sticky-col"
-                        align="center"
-                        style={{ width: "50px" }}
-                      >
-                        <input
-                          type="checkbox"
-                          onChange={() => handleSelectPegawai(item.id)}
-                        />
-                      </td>
-                      <td
-                        className="sticky-col"
-                        align="left"
-                        style={{ whiteSpace: "nowrap", width: "200px" }}
-                      >
-                        {item.nama.toUpperCase()}
-                      </td>
-                      <td align="center">{item.status_nikah.toUpperCase()}</td>
-                      {item.master_gaji_pegawai?.map(
-                        (item2: MasterGajiPegawai, index: number) => (
-                          <td align="left" key={index}>
-                            <input
-                              type="number"
-                              onChange={(e) => {
-                                handleChangeData(
-                                  item.id,
-                                  item2.id,
-                                  Number(e.target.value)
-                                );
-                              }}
-                              value={item2.nominal}
-                            />
-                          </td>
-                        )
-                      )}
-                    </tr>
-                  );
-                })
+                nominalMasterGaji?.map((item: Pegawai, index: number) => (
+                  <tr key={index}>
+                    <td
+                      className="sticky-col"
+                      align="center"
+                      style={{ width: "50px" }}
+                    >
+                      {index + 1}
+                    </td>
+                    <td
+                      className="sticky-col"
+                      align="center"
+                      style={{ width: "50px" }}
+                    >
+                      <input
+                        type="checkbox"
+                        onChange={() => handleSelectPegawai(item.id)}
+                      />
+                    </td>
+                    <td
+                      className="sticky-col"
+                      align="left"
+                      style={{ whiteSpace: "nowrap", width: "200px" }}
+                    >
+                      {item.nama.toUpperCase()}
+                    </td>
+                    <td className="sticky-col" align="center">
+                      {item.status_nikah.toUpperCase()}
+                    </td>
+                    {item.master_gaji_pegawai?.map(
+                      (item2: MasterGajiPegawai, index: number) => (
+                        <td align="left" key={index}>
+                          <NumericFormat
+                            defaultValue={item2.nominal}
+                            thousandSeparator=","
+                            displayType="input"
+                            onValueChange={(values: any) => {
+                              handleChangeData(
+                                item.id,
+                                item2.id,
+                                values.floatValue
+                              );
+                            }}
+                            onFocus={(e) =>
+                              e.target.value === "0" && (e.target.value = "")
+                            }
+                            onBlur={(e) =>
+                              e.target.value === "" && (e.target.value = "0")
+                            }
+                            onWheel={(e: any) => e.target.blur()}
+                          />
+                        </td>
+                      )
+                    )}
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
         </div>
       </div>
+
+      <style jsx>{`
+        .table-responsive {
+          overflow-x: auto;
+        }
+        .sticky-col {
+          position: -webkit-sticky;
+          position: sticky;
+          left: 0;
+          background-color: #fff;
+          z-index: 10;
+        }
+        .sticky-header {
+          position: -webkit-sticky;
+          position: sticky;
+          top: 0;
+          background-color: #fff;
+          z-index: 10;
+        }
+        .sticky-col:nth-child(4) {
+          z-index: 9; /* Adjust z-index for the last sticky column */
+        }
+      `}</style>
     </>
   );
 };

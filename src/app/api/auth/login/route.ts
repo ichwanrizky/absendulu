@@ -146,7 +146,7 @@ export async function POST(req: Request) {
 
     // expires date
     const expiredDate = new Date(formattedDate);
-    expiredDate.setHours(expiredDate.getHours() + 1);
+    expiredDate.setHours(expiredDate.getHours() + 8);
 
     // insert session
     const session = await prisma.session.create({
