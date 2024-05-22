@@ -103,9 +103,6 @@ export async function GET(req: Request) {
       where: {
         is_active: true,
         department_id: Number(select_dept),
-        id: {
-          in: [403, 84],
-        },
       },
       orderBy: {
         nama: "asc",
