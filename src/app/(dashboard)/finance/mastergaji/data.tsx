@@ -23,6 +23,7 @@ type Pegawai = {
   id: number;
   nama: string;
   status_nikah: string;
+  type_gaji: string;
   master_gaji_pegawai: MasterGajiPegawai[];
 };
 
@@ -48,9 +49,9 @@ const Data = ({
 
   // loading state
   const [isLoadingCreate, setIsLoadingCreate] = useState(false);
+  const [selectDept, setSelectDept] = useState(departments[0].id.toString());
 
   const newListKomponenGaji = listKomponenGaji as KomponenGaji[];
-
   const [nominalMasterGaji, setNominalMasterGaji] = useState<any>([]);
   const [selectedPegawai, setSelectedPegawai] = useState<any>([]);
 
@@ -95,7 +96,39 @@ const Data = ({
     }
   };
 
+  const handleSelectAllPegawai = () => {
+    const allPegawaiIds = nominalMasterGaji.map((item: any) => item.id);
+
+    const allSelected = allPegawaiIds.every((item: any) =>
+      selectedPegawai.find((item2: any) => item2.pegawai === item)
+    );
+
+    if (allSelected) {
+      setSelectedPegawai([]);
+    } else {
+      setSelectedPegawai(allPegawaiIds.map((item: any) => ({ pegawai: item })));
+    }
+  };
+
+  const handleType = (pegawaiId: number, type: string) => {
+    if (type === "") {
+      alert("Type Gaji cannot be empty");
+      return;
+    }
+
+    setNominalMasterGaji(
+      nominalMasterGaji.map((item: Pegawai) =>
+        item.id === pegawaiId ? { ...item, type_gaji: type } : item
+      )
+    );
+  };
+
   const handleCreate = async () => {
+    if (selectedPegawai.length === 0) {
+      alert("Please select at least one pegawai");
+      return;
+    }
+
     if (confirm("Save this data?")) {
       setIsLoadingCreate(true);
       try {
@@ -127,8 +160,9 @@ const Data = ({
           alert(res.message);
         } else {
           alert(res.message);
+          setSelectedPegawai([]);
           mutate(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/web/mastergaji?menu_url=${menu_url}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/mastergaji?menu_url=${menu_url}&select_dept=${selectDept}`
           );
         }
       } catch (error) {
@@ -149,7 +183,7 @@ const Data = ({
     }).then((res) => res.json());
   };
   const { data, error, isLoading } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/web/mastergaji?menu_url=${menu_url}`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/web/mastergaji?menu_url=${menu_url}&select_dept=${selectDept}`,
     fetcher
   );
   useEffect(() => {
@@ -159,10 +193,11 @@ const Data = ({
           id: item.id,
           nama: item.nama,
           status_nikah: item.status_nikah,
+          type_gaji: item.type_gaji,
           master_gaji_pegawai:
             item.master_gaji_pegawai.length > 0
               ? item.master_gaji_pegawai.map((item2: MasterGajiPegawai) => ({
-                  komponen_id: item2.id,
+                  komponen_id: item2.komponen.id,
                   nominal: item2.nominal,
                 }))
               : newListKomponenGaji.map((item2: KomponenGaji) => ({
@@ -208,6 +243,18 @@ const Data = ({
                   SAVE CHANGES
                 </button>
               ))}
+
+            <select
+              className="form-select-sm ms-2"
+              value={selectDept}
+              onChange={(e) => setSelectDept(e.target.value)}
+            >
+              {departments?.map((item: Department, index: number) => (
+                <option value={item.id} key={index}>
+                  {item.nama_department?.toUpperCase()}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -225,7 +272,13 @@ const Data = ({
                   className="fw-semibold fs-6 sticky-col sticky-header"
                   style={{ width: "50px" }}
                 >
-                  <input type="checkbox" />
+                  <input
+                    type="checkbox"
+                    onChange={handleSelectAllPegawai}
+                    checked={
+                      selectedPegawai.length === nominalMasterGaji.length
+                    }
+                  />
                 </th>
                 <th className="fw-semibold fs-6 sticky-col sticky-header">
                   NAMA
@@ -236,6 +289,9 @@ const Data = ({
                 >
                   PTKP
                 </th>
+                <th className="fw-semibold fs-6 " style={{ width: "10%" }}>
+                  TIPE
+                </th>
                 {newListKomponenGaji?.map((item, index) => (
                   <th
                     className="fw-semibold sticky-header"
@@ -245,12 +301,6 @@ const Data = ({
                     {item.komponen?.toUpperCase()}
                   </th>
                 ))}
-                <th
-                  className="fw-semibold fs-6 sticky-header"
-                  style={{ width: "10%" }}
-                >
-                  ACTION
-                </th>
               </tr>
             </thead>
             <tbody>
@@ -278,6 +328,9 @@ const Data = ({
                       <input
                         type="checkbox"
                         onChange={() => handleSelectPegawai(item.id)}
+                        checked={selectedPegawai.some(
+                          (item2: any) => item2.pegawai === item.id
+                        )}
                       />
                     </td>
                     <td
@@ -288,7 +341,17 @@ const Data = ({
                       {item.nama.toUpperCase()}
                     </td>
                     <td className="sticky-col" align="center">
-                      {item.status_nikah.toUpperCase()}
+                      {item.status_nikah?.toUpperCase()}
+                    </td>
+                    <td align="center">
+                      <select
+                        value={item.type_gaji}
+                        onChange={(e) => handleType(item.id, e.target.value)}
+                      >
+                        <option value="">SELECT</option>
+                        <option value="fix">FIX</option>
+                        <option value="nonfixed">NONFIXED</option>
+                      </select>
                     </td>
                     {item.master_gaji_pegawai?.map(
                       (item2: MasterGajiPegawai, index: number) => (

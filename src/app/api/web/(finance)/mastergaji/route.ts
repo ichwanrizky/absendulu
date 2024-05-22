@@ -74,11 +74,14 @@ export async function GET(req: Request) {
       );
     }
 
+    const select_dept = searchParams.get("select_dept");
+
     const data = await prisma.pegawai.findMany({
       select: {
         id: true,
         nama: true,
         status_nikah: true,
+        type_gaji: true,
         master_gaji_pegawai: {
           select: {
             id: true,
@@ -99,7 +102,10 @@ export async function GET(req: Request) {
       },
       where: {
         is_active: true,
-        department_id: 1,
+        department_id: Number(select_dept),
+        id: {
+          in: [403, 84],
+        },
       },
       orderBy: {
         nama: "asc",
@@ -239,6 +245,17 @@ export async function POST(req: Request) {
           }))
         ),
       }),
+
+      ...parseDataMasterGaji.map((item: any) =>
+        prisma.pegawai.update({
+          where: {
+            id: item.id,
+          },
+          data: {
+            type_gaji: item.type_gaji,
+          },
+        })
+      ),
     ]);
 
     if (!update) {
@@ -270,6 +287,7 @@ export async function POST(req: Request) {
       }
     );
   } catch (error) {
+    console.log("🚀 ~ POST ~ error:", error);
     return handleError(error);
   }
 }
