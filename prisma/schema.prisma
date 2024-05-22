@@ -191,6 +191,7 @@ model pegawai {
   izin_lokasi_tambahan       izin_lokasi_tambahan[]
   pengajuan_overtime_pegawai pengajuan_overtime_pegawai[]
   master_gaji_pegawai        master_gaji_pegawai[]
+  type_gaji                  String?                      @default("nonfixed")
 }
 
 model shift {
