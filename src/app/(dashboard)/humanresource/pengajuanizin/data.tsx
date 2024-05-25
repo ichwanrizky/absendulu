@@ -61,6 +61,7 @@ const Data = ({
   // loading state
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
   const [isLoadingApprove, setIsLoadingApprove] = useState<isLoadingProps>({});
+  const [isLoadingNotif, setIsLoadingNotif] = useState<isLoadingProps>({});
 
   // filter
   const [selectDept, setSelectDept] = useState(departments[0].id.toString());
@@ -162,6 +163,31 @@ const Data = ({
       }
       setIsLoadingApprove((prev) => ({ ...prev, [id]: false }));
     }
+  };
+
+  const resendNotif = async (id: number) => {
+    setIsLoadingNotif((prev) => ({ ...prev, [id]: true }));
+    try {
+      const body = new FormData();
+      body.append("id_pengajuanizin", id.toString());
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/resendnotif`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+          body: body,
+        }
+      );
+
+      const res = await response.json();
+      alert(res.message);
+    } catch (error) {
+      alert("something went wrong");
+    }
+    setIsLoadingNotif((prev) => ({ ...prev, [id]: false }));
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -272,7 +298,7 @@ const Data = ({
           </div>
         </div>
 
-        <div className="table-responsive mt-3">
+        <div className="table-responsive mt-3" style={{ maxHeight: "500px" }}>
           <table className="table table-bordered">
             <thead>
               <tr>
@@ -300,6 +326,9 @@ const Data = ({
                 <th className="fw-semibold fs-6" style={{ width: "15%" }}>
                   KETERANGAN
                 </th>
+                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
+                  RESEND NOTIF
+                </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
                   STATUS SUPERVISOR
                 </th>
@@ -314,7 +343,7 @@ const Data = ({
             <tbody>
               {permits?.length === 0 ? (
                 <tr>
-                  <td colSpan={11}>
+                  <td colSpan={12}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
@@ -340,6 +369,30 @@ const Data = ({
                       )}
                     </td>
                     <td align="left">{item.keterangan}</td>
+                    <td align="center">
+                      {item.jenis_izin !== "P/M" &&
+                        (isLoadingNotif[item.id] ? (
+                          <button
+                            className="btn btn-primary btn-sm"
+                            disabled
+                            type="button"
+                          >
+                            <span
+                              className="spinner-border spinner-border-sm"
+                              role="status"
+                              aria-hidden="true"
+                            />
+                          </button>
+                        ) : (
+                          <button
+                            className="btn btn-primary btn-sm"
+                            onClick={() => resendNotif(item.id)}
+                            type="button"
+                          >
+                            SEND
+                          </button>
+                        ))}
+                    </td>
                     <td align="center">
                       {item.known_status === 1 ? (
                         <>

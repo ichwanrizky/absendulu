@@ -284,7 +284,6 @@ export async function POST(req: Request) {
       }
     );
   } catch (error) {
-    console.log("🚀 ~ POST ~ error:", error);
     return handleError(error);
   }
 }
