@@ -159,6 +159,8 @@ export async function POST(req: Request) {
       jam_pulang_department.getMinutes(),
       jam_pulang_department.getSeconds()
     );
+    // jam pulang + 1 day
+    jam_pulang.setDate(jam_pulang.getDate() + 1);
 
     const difference = (formattedDate2 as any) - (jam_pulang as any);
     const differenceInMinutes = Math.round(difference / 60000);
