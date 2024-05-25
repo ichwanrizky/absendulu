@@ -137,30 +137,29 @@ export async function POST(req: Request) {
     }
 
     // format date
-    const currendDate = new Date();
-    const formattedDate = new Date(currendDate);
+    const currentDate = new Date();
+    const formattedDate = new Date(currentDate);
     formattedDate.setHours(formattedDate.getHours() + 7);
     formattedDate.setUTCHours(0, 0, 0, 0);
     const year = formattedDate.getUTCFullYear();
     const month = formattedDate.getUTCMonth() + 1;
 
     // time format
-    const currendDate2 = new Date();
-    const formattedDate2 = new Date(currendDate2);
+    const currentDate2 = new Date();
+    const formattedDate2 = new Date(currentDate2);
     formattedDate2.setHours(formattedDate2.getHours() + 7);
 
     // late
     const jam_pulang_department = dataDepartment.pegawai[0].shift
       .jam_pulang as Date;
 
-    const jam_pulang = new Date(formattedDate2 as Date);
+    const jam_pulang = new Date();
+    jam_pulang.setDate(jam_pulang.getDate() + 1);
     jam_pulang.setHours(
       jam_pulang_department.getHours(),
       jam_pulang_department.getMinutes(),
       jam_pulang_department.getSeconds()
     );
-    // jam pulang + 1 day
-    jam_pulang.setDate(jam_pulang.getDate() + 1);
 
     const difference = (formattedDate2 as any) - (jam_pulang as any);
     const differenceInMinutes = Math.round(difference / 60000);
