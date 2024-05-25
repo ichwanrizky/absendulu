@@ -83,6 +83,11 @@ const Data = ({
     }
   };
 
+  const copyToken = async (token: string) => {
+    await navigator.clipboard.writeText(token);
+    alert("Token Copied");
+  };
+
   const fetcher = (url: RequestInfo) => {
     return fetch(url, {
       headers: {
@@ -274,6 +279,7 @@ const Data = ({
                         whiteSpace: "nowrap",
                         textAlign: "center",
                       }}
+                      onClick={() => copyToken(item.token)}
                     >
                       {item.token}
                     </td>
