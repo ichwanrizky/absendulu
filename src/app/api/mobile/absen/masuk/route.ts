@@ -136,8 +136,8 @@ export async function POST(req: Request) {
       }
     }
     // format date
-    const currendDate = new Date();
-    const formattedDate = new Date(currendDate);
+    const currentDate = new Date();
+    const formattedDate = new Date(currentDate);
     formattedDate.setHours(formattedDate.getHours() + 7);
     formattedDate.setUTCHours(0, 0, 0, 0);
     const year = formattedDate.getUTCFullYear();
@@ -166,8 +166,8 @@ export async function POST(req: Request) {
     }
 
     // time format
-    const currendDate2 = new Date();
-    const formattedDate2 = new Date(currendDate2);
+    const currentDate2 = new Date();
+    const formattedDate2 = new Date(currentDate2);
     formattedDate2.setHours(formattedDate2.getHours() + 7);
     formattedDate2.setMinutes(formattedDate2.getMinutes() - 4);
 

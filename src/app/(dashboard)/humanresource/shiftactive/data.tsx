@@ -211,7 +211,7 @@ const Data = ({
           </div>
         </div>
 
-        <div className="table-responsive mt-3">
+        <div className="table-responsive mt-3" style={{ maxHeight: "500px" }}>
           <table className="table table-bordered">
             <thead>
               <tr>
