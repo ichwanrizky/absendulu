@@ -25,6 +25,11 @@ export async function GET(req: Request) {
     }
 
     const data = await prisma.roles.findMany({
+      where: {
+        role_name: {
+          not: "ADMINISTRATOR",
+        },
+      },
       orderBy: {
         role_name: "asc",
       },

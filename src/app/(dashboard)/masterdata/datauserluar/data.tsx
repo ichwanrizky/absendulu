@@ -71,7 +71,7 @@ const Data = ({ accessToken }: { accessToken: string }) => {
     } catch (error) {
       alert("something went wrong");
     }
-    setIsLoadingCreate(true);
+    setIsLoadingCreate(false);
   };
 
   const handleEdit = async (id: number) => {
