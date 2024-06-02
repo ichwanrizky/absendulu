@@ -116,20 +116,37 @@ export async function GET(req: Request) {
     SELECT
       p.id,
       p.nama,
+      p.status_nikah,
+      p.department_id,
+      dp.nama_department,
+      p.sub_department_id,
+      sd.nama_sub_department,
+      p.type_gaji,
       d.tanggal,
-      a.tanggal as tanggal_absen,
+      tml.tanggal as tanggal_libur,
+      a.tanggal AS tanggal_absen,
       a.absen_masuk,
       a.absen_pulang,
       a.late,
-      i.tanggal as tanggal_izin,
+      i.tanggal AS tanggal_izin,
       i.jenis_izin,
       i.jumlah_hari,
-      i.jumlah_jam
+      i.jumlah_jam,
+      ot.tanggal AS tanggal_ot,
+      ot.jam AS jam_ot,
+      ot.total AS total_ot 
     FROM
       pegawai p
       CROSS JOIN (${tanggalKerjaQuery}) d
-      LEFT JOIN absen a ON p.id = a.pegawai_id AND d.tanggal = a.tanggal
-      LEFT JOIN izin i ON p.id = i.pegawai_id AND d.tanggal = i.tanggal
+      LEFT JOIN absen a ON p.id = a.pegawai_id 
+      AND d.tanggal = a.tanggal
+      LEFT JOIN izin i ON p.id = i.pegawai_id 
+      AND d.tanggal = i.tanggal 
+      JOIN department dp ON p.department_id = dp.id
+      JOIN sub_department sd ON p.sub_department_id = sd.id
+      LEFT JOIN tanggal_merah tm ON dp.id = tm.department_id
+      LEFT JOIN tanggal_merah_list tml ON tm.id = tml.tanggal_merah_id AND tml.tanggal = d.tanggal
+      LEFT JOIN overtime ot ON ot.pegawai_id = p.id AND ot.tanggal = d.tanggal
     WHERE
       p.department_id = ${Number(select_dept)} 
       AND p.is_active = 1 
@@ -210,15 +227,17 @@ export async function GET(req: Request) {
       if (pegawaiId === item.id) {
         // COUNT LATE
         if (
-          item.jenis_izin === "CS" ||
-          item.jenis_izin === "IS" ||
-          item.jenis_izin === "G2"
+          item.tanggal_libur === null &&
+          item.tanggal_absen !== null &&
+          item.late !== 0
         ) {
-          if (item.late <= 60) {
+          if (item.jenis_izin !== null) {
+            ["G2", "CS", "IS"].includes(item.jenis_izin)
+              ? (totalLate += 0)
+              : (totalLate += item.late);
+          } else {
             totalLate += item.late;
           }
-        } else {
-          totalLate += item.late;
         }
 
         // COUNT IZIN / CUTI
@@ -233,11 +252,17 @@ export async function GET(req: Request) {
         } else if (item.jenis_izin === "S") {
           totalS += 1;
         } else if (item.jenis_izin === "G1") {
-          totalG1 += 1;
+          totalG1 += item.jumlah_jam !== null && jumlahJam(item.jumlah_jam);
         } else if (item.jenis_izin === "G2") {
-          totalG2 += 1;
+          if (item.jumlah_jam !== null) {
+            if (Number(jumlahJam(item.jumlah_jam)) > Number(item.late)) {
+              totalG2 += jumlahJam(item.jumlah_jam);
+            } else {
+              totalG2 += item.late;
+            }
+          }
         } else if (item.jenis_izin === "G3") {
-          totalG3 += 1;
+          totalG3 += item.jumlah_jam !== null && jumlahJam(item.jumlah_jam);
         } else if (item.jenis_izin === "P/M") {
           totalPM += 1;
         }
@@ -300,3 +325,22 @@ function getDatesInMonth(year: number, month: number) {
   }
   return dates;
 }
+
+const jumlahJam = (jumlah_jam: string | null) => {
+  switch (jumlah_jam) {
+    case "0.5":
+      return 30;
+    case "1":
+      return 60;
+    case "1.5":
+      return 90;
+    case "2":
+      return 120;
+    case "2.5":
+      return 150;
+    case "3":
+      return 180;
+    case "3.5":
+      return 210;
+  }
+};

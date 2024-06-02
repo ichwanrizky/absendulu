@@ -138,6 +138,7 @@ const ModalEdit = (props: Props) => {
       label: item.lokasi_tambahan.lokasi?.toUpperCase(),
     })) || []
   );
+  const [isActive, setIsActive] = useState(data.is_active);
 
   const changeDepartment = async (department: number) => {
     if (department === 0) {
@@ -206,6 +207,7 @@ const ModalEdit = (props: Props) => {
         body.append("tanggal_join", tanggalJoin?.toISOString() || "");
 
         body.append("izin_lokasi", JSON.stringify(izinLokasi));
+        body.append("is_active", isActive.toString());
 
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/web/datakaryawan/${data.id}?menu_url=${menu_url}`,
@@ -677,6 +679,22 @@ const ModalEdit = (props: Props) => {
                         />
                       </div>
                     </div>
+                  </div>
+
+                  <div className="form-group mb-3">
+                    <label className="mb-1 fw-semibold small">
+                      STATUS AKTIF
+                    </label>
+                    <select
+                      className="form-select"
+                      onChange={(e) => setIsActive(e.target.value === "1")}
+                      value={isActive ? "1" : "0"}
+                      required
+                    >
+                      <option value="">--PILIH--</option>
+                      <option value="1">ACTIVE</option>
+                      <option value="0">TIDAK AKTIF</option>
+                    </select>
                   </div>
                 </div>
                 <div className="modal-footer">
