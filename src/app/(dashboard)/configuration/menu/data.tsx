@@ -245,6 +245,9 @@ const Data = ({ accessToken }: { accessToken: string }) => {
                   GROUP
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
+                  URUT
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "10%" }}>
                   ACTION
                 </th>
               </tr>
@@ -252,7 +255,7 @@ const Data = ({ accessToken }: { accessToken: string }) => {
             <tbody>
               {menus?.length === 0 ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
@@ -263,6 +266,7 @@ const Data = ({ accessToken }: { accessToken: string }) => {
                     <td>{item.menu?.toUpperCase()}</td>
                     <td>{item.path}</td>
                     <td>{item.menu_group.menu_group?.toUpperCase()}</td>
+                    <td align="center">{item?.urut}</td>
                     <td>
                       <div className="d-flex gap-2">
                         {actions?.includes("update") &&

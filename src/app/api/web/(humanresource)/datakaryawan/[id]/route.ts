@@ -250,6 +250,7 @@ export async function POST(
 
     const izinLokasi = body.get("izin_lokasi");
     const parseIzinLokasi = izinLokasi ? JSON.parse(izinLokasi as string) : [];
+    const is_active = body.get("is_active")!.toString();
 
     const update = await prisma.$transaction([
       prisma.pegawai.update({
@@ -278,6 +279,7 @@ export async function POST(
           no_rek: noRekening,
           bpjs_tk: bpjstk,
           bpjs_kes: bpjkskes,
+          is_active: is_active === "1" ? true : false,
           department: {
             connect: {
               id: Number(department),
