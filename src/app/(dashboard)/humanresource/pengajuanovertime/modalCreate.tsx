@@ -235,7 +235,7 @@ const ModalCreate = (props: Props) => {
                       onChange={(e: Date) => setJamFrom(e)}
                       showTimeSelect
                       showTimeSelectOnly
-                      timeIntervals={30}
+                      timeIntervals={10}
                       timeCaption="Time"
                       timeFormat="HH:mm"
                       dateFormat="HH:mm"
@@ -256,7 +256,7 @@ const ModalCreate = (props: Props) => {
                       onChange={(e: Date) => setJamTo(e)}
                       showTimeSelect
                       showTimeSelectOnly
-                      timeIntervals={30}
+                      timeIntervals={10}
                       timeCaption="Time"
                       timeFormat="HH:mm"
                       dateFormat="HH:mm"
