@@ -114,6 +114,8 @@ export async function GET(req: Request) {
         },
       },
       orderBy: {
+        tahun: "desc",
+        bulan: "desc",
         id: "desc",
       },
     });
