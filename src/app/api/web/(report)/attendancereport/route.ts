@@ -108,7 +108,7 @@ export async function GET(req: Request) {
       (item: any) => !tanggalMerah.includes(item)
     );
 
-    const tanggalKerjaQuery = tanggalKerja
+    const tanggalKerjaQuery = listDates
       .map((date) => `SELECT '${date}' as tanggal`)
       .join(" UNION ");
 
@@ -146,7 +146,16 @@ export async function GET(req: Request) {
       JOIN sub_department sd ON p.sub_department_id = sd.id
       LEFT JOIN tanggal_merah tm ON dp.id = tm.department_id
       LEFT JOIN tanggal_merah_list tml ON tm.id = tml.tanggal_merah_id AND tml.tanggal = d.tanggal
-      LEFT JOIN overtime ot ON ot.pegawai_id = p.id AND ot.tanggal = d.tanggal
+      LEFT JOIN (
+        SELECT
+            pegawai_id,
+            tanggal,
+            jam,
+            total,
+            ROW_NUMBER() OVER (PARTITION BY pegawai_id, tanggal ORDER BY tanggal) AS rn
+        FROM
+            overtime
+    ) ot ON ot.pegawai_id = p.id AND ot.tanggal = d.tanggal AND ot.rn = 1
     WHERE
       p.department_id = ${Number(select_dept)} 
       AND p.is_active = 1 
@@ -272,9 +281,11 @@ export async function GET(req: Request) {
           totalAttend += 1;
         }
 
+        // COUNT NOT ATTEND
         if (
           !item.tanggal_absen &&
           !item.tanggal_izin &&
+          !item.tanggal_libur &&
           item.tanggal < new Date().toISOString().split("T")[0]
         ) {
           totalNotAttend += 1;

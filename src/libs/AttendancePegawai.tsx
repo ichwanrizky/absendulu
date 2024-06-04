@@ -8,30 +8,6 @@ const AttendancePegawai = async (
 ) => {
   const listDates = getDatesInMonth(Number(tahun), Number(bulan) - 1);
 
-  const listTanggalMerah = await prisma.tanggal_merah_list.findMany({
-    select: {
-      tanggal: true,
-    },
-    where: {
-      tanggal_merah: {
-        department_id: 1,
-        bulan: Number(bulan),
-        tahun: Number(tahun),
-      },
-    },
-    orderBy: {
-      tanggal: "asc",
-    },
-  });
-
-  const tanggalMerah = listTanggalMerah.map(
-    (item: any) => item.tanggal.toISOString().split("T")[0]
-  );
-
-  const tanggalKerja = listDates.filter(
-    (item: any) => !tanggalMerah.includes(item)
-  );
-
   const tanggalKerjaQuery = listDates
     .map((date) => `SELECT '${date}' as tanggal`)
     .join(" UNION ");
@@ -70,7 +46,17 @@ const AttendancePegawai = async (
       JOIN sub_department sd ON p.sub_department_id = sd.id
       LEFT JOIN tanggal_merah tm ON dp.id = tm.department_id
       LEFT JOIN tanggal_merah_list tml ON tm.id = tml.tanggal_merah_id AND tml.tanggal = d.tanggal
-      LEFT JOIN overtime ot ON ot.pegawai_id = p.id AND ot.tanggal = d.tanggal
+      LEFT JOIN (
+        SELECT
+            pegawai_id,
+            tanggal,
+            jam,
+            total,
+            ROW_NUMBER() OVER (PARTITION BY pegawai_id, tanggal ORDER BY tanggal) AS rn
+        FROM
+            overtime
+    ) ot ON ot.pegawai_id = p.id AND ot.tanggal = d.tanggal AND ot.rn = 1
+
     WHERE
       p.id = ${pegawai}
     ORDER BY

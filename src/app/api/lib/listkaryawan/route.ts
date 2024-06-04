@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     const department = body.get("department")?.toString();
     const sub_department = body.get("sub_department")?.toString();
 
-    if (!department) {
+    if (!department && !sub_department) {
       return new NextResponse(
         JSON.stringify({
           status: false,
