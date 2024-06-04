@@ -81,9 +81,12 @@ export async function GET(
       select: {
         pegawai: {
           select: {
+            id: true,
             nama: true,
           },
         },
+        department_id: true,
+        id: true,
         nominal: true,
         bulan: true,
         tahun: true,

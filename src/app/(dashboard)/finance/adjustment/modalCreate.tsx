@@ -2,6 +2,7 @@
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Select from "react-select";
+import { NumericFormat } from "react-number-format";
 
 type Props = {
   isModalOpen: any;
@@ -17,6 +18,11 @@ type Department = {
   longitude: string;
   radius: string;
 };
+
+type Pegawai = {
+  id: number;
+  nama: string;
+};
 const ModalCreate = (props: Props) => {
   const { isModalOpen, onClose, accessToken, dataDepartment } = props;
 
@@ -27,15 +33,17 @@ const ModalCreate = (props: Props) => {
   // loading state
   const [isLoading, setIsLoading] = useState(false);
 
+  const [listPegawai, setListPegawai] = useState([] as Pegawai[]);
   const [department, setDepartment] = useState("");
+  const [pegawai, setPegawai] = useState({
+    value: "",
+    label: "",
+  });
   const [bulan, setBulan] = useState("");
   const [tahun, setTahun] = useState("");
-  const [tanggalMerah, setTanggalMerah] = useState([
-    {
-      label: "",
-      value: "",
-    },
-  ]);
+  const [jenis, setJenis] = useState("");
+  const [nominal, setNominal] = useState(0);
+  const [keterangan, setKeterangan] = useState("");
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -44,11 +52,14 @@ const ModalCreate = (props: Props) => {
       try {
         const body = new FormData();
         body.append("department", department);
-        body.append("bulan", bulan);
+        body.append("pegawai", pegawai.value);
         body.append("tahun", tahun);
-        body.append("tanggal_merah", JSON.stringify(tanggalMerah));
+        body.append("bulan", bulan);
+        body.append("jenis", jenis);
+        body.append("nominal", nominal.toString());
+        body.append("keterangan", keterangan);
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/web/tanggalmerah?menu_url=${menu_url}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/adjustment?menu_url=${menu_url}`,
           {
             method: "POST",
             headers: {
@@ -57,7 +68,6 @@ const ModalCreate = (props: Props) => {
             body: body,
           }
         );
-
         const res = await response.json();
         if (!response.ok) {
           alert(res.message);
@@ -69,6 +79,42 @@ const ModalCreate = (props: Props) => {
         alert("something went wrong");
       }
       setIsLoading(false);
+    }
+  };
+
+  const getPegawai = async (department: number) => {
+    setPegawai({
+      value: "",
+      label: "",
+    });
+    if (!department) {
+      setListPegawai([]);
+      return;
+    }
+
+    try {
+      const body = new FormData();
+      body.append("department", department.toString());
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listkaryawan`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+          body: body,
+        }
+      );
+
+      const res = await response.json();
+      if (!response.ok) {
+        alert(res.message);
+        setListPegawai([]);
+      } else {
+        setListPegawai(res.data);
+      }
+    } catch (error) {
+      alert("something went wrong");
     }
   };
 
@@ -90,7 +136,7 @@ const ModalCreate = (props: Props) => {
               <div className="modal-content">
                 <div className="modal-header">
                   <h1 className="modal-title fs-5 fw-semibold">
-                    ADD TANGGAL MERAH
+                    ADD ADJUSTMENT
                   </h1>
                   <button
                     type="button"
@@ -105,7 +151,10 @@ const ModalCreate = (props: Props) => {
                     <select
                       className="form-select"
                       value={department}
-                      onChange={(e) => setDepartment(e.target.value)}
+                      onChange={(e) => {
+                        setDepartment(e.target.value);
+                        getPegawai(Number(e.target.value));
+                      }}
                       required
                     >
                       <option value="">--PILIH--</option>
@@ -117,6 +166,22 @@ const ModalCreate = (props: Props) => {
                         )
                       )}
                     </select>
+                  </div>
+
+                  <div className="form-group mb-3">
+                    <label className="mb-1 fw-semibold small">PEGAWAI</label>
+                    <Select
+                      value={pegawai}
+                      options={listPegawai?.map(
+                        (item: Pegawai, index: number) => ({
+                          value: item.id,
+                          label: item.nama?.toUpperCase(),
+                        })
+                      )}
+                      onChange={(e: any) => setPegawai(e)}
+                      isClearable
+                      required
+                    />
                   </div>
 
                   <div className="form-group mb-3">
@@ -170,18 +235,48 @@ const ModalCreate = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">TANGGAL</label>
-                    <Select
-                      options={Array.from({ length: 31 }, (_, i) => ({
-                        label: `${(i + 1).toString().padStart(2, "0")}`,
-                        value: `${(i + 1).toString().padStart(2, "0")}`,
-                      }))}
-                      onChange={(e: any) => setTanggalMerah(e)}
-                      isMulti
-                      isClearable
-                      closeMenuOnSelect={false}
+                    <label className="mb-1 fw-semibold small">JENIS</label>
+                    <select
+                      className="form-select"
                       required
+                      value={jenis}
+                      onChange={(e) => setJenis(e.target.value)}
+                    >
+                      <option value="">--PILIH--</option>
+                      <option value="penambahan">PENAMBAHAN / PROJECT</option>
+                      <option value="pengurangan">PENGURANGAN</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group mb-3">
+                    <label className="mb-1 fw-semibold small">NOMINAL</label>
+                    <NumericFormat
+                      className="form-control"
+                      defaultValue={nominal}
+                      thousandSeparator=","
+                      displayType="input"
+                      onValueChange={(values: any) => {
+                        setNominal(values.floatValue);
+                      }}
+                      onFocus={(e) =>
+                        e.target.value === "0" && (e.target.value = "")
+                      }
+                      onBlur={(e) =>
+                        e.target.value === "" && (e.target.value = "0")
+                      }
+                      onWheel={(e: any) => e.target.blur()}
                     />
+                  </div>
+
+                  <div className="form-group mb-3">
+                    <label className="mb-1 fw-semibold small">KETERANGAN</label>
+                    <textarea
+                      className="form-control"
+                      required
+                      value={keterangan}
+                      onChange={(e) => setKeterangan(e.target.value)}
+                      rows={3}
+                    ></textarea>
                   </div>
                 </div>
 

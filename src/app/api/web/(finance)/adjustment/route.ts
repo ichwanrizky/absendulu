@@ -74,8 +74,10 @@ export async function GET(req: Request) {
       );
     }
 
-    // filter
+    // search
+    const search = searchParams.get("search");
 
+    // filter
     const select_dept = searchParams.get("select_dept");
     const bulan = searchParams.get("bulan");
     const tahun = searchParams.get("tahun");
@@ -84,19 +86,27 @@ export async function GET(req: Request) {
       select: {
         pegawai: {
           select: {
+            id: true,
             nama: true,
           },
         },
+        id: true,
         nominal: true,
         bulan: true,
         tahun: true,
         keterangan: true,
         jenis: true,
+        department_id: true,
       },
       where: {
         department_id: Number(select_dept),
         bulan: Number(bulan),
         tahun: Number(tahun),
+        pegawai: {
+          nama: {
+            contains: search ? search : undefined,
+          },
+        },
       },
     });
 

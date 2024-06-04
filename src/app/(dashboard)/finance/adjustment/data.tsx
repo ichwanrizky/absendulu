@@ -3,7 +3,6 @@ import { useState } from "react";
 import useSWR, { mutate } from "swr";
 import ModalCreate from "./modalCreate";
 import ModalEdit from "./modalEdit";
-import ModalFilter from "./modalFilter";
 import { usePathname } from "next/navigation";
 
 type Department = {
@@ -15,18 +14,18 @@ type Department = {
   radius: string;
 };
 
-type TanggalMerah = {
+type Adjustment = {
   id: number;
+  pegawai: {
+    id: number;
+    nama: string;
+  };
+  nominal: number;
   bulan: number;
   tahun: number;
+  keterangan: string;
+  jenis: string;
   department_id: number;
-  tanggal_merah_list: TanggalMerahList[];
-  department: Department;
-};
-
-type TanggalMerahList = {
-  tanggal: Date;
-  tanggal_nomor: string;
 };
 
 interface isLoadingProps {
@@ -51,13 +50,11 @@ const Data = ({
   // modal state
   const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
   const [isModalEditOpen, setIsModalEditOpen] = useState(false);
-  const [isModalFilterOpen, setIsModalFilterOpen] = useState(false);
 
   // data state
-  const [dataEdit, setDataEdit] = useState({} as TanggalMerah);
+  const [dataEdit, setDataEdit] = useState({} as Adjustment);
 
   // filter
-
   const [search, setSearch] = useState("");
   const [bulan, setBulan] = useState((new Date().getMonth() + 1).toString());
   const [tahun, setTahun] = useState(new Date().getFullYear().toString());
@@ -71,7 +68,7 @@ const Data = ({
     setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/web/tanggalmerah/${id}?menu_url=${menu_url}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/web/adjustment/${id}?menu_url=${menu_url}`,
         {
           headers: {
             authorization: `Bearer ${accessToken}`,
@@ -97,7 +94,7 @@ const Data = ({
       setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/web/tanggalmerah/${id}?menu_url=${menu_url}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/adjustment/${id}?menu_url=${menu_url}`,
           {
             method: "DELETE",
             headers: {
@@ -110,11 +107,7 @@ const Data = ({
         alert(res.message);
         if (response.ok) {
           mutate(
-            `${
-              process.env.NEXT_PUBLIC_API_URL
-            }/api/web/tanggalmerah?menu_url=${menu_url}&select_dept=${selectDept}&filter=${JSON.stringify(
-              filter
-            )}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/adjustment?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
           );
         }
       } catch (error) {
@@ -127,13 +120,8 @@ const Data = ({
   const closeModal = () => {
     setIsModalCreateOpen(false);
     setIsModalEditOpen(false);
-    setIsModalFilterOpen(false);
     mutate(
-      `${
-        process.env.NEXT_PUBLIC_API_URL
-      }/api/web/tanggalmerah?menu_url=${menu_url}&select_dept=${selectDept}&filter=${JSON.stringify(
-        filter
-      )}`
+      `${process.env.NEXT_PUBLIC_API_URL}/api/web/adjustment?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
     );
   };
 
@@ -158,6 +146,27 @@ const Data = ({
   if (isLoading) {
     return (
       <div className="card-body">
+        <div className="row">
+          <div className="col-sm-12 d-flex justify-content-between align-items-center">
+            <div></div>
+
+            <input
+              type="text"
+              placeholder="Search..."
+              aria-label="Search"
+              onChange={(e) => setSearch(e.target.value)}
+              value={search}
+              className="form-control-sm ms-2"
+              id="search"
+              style={{
+                width: "200px",
+                float: "right",
+                border: "1px solid #ced4da",
+              }}
+            />
+          </div>
+        </div>
+
         <div className="text-center">
           <span
             className="spinner-border spinner-border-sm me-2"
@@ -190,7 +199,7 @@ const Data = ({
     );
   }
 
-  const holidays = data?.data;
+  const adjustments = data?.data;
   const actions = data?.actions;
 
   return (
@@ -303,40 +312,21 @@ const Data = ({
                 </th>
               </tr>
             </thead>
-            {/* <tbody>
-              {holidays?.length === 0 ? (
+            <tbody>
+              {adjustments?.length === 0 ? (
                 <tr>
                   <td colSpan={6}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
               ) : (
-                holidays?.map((item: TanggalMerah, index: number) => (
+                adjustments?.map((item: Adjustment, index: number) => (
                   <tr key={index}>
                     <td align="center">{index + 1}</td>
-                    <td align="left">
-                      {item.department?.nama_department?.toUpperCase()}
-                    </td>
-                    <td align="center">{item.tahun}</td>
-                    <td>{monthNames(item.bulan)}</td>
-                    <td
-                      style={{
-                        maxWidth: "100px",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        textAlign: "left",
-                      }}
-                    >
-                      {item.tanggal_merah_list
-                        ?.map((item: TanggalMerahList) =>
-                          new Date(item.tanggal as Date)
-                            .toLocaleString("id-ID", optionsDate)
-                            .replace(/\//g, "-")
-                        )
-                        .join(", ")}
-                    </td>
-
+                    <td align="left">{item.pegawai.nama?.toUpperCase()}</td>
+                    <td align="left">{item.jenis?.toUpperCase()}</td>
+                    <td align="left">{item.keterangan?.toUpperCase()}</td>
+                    <td align="right">{numberWithCommas(item.nominal)}</td>
                     <td>
                       <div className="d-flex gap-2">
                         {actions?.includes("update") &&
@@ -379,58 +369,37 @@ const Data = ({
                   </tr>
                 ))
               )}
-            </tbody> */}
+            </tbody>
           </table>
         </div>
       </div>
 
       {/* modal create */}
-      {/* {isModalCreateOpen && (
+      {isModalCreateOpen && (
         <ModalCreate
           isModalOpen={isModalCreateOpen}
           onClose={closeModal}
           accessToken={accessToken}
           dataDepartment={departments}
         />
-      )} */}
+      )}
 
       {/* modal edit */}
-      {/* {isModalEditOpen && (
+      {isModalEditOpen && (
         <ModalEdit
           isModalOpen={isModalEditOpen}
           onClose={closeModal}
           accessToken={accessToken}
+          dataDepartment={departments}
           dataEdit={dataEdit}
         />
-      )} */}
+      )}
     </>
   );
 };
 
-const optionsDate: any = {
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-  timeZone: "UTC",
-};
-
-const monthNames = (month: number) => {
-  const monthNames = [
-    "Januari",
-    "Februari",
-    "Maret",
-    "April",
-    "Mei",
-    "Juni",
-    "Juli",
-    "Augustus",
-    "September",
-    "Oktober",
-    "November",
-    "Desember",
-  ];
-
-  return monthNames[month - 1];
+const numberWithCommas = (num: number) => {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
 
 export default Data;

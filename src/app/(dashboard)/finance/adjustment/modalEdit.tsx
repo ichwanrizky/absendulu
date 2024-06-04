@@ -1,35 +1,45 @@
 "use client";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Select from "react-select";
+import { NumericFormat } from "react-number-format";
 
 type Props = {
   isModalOpen: any;
   onClose: any;
   accessToken?: string;
-  dataEdit: TanggalMerah;
+  dataDepartment?: Department[];
+  dataEdit: Adjustment;
 };
-
 type Department = {
+  id: number;
   nama_department: string;
+  lot: string;
+  latitude: string;
+  longitude: string;
+  radius: string;
 };
 
-type TanggalMerah = {
+type Pegawai = {
   id: number;
+  nama: string;
+};
+
+type Adjustment = {
+  id: number;
+  pegawai: {
+    id: number;
+    nama: string;
+  };
+  nominal: number;
   bulan: number;
   tahun: number;
+  keterangan: string;
+  jenis: string;
   department_id: number;
-  tanggal_merah_list: TanggalMerahList[];
-  department: Department;
 };
-
-type TanggalMerahList = {
-  tanggal: Date;
-  tanggal_nomor: string;
-};
-
 const ModalEdit = (props: Props) => {
-  const { isModalOpen, onClose, accessToken, dataEdit } = props;
+  const { isModalOpen, onClose, accessToken, dataDepartment, dataEdit } = props;
 
   const pathname = usePathname();
   const lastSlashIndex = pathname.lastIndexOf("/");
@@ -38,14 +48,19 @@ const ModalEdit = (props: Props) => {
   // loading state
   const [isLoading, setIsLoading] = useState(false);
 
-  const [bulan, setBulan] = useState(dataEdit.bulan?.toString());
-  const [tahun, setTahun] = useState(dataEdit.tahun?.toString());
-  const [tanggalMerah, setTanggalMerah] = useState(
-    dataEdit.tanggal_merah_list?.map((item: TanggalMerahList) => ({
-      value: item.tanggal_nomor,
-      label: item.tanggal_nomor,
-    }))
+  const [listPegawai, setListPegawai] = useState([] as Pegawai[]);
+  const [department, setDepartment] = useState(
+    dataEdit.department_id.toString()
   );
+  const [pegawai, setPegawai] = useState({
+    value: dataEdit.pegawai.id?.toString(),
+    label: dataEdit.pegawai.nama?.toUpperCase(),
+  });
+  const [bulan, setBulan] = useState(dataEdit.bulan.toString());
+  const [tahun, setTahun] = useState(dataEdit.tahun.toString());
+  const [jenis, setJenis] = useState(dataEdit.jenis);
+  const [nominal, setNominal] = useState(dataEdit.nominal);
+  const [keterangan, setKeterangan] = useState(dataEdit.keterangan);
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -53,11 +68,15 @@ const ModalEdit = (props: Props) => {
       setIsLoading(true);
       try {
         const body = new FormData();
-        body.append("bulan", bulan);
+        body.append("department", department);
+        body.append("pegawai", pegawai.value);
         body.append("tahun", tahun);
-        body.append("tanggal_merah", JSON.stringify(tanggalMerah));
+        body.append("bulan", bulan);
+        body.append("jenis", jenis);
+        body.append("nominal", nominal.toString());
+        body.append("keterangan", keterangan);
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/web/tanggalmerah/${dataEdit.id}?menu_url=${menu_url}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/adjustment/${dataEdit.id}?menu_url=${menu_url}`,
           {
             method: "POST",
             headers: {
@@ -66,7 +85,6 @@ const ModalEdit = (props: Props) => {
             body: body,
           }
         );
-
         const res = await response.json();
         if (!response.ok) {
           alert(res.message);
@@ -80,6 +98,78 @@ const ModalEdit = (props: Props) => {
       setIsLoading(false);
     }
   };
+
+  const getPegawai = async (department: number) => {
+    setPegawai({
+      value: "",
+      label: "",
+    });
+    if (!department) {
+      setListPegawai([]);
+      return;
+    }
+
+    try {
+      const body = new FormData();
+      body.append("department", department.toString());
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listkaryawan`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+          body: body,
+        }
+      );
+
+      const res = await response.json();
+      if (!response.ok) {
+        alert(res.message);
+        setListPegawai([]);
+      } else {
+        setListPegawai(res.data);
+      }
+    } catch (error) {
+      alert("something went wrong");
+    }
+  };
+
+  const getPegawaiFirst = async (department: number) => {
+    if (!department) {
+      setListPegawai([]);
+      return;
+    }
+
+    try {
+      const body = new FormData();
+      body.append("department", department.toString());
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listkaryawan`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+          body: body,
+        }
+      );
+
+      const res = await response.json();
+      if (!response.ok) {
+        alert(res.message);
+        setListPegawai([]);
+      } else {
+        setListPegawai(res.data);
+      }
+    } catch (error) {
+      alert("something went wrong");
+    }
+  };
+
+  useEffect(() => {
+    getPegawaiFirst(dataEdit.department_id);
+  }, []);
 
   return (
     isModalOpen && (
@@ -99,7 +189,7 @@ const ModalEdit = (props: Props) => {
               <div className="modal-content">
                 <div className="modal-header">
                   <h1 className="modal-title fs-5 fw-semibold">
-                    EDIT TANGGAL MERAH
+                    EDIT ADJUSTMENT
                   </h1>
                   <button
                     type="button"
@@ -111,10 +201,39 @@ const ModalEdit = (props: Props) => {
                 <div className="modal-body">
                   <div className="form-group mb-3">
                     <label className="mb-1 fw-semibold small">DEPARTMENT</label>
-                    <input
-                      className="form-control"
-                      value={dataEdit?.department?.nama_department?.toUpperCase()}
-                      readOnly
+                    <select
+                      className="form-select"
+                      value={department}
+                      onChange={(e) => {
+                        setDepartment(e.target.value);
+                        getPegawai(Number(e.target.value));
+                      }}
+                      required
+                    >
+                      <option value="">--PILIH--</option>
+                      {dataDepartment?.map(
+                        (item: Department, index: number) => (
+                          <option value={item.id} key={index}>
+                            {item.nama_department?.toUpperCase()}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </div>
+
+                  <div className="form-group mb-3">
+                    <label className="mb-1 fw-semibold small">PEGAWAI</label>
+                    <Select
+                      value={pegawai}
+                      options={listPegawai?.map(
+                        (item: Pegawai, index: number) => ({
+                          value: item.id,
+                          label: item.nama?.toUpperCase(),
+                        })
+                      )}
+                      onChange={(e: any) => setPegawai(e)}
+                      isClearable
+                      required
                     />
                   </div>
 
@@ -155,9 +274,9 @@ const ModalEdit = (props: Props) => {
                     <label className="mb-1 fw-semibold small">TAHUN</label>
                     <select
                       className="form-select"
+                      required
                       value={tahun}
                       onChange={(e) => setTahun(e.target.value)}
-                      required
                     >
                       <option value="">--PILIH--</option>
                       {Array.from({ length: 5 }, (_, i) => (
@@ -169,19 +288,48 @@ const ModalEdit = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">TANGGAL</label>
-                    <Select
-                      value={tanggalMerah}
-                      options={Array.from({ length: 31 }, (_, i) => ({
-                        label: `${(i + 1).toString().padStart(2, "0")}`,
-                        value: `${(i + 1).toString().padStart(2, "0")}`,
-                      }))}
-                      onChange={(e: any) => setTanggalMerah(e)}
-                      isMulti
-                      isClearable
-                      closeMenuOnSelect={false}
+                    <label className="mb-1 fw-semibold small">JENIS</label>
+                    <select
+                      className="form-select"
                       required
+                      value={jenis}
+                      onChange={(e) => setJenis(e.target.value)}
+                    >
+                      <option value="">--PILIH--</option>
+                      <option value="penambahan">PENAMBAHAN / PROJECT</option>
+                      <option value="pengurangan">PENGURANGAN</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group mb-3">
+                    <label className="mb-1 fw-semibold small">NOMINAL</label>
+                    <NumericFormat
+                      className="form-control"
+                      defaultValue={nominal}
+                      thousandSeparator=","
+                      displayType="input"
+                      onValueChange={(values: any) => {
+                        setNominal(values.floatValue);
+                      }}
+                      onFocus={(e) =>
+                        e.target.value === "0" && (e.target.value = "")
+                      }
+                      onBlur={(e) =>
+                        e.target.value === "" && (e.target.value = "0")
+                      }
+                      onWheel={(e: any) => e.target.blur()}
                     />
+                  </div>
+
+                  <div className="form-group mb-3">
+                    <label className="mb-1 fw-semibold small">KETERANGAN</label>
+                    <textarea
+                      className="form-control"
+                      required
+                      value={keterangan}
+                      onChange={(e) => setKeterangan(e.target.value)}
+                      rows={3}
+                    ></textarea>
                   </div>
                 </div>
 
