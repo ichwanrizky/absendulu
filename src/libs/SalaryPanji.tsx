@@ -92,32 +92,45 @@ const SalaryPanji = async (bulan: number, tahun: number) => {
       JOIN sub_department sd ON p.sub_department_id = sd.id
       LEFT JOIN tanggal_merah tm ON dp.id = tm.department_id
       LEFT JOIN tanggal_merah_list tml ON tm.id = tml.tanggal_merah_id AND tml.tanggal = d.tanggal
-      LEFT JOIN overtime ot ON ot.pegawai_id = p.id AND ot.tanggal = d.tanggal
+      LEFT JOIN (
+        SELECT
+            pegawai_id,
+            tanggal,
+            jam,
+            total,
+            ROW_NUMBER() OVER (PARTITION BY pegawai_id, tanggal ORDER BY tanggal) AS rn
+        FROM
+            overtime
+    ) ot ON ot.pegawai_id = p.id AND ot.tanggal = d.tanggal AND ot.rn = 1
     WHERE
-      p.id IN (456)
+      p.id IN (492)
     ORDER BY
       p.nama,
       d.tanggal
   `;
+  // console.log(
+  //   dataQuery.replace(/'/g, '"').replace(/\n/g, "").replace(/\s+/g, " ").trim()
+  // );
 
   const data = (await prisma.$queryRawUnsafe(dataQuery)) as any;
 
   let reportData: any = [];
 
   let pegawaiId = 0;
-  let totalAttend: number = 0;
-  let totalAttendWeekend: number = 0;
-  let totalNotAttend: number = 0;
-  let totalLate: number = 0;
-  let totalC: number = 0;
-  let totalCS: number = 0;
-  let totalI: number = 0;
-  let totalIS: number = 0;
-  let totalS: number = 0;
-  let totalG1: number = 0;
-  let totalG2: number = 0;
-  let totalG3: number = 0;
-  let totalPM: number = 0;
+  let totalAttend: any = 0;
+  let totalNotAttend: any = 0;
+  let totalAttendWeekend: any = 0;
+  let totalLate: any = 0;
+  let totalC: any = 0;
+  let totalCS: any = 0;
+  let totalI: any = 0;
+  let totalIS: any = 0;
+  let totalS: any = 0;
+  let totalG1: any = 0;
+  let totalG2: any = 0;
+  let totalG3: any = 0;
+  let totalPM: any = 0;
+
   let overtime: number = 0;
   let overtimeTotal: number = 0;
 
@@ -171,34 +184,42 @@ const SalaryPanji = async (bulan: number, tahun: number) => {
     if (pegawaiId === item.id) {
       // COUNT LATE
       if (
-        item.jenis_izin === "CS" ||
-        item.jenis_izin === "IS" ||
-        item.jenis_izin === "G2"
+        item.tanggal_libur === null &&
+        item.tanggal_absen !== null &&
+        item.late !== 0
       ) {
-        if (item.late <= 60) {
+        if (item.jenis_izin !== null) {
+          ["G2", "CS", "IS"].includes(item.jenis_izin)
+            ? (totalLate += 0)
+            : (totalLate += item.late);
+        } else {
           totalLate += item.late;
         }
-      } else {
-        if (!item.tanggal_libur) totalLate += item.late;
       }
 
       // COUNT IZIN / CUTI
       if (item.jenis_izin === "C") {
         totalC += 1;
       } else if (item.jenis_izin === "CS") {
-        totalCS += 0.5;
+        totalCS += 1;
       } else if (item.jenis_izin === "I") {
         totalI += 1;
       } else if (item.jenis_izin === "IS") {
-        totalIS += 0.5;
+        totalIS += 1;
       } else if (item.jenis_izin === "S") {
         totalS += 1;
       } else if (item.jenis_izin === "G1") {
-        totalG1 += Number(item.jumlah_jam);
+        totalG1 += item.jumlah_jam !== null && jumlahJam(item.jumlah_jam);
       } else if (item.jenis_izin === "G2") {
-        totalG2 += Number(item.jumlah_jam);
+        if (item.jumlah_jam !== null) {
+          if (Number(jumlahJam(item.jumlah_jam)) > Number(item.late)) {
+            totalG2 += jumlahJam(item.jumlah_jam);
+          } else {
+            totalG2 += item.late;
+          }
+        }
       } else if (item.jenis_izin === "G3") {
-        totalG3 += Number(item.jumlah_jam);
+        totalG3 += item.jumlah_jam !== null && jumlahJam(item.jumlah_jam);
       } else if (item.jenis_izin === "P/M") {
         totalPM += 1;
       }
@@ -345,8 +366,6 @@ const SalaryPanji = async (bulan: number, tahun: number) => {
           nominal = Math.round((basic_salary / 173) * item.overtime_total);
       }
 
-      // ADJUSTMENT
-
       // ABSENT
       if (i.id === 20 || i.id === 9) {
         if (i.tipe === "informasi") nominal = item.notattend_count;
@@ -416,7 +435,7 @@ const SalaryPanji = async (bulan: number, tahun: number) => {
         nominal = item.attend_count + item.attend_weekend_count;
       }
 
-      if (i.id !== 26 && i.id !== 27) {
+      if (i.id !== 26 && i.id !== 27 && i.id !== 8 && i.id !== 17) {
         gajiData.push({
           pegawai_id: item.pegawai_id,
           nama: item.nama,
@@ -429,12 +448,59 @@ const SalaryPanji = async (bulan: number, tahun: number) => {
         });
       }
     });
+
+    // ADJUSTMENT PLUS // id.id = 8
+    const adjustment_plus = await prisma.adjustment.aggregate({
+      _sum: {
+        nominal: true,
+      },
+      where: {
+        bulan: bulan,
+        tahun: tahun,
+        pegawai_id: item.pegawai_id,
+        jenis: "penambahan",
+      },
+    });
+    const nominalAdjustmentPlus = adjustment_plus._sum.nominal || 0;
+    gajiData.push({
+      pegawai_id: item.pegawai_id,
+      nama: item.nama,
+      status_nikah: item.status_nikah,
+      department_id: item.department_id,
+      tipe: "penambahan",
+      komponen_id: 8,
+      komponen_name: "ADJUSTMENT PLUS",
+      nominal: nominalAdjustmentPlus,
+    });
+    // ADJUSTMENT PLUS // i.id = 17
+    const adjustment_minus = await prisma.adjustment.aggregate({
+      _sum: {
+        nominal: true,
+      },
+      where: {
+        bulan: bulan,
+        tahun: tahun,
+        pegawai_id: item.pegawai_id,
+        jenis: "pengurangan",
+      },
+    });
+
+    const nominalAdjustmentMinus = adjustment_minus._sum.nominal || 0;
+    gajiData.push({
+      pegawai_id: item.pegawai_id,
+      nama: item.nama,
+      status_nikah: item.status_nikah,
+      department_id: item.department_id,
+      tipe: "pengurangan",
+      komponen_id: 17,
+      komponen_name: "ADJUSTMENT MINUS",
+      nominal: nominalAdjustmentMinus,
+    });
   }
 
+  console.log(gajiData);
   return gajiData;
 };
-
-export default SalaryPanji;
 
 function getDatesInMonth(year: number, month: number) {
   let dates = [];
@@ -447,3 +513,24 @@ function getDatesInMonth(year: number, month: number) {
   }
   return dates;
 }
+
+const jumlahJam = (jumlah_jam: string | null) => {
+  switch (jumlah_jam) {
+    case "0.5":
+      return 30;
+    case "1":
+      return 60;
+    case "1.5":
+      return 90;
+    case "2":
+      return 120;
+    case "2.5":
+      return 150;
+    case "3":
+      return 180;
+    case "3.5":
+      return 210;
+  }
+};
+
+export default SalaryPanji;

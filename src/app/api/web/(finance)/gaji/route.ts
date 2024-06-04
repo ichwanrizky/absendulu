@@ -120,18 +120,16 @@ export async function GET(req: Request) {
     if (select_dept === 1) {
       const gaji = await SalaryPanji(bulan, tahun);
 
-      const createGaji = await prisma.gaji.createMany({
-        data: gaji?.map((item: any) => ({
-          bulan: bulan,
-          tahun: tahun,
-          pegawai_id: item.pegawai_id,
-          tipe: item.tipe,
-          komponen: item.komponen_name,
-          nominal: Number(item.nominal),
-        })),
-      });
-
-      console.log(createGaji);
+      // const createGaji = await prisma.gaji.createMany({
+      //   data: gaji?.map((item: any) => ({
+      //     bulan: bulan,
+      //     tahun: tahun,
+      //     pegawai_id: item.pegawai_id,
+      //     tipe: item.tipe,
+      //     komponen: item.komponen_name,
+      //     nominal: Number(item.nominal),
+      //   })),
+      // });
     }
   } catch (error) {
     return handleError(error);
