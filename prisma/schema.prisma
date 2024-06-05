@@ -117,6 +117,7 @@ model department {
   overtime           overtime[]
   komponen_gaji      komponen_gaji[]
   adjustment         adjustment[]
+  gaji_pegawai       gaji_pegawai[]
 }
 
 model sub_department {
@@ -195,6 +196,7 @@ model pegawai {
   type_gaji                  String?                      @default("nonfixed")
   gaji                       gaji[]
   adjustment                 adjustment[]
+  gaji_pegawai               gaji_pegawai[]
 }
 
 model shift {
@@ -394,14 +396,32 @@ model master_gaji_pegawai {
 }
 
 model gaji {
-  id         Int     @id @default(autoincrement())
-  bulan      Int
-  tahun      Int
-  pegawai_id Int
-  pegawai    pegawai @relation(fields: [pegawai_id], references: [id])
-  tipe       String?
-  komponen   String?
-  nominal    Int     @default(0)
+  id              Int          @id @default(autoincrement())
+  bulan           Int
+  tahun           Int
+  pegawai_id      Int
+  pegawai         pegawai      @relation(fields: [pegawai_id], references: [id])
+  tipe            String?
+  komponen        String?
+  komponen_id     Int?
+  nominal         Int          @default(0)
+  urut            Int
+  gaji_pegawai_id Int
+  gaji_pegawai    gaji_pegawai @relation(fields: [gaji_pegawai_id], references: [id])
+}
+
+model gaji_pegawai {
+  id            Int        @id @default(autoincrement())
+  uuid          String     @unique @default(uuid())
+  bulan         Int
+  tahun         Int
+  pegawai_id    Int
+  pegawai       pegawai    @relation(fields: [pegawai_id], references: [id])
+  nominal       Int        @default(0)
+  publish       Boolean    @default(false)
+  gaji          gaji[]
+  department_id Int
+  department    department @relation(fields: [department_id], references: [id])
 }
 
 model adjustment {

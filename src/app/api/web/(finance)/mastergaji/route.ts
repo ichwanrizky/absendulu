@@ -237,7 +237,7 @@ export async function POST(req: Request) {
         data: parseDataMasterGaji.flatMap((item: any) =>
           item.master_gaji_pegawai.map((item2: any) => ({
             pegawai_id: item.id,
-            komponen_id: item2.id,
+            komponen_id: item2.komponen_id,
             nominal: item2.nominal,
           }))
         ),
