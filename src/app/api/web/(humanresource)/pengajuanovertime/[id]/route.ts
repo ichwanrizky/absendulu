@@ -146,6 +146,9 @@ export async function POST(
             const difference = jam_to - jam_from;
             const hours = difference / (1000 * 60 * 60);
 
+            const roundedHours =
+              Math.floor(hours) + (hours % 1 >= 0.5 ? 0.5 : 0);
+
             const checkTanggalMerah = await prisma.tanggal_merah_list.findFirst(
               {
                 where: {
@@ -157,19 +160,28 @@ export async function POST(
             let is_holiday;
             let total;
 
+            let newRoundedHours;
+
             if (checkTanggalMerah) {
               is_holiday = true;
-              total = holiday(hours?.toString());
+
+              if (roundedHours >= 4) {
+                newRoundedHours = roundedHours - 1;
+              } else {
+                newRoundedHours = roundedHours;
+              }
+              total = holiday(newRoundedHours?.toString());
             } else {
+              newRoundedHours = roundedHours;
               is_holiday = false;
-              total = normalDay(hours?.toString());
+              total = normalDay(roundedHours?.toString());
             }
 
             return {
               tanggal: item.pengajuan_overtime.tanggal as Date,
               pegawai_id: Number(item.pegawai_id),
               department_id: Number(item.pengajuan_overtime.department_id),
-              jam: hours?.toString(),
+              jam: newRoundedHours?.toString(),
               total: total,
               is_holiday: is_holiday,
               status: 1,
