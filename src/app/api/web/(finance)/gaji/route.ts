@@ -218,29 +218,42 @@ export async function POST(req: Request) {
       const gaji = await SalaryPanji(Number(bulan), Number(tahun), pegawai);
 
       for (const item of (gaji as any) || []) {
-        await prisma.gaji_pegawai.create({
-          data: {
-            bulan: Number(item.bulan),
-            tahun: Number(item.tahun),
-            pegawai_id: Number(item.pegawai_id),
-            nominal: Number(item.nominal),
-            department_id: Number(department),
-            gaji: {
-              createMany: {
-                data: item.gaji?.map((item2: any) => ({
-                  bulan: Number(item.bulan),
-                  tahun: Number(item.tahun),
-                  pegawai_id: Number(item.pegawai_id),
-                  tipe: item2.tipe,
-                  komponen: item2.komponen_name,
-                  komponen_id: item2.komponen_id,
-                  nominal: Number(item2.nominal),
-                  urut: item2.urut_tampil,
-                })),
+        await prisma.$transaction([
+          prisma.gaji_pegawai.create({
+            data: {
+              bulan: Number(item.bulan),
+              tahun: Number(item.tahun),
+              pegawai_id: Number(item.pegawai_id),
+              nominal: Number(item.nominal),
+              department_id: Number(department),
+              gaji: {
+                createMany: {
+                  data: item.gaji?.map((item2: any) => ({
+                    bulan: Number(item.bulan),
+                    tahun: Number(item.tahun),
+                    pegawai_id: Number(item.pegawai_id),
+                    tipe: item2.tipe,
+                    komponen: item2.komponen_name,
+                    komponen_id: item2.komponen_id,
+                    nominal: Number(item2.nominal),
+                    urut: item2.urut_tampil,
+                  })),
+                },
               },
             },
-          },
-        });
+          }),
+
+          prisma.pph21.create({
+            data: {
+              bulan: Number(item.bulan),
+              tahun: Number(item.tahun),
+              department_id: Number(department),
+              pegawai_id: Number(item.pegawai_id),
+              gaji: Number(item.nominal),
+              pph21: Number(item.pph),
+            },
+          }),
+        ]);
       }
     }
 

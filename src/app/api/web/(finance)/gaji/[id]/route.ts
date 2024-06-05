@@ -93,6 +93,17 @@ export async function DELETE(
       );
     }
 
+    const gaji = await prisma.gaji_pegawai.findFirst({
+      where: {
+        id: Number(id),
+      },
+      select: {
+        bulan: true,
+        tahun: true,
+        pegawai_id: true,
+      },
+    });
+
     const deletes = await prisma.$transaction([
       prisma.gaji.deleteMany({
         where: {
@@ -103,6 +114,14 @@ export async function DELETE(
       prisma.gaji_pegawai.delete({
         where: {
           id: Number(id),
+        },
+      }),
+
+      prisma.pph21.deleteMany({
+        where: {
+          bulan: gaji!.bulan,
+          tahun: gaji!.tahun,
+          pegawai_id: gaji!.pegawai_id,
         },
       }),
     ]);
