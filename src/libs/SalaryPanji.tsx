@@ -28,7 +28,7 @@ type ReportData = {
   overtime_total: number;
 };
 
-const SalaryPanji = async (bulan: number, tahun: number, parsePegawai: any) => {
+const SalaryPanji = async (bulan: number, tahun: number, pegawai: any) => {
   const listDates = getDatesInMonth(Number(tahun), Number(bulan) - 1);
 
   const listTanggalMerah = await prisma.tanggal_merah_list.findMany({
@@ -59,6 +59,7 @@ const SalaryPanji = async (bulan: number, tahun: number, parsePegawai: any) => {
     .map((date) => `SELECT '${date}' as tanggal`)
     .join(" UNION ");
 
+  const parsePegawai = pegawai ? JSON.parse(pegawai as string) : [];
   const pegawaiValues = parsePegawai.map((item: any) => item.value).join(",");
 
   const dataQuery = `
@@ -280,6 +281,7 @@ const SalaryPanji = async (bulan: number, tahun: number, parsePegawai: any) => {
   });
 
   let gajiData: any = [];
+  let gajiPegawai: any = [];
 
   for (const item of (reportData as ReportData[]) || []) {
     const masterGaji = await prisma.komponen_gaji.findMany({
@@ -297,7 +299,7 @@ const SalaryPanji = async (bulan: number, tahun: number, parsePegawai: any) => {
         department_id: 1,
       },
       orderBy: {
-        urut_tampil: "asc",
+        urut: "asc",
       },
     });
 
@@ -344,7 +346,6 @@ const SalaryPanji = async (bulan: number, tahun: number, parsePegawai: any) => {
       },
     });
     const nominalAdjustmentPlus = adjustment_plus._sum.nominal || 0;
-
     // ADJUSTMENT PLUS // i.id = 17
     const adjustment_minus = await prisma.adjustment.aggregate({
       _sum: {
@@ -364,42 +365,65 @@ const SalaryPanji = async (bulan: number, tahun: number, parsePegawai: any) => {
 
       // BPJS KES
       if (i.id === 26) {
-        bpjs_kes += i.master_gaji_pegawai[0].nominal;
+        bpjs_kes +=
+          i.master_gaji_pegawai.length > 0
+            ? i.master_gaji_pegawai[0].nominal
+            : 0;
       }
 
       // BPJS TK
       if (i.id === 27) {
-        bpjs_tk += i.master_gaji_pegawai[0].nominal;
+        bpjs_tk +=
+          i.master_gaji_pegawai.length > 0
+            ? i.master_gaji_pegawai[0].nominal
+            : 0;
       }
 
       // basic only
       if (i.id === 1) {
-        basic_salary += i.master_gaji_pegawai[0].nominal;
+        basic_salary +=
+          i.master_gaji_pegawai.length > 0
+            ? i.master_gaji_pegawai[0].nominal
+            : 0;
       }
 
       // komponen fix only
       if (i.id === 2) {
-        komponen_fix += i.master_gaji_pegawai[0].nominal;
+        komponen_fix +=
+          i.master_gaji_pegawai.length > 0
+            ? i.master_gaji_pegawai[0].nominal
+            : 0;
       }
 
       // basic fix
       if (i.id === 1 || i.id === 2) {
-        basic_fix += i.master_gaji_pegawai[0].nominal;
+        basic_fix +=
+          i.master_gaji_pegawai.length > 0
+            ? i.master_gaji_pegawai[0].nominal
+            : 0;
       }
 
       // FIX DLL
       if (i.metode === "tetap" && i.is_master) {
-        nominal = i.master_gaji_pegawai[0].nominal;
+        nominal =
+          i.master_gaji_pegawai.length > 0
+            ? i.master_gaji_pegawai[0].nominal
+            : 0;
       }
 
       // MEAL / TRANSPORT / SHIFT
       if (i.id === 3 || i.id === 4 || i.id === 5) {
         if (item.type_gaji === "nonfixed") {
           nominal =
-            i.master_gaji_pegawai[0].nominal *
-            (item.attend_count + item.attend_weekend_count);
+            i.master_gaji_pegawai.length > 0
+              ? i.master_gaji_pegawai[0].nominal *
+                (item.attend_count + item.attend_weekend_count)
+              : 0;
         } else {
-          nominal = i.master_gaji_pegawai[0].nominal;
+          nominal =
+            i.master_gaji_pegawai.length > 0
+              ? i.master_gaji_pegawai[0].nominal
+              : 0;
         }
       }
 
@@ -414,7 +438,10 @@ const SalaryPanji = async (bulan: number, tahun: number, parsePegawai: any) => {
           item.sakit_count === 0 &&
           item.notattend_count === 0
         ) {
-          nominal = i.master_gaji_pegawai[0].nominal;
+          nominal =
+            i.master_gaji_pegawai.length > 0
+              ? i.master_gaji_pegawai[0].nominal
+              : 0;
         }
       }
 
@@ -519,12 +546,15 @@ const SalaryPanji = async (bulan: number, tahun: number, parsePegawai: any) => {
           komponen_id: i.id,
           komponen_name: i.komponen,
           nominal: nominal,
+          urut_tampil: i.urut_tampil,
         });
       }
     });
 
     const gajiBruto = gajiData
-      .filter((i: any) => i.tipe === "penambahan")
+      .filter(
+        (i: any) => i.tipe === "penambahan" && i.pegawai_id === item.pegawai_id
+      )
       .reduce((acc: any, item: any) => acc + item.nominal, 0);
 
     // new pph21
@@ -537,9 +567,26 @@ const SalaryPanji = async (bulan: number, tahun: number, parsePegawai: any) => {
         return i;
       });
     }
+
+    // pengurangan gaji
+    const gajiPengurangan = gajiData
+      .filter(
+        (i: any) => i.tipe === "pengurangan" && i.pegawai_id === item.pegawai_id
+      )
+      .reduce((acc: any, item: any) => acc + item.nominal, 0);
+
+    // NEW ARRAY
+    gajiPegawai.push({
+      pegawai_id: item.pegawai_id,
+      bulan: bulan,
+      tahun: tahun,
+      nominal: gajiBruto - gajiPengurangan,
+      pph: nominalPph21,
+      gaji: gajiData,
+    });
   }
 
-  return gajiData;
+  return gajiPegawai;
 };
 
 function getDatesInMonth(year: number, month: number) {

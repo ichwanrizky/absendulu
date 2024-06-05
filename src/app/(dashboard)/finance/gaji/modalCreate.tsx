@@ -35,15 +35,9 @@ const ModalCreate = (props: Props) => {
 
   const [listPegawai, setListPegawai] = useState([] as Pegawai[]);
   const [department, setDepartment] = useState("");
-  const [pegawai, setPegawai] = useState({
-    value: "",
-    label: "",
-  });
+  const [pegawai, setPegawai] = useState([] as any);
   const [bulan, setBulan] = useState("");
   const [tahun, setTahun] = useState("");
-  const [jenis, setJenis] = useState("");
-  const [nominal, setNominal] = useState(0);
-  const [keterangan, setKeterangan] = useState("");
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -52,14 +46,12 @@ const ModalCreate = (props: Props) => {
       try {
         const body = new FormData();
         body.append("department", department);
-        body.append("pegawai", pegawai.value);
+        body.append("pegawai", JSON.stringify(pegawai));
         body.append("tahun", tahun);
         body.append("bulan", bulan);
-        body.append("jenis", jenis);
-        body.append("nominal", nominal.toString());
-        body.append("keterangan", keterangan);
+
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/web/adjustment?menu_url=${menu_url}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/gaji?menu_url=${menu_url}`,
           {
             method: "POST",
             headers: {
@@ -82,12 +74,12 @@ const ModalCreate = (props: Props) => {
     }
   };
 
-  const getPegawai = async (department: number) => {
-    setPegawai({
-      value: "",
-      label: "",
-    });
-    if (!department) {
+  const getPegawaiGaji = async (
+    department: string,
+    bulan: string,
+    tahun: string
+  ) => {
+    if (!department || !bulan || !tahun) {
       setListPegawai([]);
       return;
     }
@@ -95,8 +87,10 @@ const ModalCreate = (props: Props) => {
     try {
       const body = new FormData();
       body.append("department", department.toString());
+      body.append("bulan", bulan);
+      body.append("tahun", tahun);
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listkaryawan`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listkaryawan_gaji`,
         {
           method: "POST",
           headers: {
@@ -118,6 +112,20 @@ const ModalCreate = (props: Props) => {
     }
   };
 
+  const selectAll = () => {
+    if (pegawai?.length > 0) {
+      setPegawai([]);
+      return;
+    }
+
+    setPegawai(
+      listPegawai?.map((item: Pegawai) => ({
+        label: item.nama?.toUpperCase(),
+        value: item.id,
+      }))
+    );
+  };
+
   return (
     isModalOpen && (
       <>
@@ -135,9 +143,7 @@ const ModalCreate = (props: Props) => {
             <form onSubmit={handleSubmit}>
               <div className="modal-content">
                 <div className="modal-header">
-                  <h1 className="modal-title fs-5 fw-semibold">
-                    ADD ADJUSTMENT
-                  </h1>
+                  <h1 className="modal-title fs-5 fw-semibold">ADD GAJI</h1>
                   <button
                     type="button"
                     className="btn-close"
@@ -153,7 +159,7 @@ const ModalCreate = (props: Props) => {
                       value={department}
                       onChange={(e) => {
                         setDepartment(e.target.value);
-                        getPegawai(Number(e.target.value));
+                        getPegawaiGaji(e.target.value, bulan, tahun);
                       }}
                       required
                     >
@@ -169,27 +175,14 @@ const ModalCreate = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">PEGAWAI</label>
-                    <Select
-                      value={pegawai}
-                      options={listPegawai?.map(
-                        (item: Pegawai, index: number) => ({
-                          value: item.id,
-                          label: item.nama?.toUpperCase(),
-                        })
-                      )}
-                      onChange={(e: any) => setPegawai(e)}
-                      isClearable
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group mb-3">
                     <label className="mb-1 fw-semibold small">BULAN</label>
                     <select
                       className="form-select"
                       value={bulan}
-                      onChange={(e) => setBulan(e.target.value)}
+                      onChange={(e) => {
+                        setBulan(e.target.value);
+                        getPegawaiGaji(department, e.target.value, tahun);
+                      }}
                       required
                     >
                       <option value="">--PILIH--</option>
@@ -223,7 +216,10 @@ const ModalCreate = (props: Props) => {
                       className="form-select"
                       required
                       value={tahun}
-                      onChange={(e) => setTahun(e.target.value)}
+                      onChange={(e) => {
+                        setTahun(e.target.value);
+                        getPegawaiGaji(department, bulan, e.target.value);
+                      }}
                     >
                       <option value="">--PILIH--</option>
                       {Array.from({ length: 5 }, (_, i) => (
@@ -235,48 +231,26 @@ const ModalCreate = (props: Props) => {
                   </div>
 
                   <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">JENIS</label>
-                    <select
-                      className="form-select"
+                    <label className="mb-1 fw-semibold small">PEGAWAI</label>
+                    <Select
+                      value={pegawai}
+                      options={listPegawai?.map(
+                        (item: Pegawai, index: number) => ({
+                          value: item.id,
+                          label: item.nama?.toUpperCase(),
+                        })
+                      )}
+                      onChange={(e: any) => setPegawai(e)}
+                      isClearable
+                      isMulti
                       required
-                      value={jenis}
-                      onChange={(e) => setJenis(e.target.value)}
-                    >
-                      <option value="">--PILIH--</option>
-                      <option value="penambahan">PENAMBAHAN / PROJECT</option>
-                      <option value="pengurangan">PENGURANGAN</option>
-                    </select>
-                  </div>
-
-                  <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">NOMINAL</label>
-                    <NumericFormat
-                      className="form-control"
-                      defaultValue={nominal}
-                      thousandSeparator=","
-                      displayType="input"
-                      onValueChange={(values: any) => {
-                        setNominal(values.floatValue);
-                      }}
-                      onFocus={(e) =>
-                        e.target.value === "0" && (e.target.value = "")
-                      }
-                      onBlur={(e) =>
-                        e.target.value === "" && (e.target.value = "0")
-                      }
-                      onWheel={(e: any) => e.target.blur()}
-                    />
-                  </div>
-
-                  <div className="form-group mb-3">
-                    <label className="mb-1 fw-semibold small">KETERANGAN</label>
-                    <textarea
-                      className="form-control"
-                      required
-                      value={keterangan}
-                      onChange={(e) => setKeterangan(e.target.value)}
-                      rows={3}
-                    ></textarea>
+                    />{" "}
+                    {listPegawai?.length > 0 && (
+                      <>
+                        select all{" "}
+                        <input type="checkbox" onChange={selectAll} />
+                      </>
+                    )}
                   </div>
                 </div>
 

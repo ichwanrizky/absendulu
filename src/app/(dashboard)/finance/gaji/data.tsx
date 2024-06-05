@@ -13,19 +13,22 @@ type Department = {
   radius: string;
 };
 
-type Adjustment = {
+interface Pegawai {
   id: number;
-  pegawai: {
-    id: number;
-    nama: string;
-  };
-  nominal: number;
+  nama: string;
+}
+
+interface Gaji {
+  id: number;
+  uuid: string;
   bulan: number;
   tahun: number;
-  keterangan: string;
-  jenis: string;
+  pegawai_id: number;
+  nominal: number;
+  publish: boolean;
   department_id: number;
-};
+  pegawai: Pegawai;
+}
 
 interface isLoadingProps {
   [key: number]: boolean;
@@ -44,14 +47,9 @@ const Data = ({
 
   // loading state
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
-  const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
 
   // modal state
   const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
-  const [isModalEditOpen, setIsModalEditOpen] = useState(false);
-
-  // data state
-  const [dataEdit, setDataEdit] = useState({} as Adjustment);
 
   // filter
   const [search, setSearch] = useState("");
@@ -63,37 +61,12 @@ const Data = ({
     setIsModalCreateOpen(true);
   };
 
-  const handleEdit = async (id: number) => {
-    setIsLoadingEdit((prev) => ({ ...prev, [id]: true }));
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/web/adjustment/${id}?menu_url=${menu_url}`,
-        {
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-      const res = await response.json();
-
-      if (!response.ok) {
-        alert(res.message);
-      } else {
-        setDataEdit(res.data);
-        setIsModalEditOpen(true);
-      }
-    } catch (error) {
-      alert("something went wrong");
-    }
-    setIsLoadingEdit((prev) => ({ ...prev, [id]: false }));
-  };
-
   const handleDelete = async (id: number) => {
     if (confirm("Delete this data?")) {
       setIsLoadingDelete((prev) => ({ ...prev, [id]: true }));
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/web/adjustment/${id}?menu_url=${menu_url}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/gaji/${id}?menu_url=${menu_url}`,
           {
             method: "DELETE",
             headers: {
@@ -106,7 +79,7 @@ const Data = ({
         alert(res.message);
         if (response.ok) {
           mutate(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/web/adjustment?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/gaji?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
           );
         }
       } catch (error) {
@@ -118,9 +91,8 @@ const Data = ({
 
   const closeModal = () => {
     setIsModalCreateOpen(false);
-    setIsModalEditOpen(false);
     mutate(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/web/adjustment?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
+      `${process.env.NEXT_PUBLIC_API_URL}/api/web/gaji?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
     );
   };
 
@@ -137,8 +109,8 @@ const Data = ({
 
   const { data, error, isLoading } = useSWR(
     search === ""
-      ? `${process.env.NEXT_PUBLIC_API_URL}/api/web/adjustment?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
-      : `${process.env.NEXT_PUBLIC_API_URL}/api/web/adjustment?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}&search=${search}`,
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/web/gaji?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
+      : `${process.env.NEXT_PUBLIC_API_URL}/api/web/gaji?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}&search=${search}`,
     fetcher
   );
 
@@ -198,7 +170,7 @@ const Data = ({
     );
   }
 
-  const adjustments = data?.data;
+  const salarys = data?.data;
   const actions = data?.actions;
 
   return (
@@ -294,17 +266,12 @@ const Data = ({
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
                   NO
                 </th>
-                <th className="fw-semibold fs-6" style={{ width: "20%" }}>
-                  NAMA
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "10%" }}>
-                  JENIS
-                </th>
-                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
-                  KETERANGAN
-                </th>
+                <th className="fw-semibold fs-6">NAMA</th>
                 <th className="fw-semibold fs-6" style={{ width: "15%" }}>
                   NOMINAL
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "15%" }}>
+                  SLIP
                 </th>
                 <th className="fw-semibold fs-6" style={{ width: "10%" }}>
                   ACTION
@@ -312,58 +279,37 @@ const Data = ({
               </tr>
             </thead>
             <tbody>
-              {adjustments?.length === 0 ? (
+              {salarys?.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={5}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
               ) : (
-                adjustments?.map((item: Adjustment, index: number) => (
+                salarys?.map((item: Gaji, index: number) => (
                   <tr key={index}>
                     <td align="center">{index + 1}</td>
-                    <td align="left">{item.pegawai.nama?.toUpperCase()}</td>
-                    <td align="left">{item.jenis?.toUpperCase()}</td>
-                    <td align="left">{item.keterangan?.toUpperCase()}</td>
+                    <td align="left">{item.pegawai?.nama?.toUpperCase()}</td>
                     <td align="right">{numberWithCommas(item.nominal)}</td>
-                    <td>
-                      <div className="d-flex gap-2">
-                        {actions?.includes("update") &&
-                          (isLoadingEdit[item.id] ? (
-                            <button className="btn btn-success btn-sm" disabled>
-                              <span
-                                className="spinner-border spinner-border-sm"
-                                role="status"
-                                aria-hidden="true"
-                              />
-                            </button>
-                          ) : (
-                            <button
-                              className="btn btn-success btn-sm"
-                              onClick={() => handleEdit(item.id)}
-                            >
-                              EDIT
-                            </button>
-                          ))}
-
-                        {actions?.includes("delete") &&
-                          (isLoadingDelete[item.id] ? (
-                            <button className="btn btn-danger btn-sm" disabled>
-                              <span
-                                className="spinner-border spinner-border-sm"
-                                role="status"
-                                aria-hidden="true"
-                              />
-                            </button>
-                          ) : (
-                            <button
-                              className="btn btn-danger btn-sm"
-                              onClick={() => handleDelete(item.id)}
-                            >
-                              DELETE
-                            </button>
-                          ))}
-                      </div>
+                    <td align="left"></td>
+                    <td align="center">
+                      {actions?.includes("delete") &&
+                        (isLoadingDelete[item.id] ? (
+                          <button className="btn btn-danger btn-sm" disabled>
+                            <span
+                              className="spinner-border spinner-border-sm"
+                              role="status"
+                              aria-hidden="true"
+                            />
+                          </button>
+                        ) : (
+                          <button
+                            className="btn btn-danger btn-sm"
+                            onClick={() => handleDelete(item.id)}
+                          >
+                            DELETE
+                          </button>
+                        ))}
                     </td>
                   </tr>
                 ))
