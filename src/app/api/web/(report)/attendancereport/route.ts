@@ -144,7 +144,7 @@ export async function GET(req: Request) {
       AND d.tanggal = i.tanggal 
       JOIN department dp ON p.department_id = dp.id
       JOIN sub_department sd ON p.sub_department_id = sd.id
-      LEFT JOIN tanggal_merah tm ON dp.id = tm.department_id
+      LEFT JOIN tanggal_merah tm ON dp.id = tm.department_id AND tm.bulan = ${bulan} AND tm.tahun = ${tahun}
       LEFT JOIN tanggal_merah_list tml ON tm.id = tml.tanggal_merah_id AND tml.tanggal = d.tanggal
       LEFT JOIN (
         SELECT
@@ -164,6 +164,14 @@ export async function GET(req: Request) {
       p.nama,
       d.tanggal
   `;
+
+    // console.log(
+    //   dataQuery
+    //     .replace(/'/g, '"')
+    //     .replace(/\n/g, "")
+    //     .replace(/\s+/g, " ")
+    //     .trim()
+    // );
 
     const data = (await prisma.$queryRawUnsafe(dataQuery)) as any;
 
