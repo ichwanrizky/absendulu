@@ -1,4 +1,5 @@
 import prisma from "@/libs/db";
+import newPph from "./NewPph";
 
 type ReportData = {
   pegawai_id: number;
@@ -27,7 +28,7 @@ type ReportData = {
   overtime_total: number;
 };
 
-const SalaryPanji = async (bulan: number, tahun: number) => {
+const SalaryPanji = async (bulan: number, tahun: number, parsePegawai: any) => {
   const listDates = getDatesInMonth(Number(tahun), Number(bulan) - 1);
 
   const listTanggalMerah = await prisma.tanggal_merah_list.findMany({
@@ -57,6 +58,8 @@ const SalaryPanji = async (bulan: number, tahun: number) => {
   const tanggalKerjaQuery = listDates
     .map((date) => `SELECT '${date}' as tanggal`)
     .join(" UNION ");
+
+  const pegawaiValues = parsePegawai.map((item: any) => item.value).join(",");
 
   const dataQuery = `
     SELECT
@@ -103,7 +106,7 @@ const SalaryPanji = async (bulan: number, tahun: number) => {
             overtime
     ) ot ON ot.pegawai_id = p.id AND ot.tanggal = d.tanggal AND ot.rn = 1
     WHERE
-      p.id IN (492)
+      p.id IN (${pegawaiValues})
     ORDER BY
       p.nama,
       d.tanggal
@@ -305,6 +308,57 @@ const SalaryPanji = async (bulan: number, tahun: number) => {
     let bpjs_kes: number = 0;
     let bpjs_tk: number = 0;
 
+    // FOR NEW PPH
+    let ter: string = "";
+    switch (item.status_nikah) {
+      case "TK":
+      case "K0":
+      case "TK/0":
+      case "TK/1":
+        ter = "TER_A";
+        break;
+      case "K1":
+      case "K2":
+      case "TK/2":
+      case "TK/3":
+        ter = "TER_B";
+        break;
+      case "K3":
+        ter = "TER_C";
+        break;
+      default:
+        ter = ""; // or handle the default case as needed
+        break;
+    }
+
+    // ADJUSTMENT PLUS // id.id = 8
+    const adjustment_plus = await prisma.adjustment.aggregate({
+      _sum: {
+        nominal: true,
+      },
+      where: {
+        bulan: bulan,
+        tahun: tahun,
+        pegawai_id: item.pegawai_id,
+        jenis: "penambahan",
+      },
+    });
+    const nominalAdjustmentPlus = adjustment_plus._sum.nominal || 0;
+
+    // ADJUSTMENT PLUS // i.id = 17
+    const adjustment_minus = await prisma.adjustment.aggregate({
+      _sum: {
+        nominal: true,
+      },
+      where: {
+        bulan: bulan,
+        tahun: tahun,
+        pegawai_id: item.pegawai_id,
+        jenis: "pengurangan",
+      },
+    });
+    const nominalAdjustmentMinus = adjustment_minus._sum.nominal || 0;
+
     masterGaji.map((i: any) => {
       let nominal: number = 0;
 
@@ -333,18 +387,23 @@ const SalaryPanji = async (bulan: number, tahun: number) => {
         basic_fix += i.master_gaji_pegawai[0].nominal;
       }
 
+      // FIX DLL
       if (i.metode === "tetap" && i.is_master) {
         nominal = i.master_gaji_pegawai[0].nominal;
       }
 
       // MEAL / TRANSPORT / SHIFT
       if (i.id === 3 || i.id === 4 || i.id === 5) {
-        nominal =
-          i.master_gaji_pegawai[0].nominal *
-          (item.attend_count + item.attend_weekend_count);
+        if (item.type_gaji === "nonfixed") {
+          nominal =
+            i.master_gaji_pegawai[0].nominal *
+            (item.attend_count + item.attend_weekend_count);
+        } else {
+          nominal = i.master_gaji_pegawai[0].nominal;
+        }
       }
 
-      // ATTENDANCE
+      // ATTENDANCE ALLOWANCE
       if (i.id === 28) {
         if (
           item.late_count === 0 &&
@@ -367,14 +426,14 @@ const SalaryPanji = async (bulan: number, tahun: number) => {
       }
 
       // ABSENT
-      if (i.id === 20 || i.id === 9) {
+      if ((i.id === 20 || i.id === 9) && item.type_gaji === "nonfixed") {
         if (i.tipe === "informasi") nominal = item.notattend_count;
         else if (i.tipe === "pengurangan")
           nominal = Math.round((basic_fix / 22) * item.notattend_count);
       }
 
       // UL
-      if (i.id === 21 || i.id === 10) {
+      if ((i.id === 21 || i.id === 10) && item.type_gaji === "nonfixed") {
         if (i.tipe === "informasi")
           nominal = item.izin_count + item.izin_s_count;
         else if (i.tipe === "pengurangan")
@@ -395,7 +454,7 @@ const SalaryPanji = async (bulan: number, tahun: number) => {
       }
 
       // LATE
-      if (i.id === 24 || i.id === 29) {
+      if ((i.id === 24 || i.id === 29) && item.type_gaji === "nonfixed") {
         if (i.tipe === "informasi") nominal = item.late_count;
         else if (i.tipe === "pengurangan")
           nominal = Math.round(
@@ -405,7 +464,7 @@ const SalaryPanji = async (bulan: number, tahun: number) => {
       }
 
       // GATEPASS
-      if (i.id === 23 || i.id === 12) {
+      if ((i.id === 23 || i.id === 12) && item.type_gaji === "nonfixed") {
         if (i.tipe === "informasi")
           nominal = item.g1_count + item.g2_count + item.g3_count;
         else if (i.tipe === "pengurangan")
@@ -419,10 +478,15 @@ const SalaryPanji = async (bulan: number, tahun: number) => {
 
       // BPJS KES & JP (1%)
       if (i.id === 16 || i.id === 15) {
-        if (bpjs_kes > 8000000) nominal = Math.round(8000000 * 0.01);
-        else nominal = Math.round(bpjs_kes * 0.01);
-
         // BPJSKES PAK EDI
+
+        if (item.pegawai_id === 70) {
+          if (bpjs_kes > 8000000) nominal = Math.round(8000000 * 0.02);
+          else nominal = Math.round(bpjs_kes * 0.02);
+        } else {
+          if (bpjs_kes > 8000000) nominal = Math.round(8000000 * 0.01);
+          else nominal = Math.round(bpjs_kes * 0.01);
+        }
       }
 
       // JHT (2%)
@@ -435,7 +499,17 @@ const SalaryPanji = async (bulan: number, tahun: number) => {
         nominal = item.attend_count + item.attend_weekend_count;
       }
 
-      if (i.id !== 26 && i.id !== 27 && i.id !== 8 && i.id !== 17) {
+      // ADJUSTMENT PLUS
+      if (i.id === 8) {
+        nominal = nominalAdjustmentPlus;
+      }
+
+      // ADJUSTMENT MINUS
+      if (i.id === 17) {
+        nominal = nominalAdjustmentMinus;
+      }
+
+      if (i.id !== 26 && i.id !== 27) {
         gajiData.push({
           pegawai_id: item.pegawai_id,
           nama: item.nama,
@@ -449,56 +523,22 @@ const SalaryPanji = async (bulan: number, tahun: number) => {
       }
     });
 
-    // ADJUSTMENT PLUS // id.id = 8
-    const adjustment_plus = await prisma.adjustment.aggregate({
-      _sum: {
-        nominal: true,
-      },
-      where: {
-        bulan: bulan,
-        tahun: tahun,
-        pegawai_id: item.pegawai_id,
-        jenis: "penambahan",
-      },
-    });
-    const nominalAdjustmentPlus = adjustment_plus._sum.nominal || 0;
-    gajiData.push({
-      pegawai_id: item.pegawai_id,
-      nama: item.nama,
-      status_nikah: item.status_nikah,
-      department_id: item.department_id,
-      tipe: "penambahan",
-      komponen_id: 8,
-      komponen_name: "ADJUSTMENT PLUS",
-      nominal: nominalAdjustmentPlus,
-    });
-    // ADJUSTMENT PLUS // i.id = 17
-    const adjustment_minus = await prisma.adjustment.aggregate({
-      _sum: {
-        nominal: true,
-      },
-      where: {
-        bulan: bulan,
-        tahun: tahun,
-        pegawai_id: item.pegawai_id,
-        jenis: "pengurangan",
-      },
-    });
+    const gajiBruto = gajiData
+      .filter((i: any) => i.tipe === "penambahan")
+      .reduce((acc: any, item: any) => acc + item.nominal, 0);
 
-    const nominalAdjustmentMinus = adjustment_minus._sum.nominal || 0;
-    gajiData.push({
-      pegawai_id: item.pegawai_id,
-      nama: item.nama,
-      status_nikah: item.status_nikah,
-      department_id: item.department_id,
-      tipe: "pengurangan",
-      komponen_id: 17,
-      komponen_name: "ADJUSTMENT MINUS",
-      nominal: nominalAdjustmentMinus,
-    });
+    // new pph21
+    const nominalPph21 = Math.round(newPph(ter, gajiBruto));
+    if (nominalPph21 > 0) {
+      gajiData = gajiData.map((i: any) => {
+        if (i.komponen_id === 13) {
+          return { ...i, nominal: nominalPph21 };
+        }
+        return i;
+      });
+    }
   }
 
-  console.log(gajiData);
   return gajiData;
 };
 
