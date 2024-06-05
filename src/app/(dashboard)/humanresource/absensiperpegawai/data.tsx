@@ -31,6 +31,7 @@ interface Absensi {
   jumlah_hari: number | null;
   jumlah_jam: string | null;
   tanggal_ot: string | null;
+  jam_ot: string | null;
   total_ot: number | null;
 }
 
@@ -116,6 +117,7 @@ const Data = ({
 
   const attendance = data?.data;
   let latePegawai: number = 0;
+  let jamOtPegawai: number = 0;
 
   return (
     <>
@@ -235,12 +237,18 @@ const Data = ({
                 <th className="fw-semibold fs-6" style={{ width: "5%" }}>
                   IZIN
                 </th>
+                <th className="fw-semibold fs-6" style={{ width: "5%" }}>
+                  OT
+                </th>
+                <th className="fw-semibold fs-6" style={{ width: "5%" }}>
+                  TOTAL OT
+                </th>
               </tr>
             </thead>
             <tbody>
               {attendance?.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={8}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
@@ -309,6 +317,14 @@ const Data = ({
                         </>
                       )}
                     </td>
+                    <td align="center">
+                      {item.jam_ot &&
+                        (() => {
+                          jamOtPegawai += Number(item.jam_ot);
+                          return `${item.jam_ot} Jam`;
+                        })()}
+                    </td>
+                    <td align="center">{item.total_ot}</td>
                   </tr>
                 ))
               )}
@@ -316,7 +332,9 @@ const Data = ({
             <tfoot>
               <tr>
                 <td colSpan={6}></td>
-                <td align="center">{latePegawai}</td>
+                <td align="center">{latePegawai + " Menit"}</td>
+                <td></td>
+                <td align="center">{jamOtPegawai + " Jam"}</td>
                 <td></td>
               </tr>
             </tfoot>

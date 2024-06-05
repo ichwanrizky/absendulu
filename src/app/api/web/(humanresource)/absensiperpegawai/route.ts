@@ -76,8 +76,6 @@ export async function GET(req: Request) {
       );
     }
 
-    // search
-    const search = searchParams.get("search");
     // filter
     const select_dept = searchParams.get("select_dept");
     const bulan = searchParams.get("bulan");
@@ -139,18 +137,3 @@ export async function GET(req: Request) {
     return handleError(error);
   }
 }
-
-const optionsDate: any = {
-  hour: "numeric",
-  minute: "numeric",
-  second: "numeric",
-  timeZone: "UTC",
-};
-
-const optionsDate2: any = {
-  weekday: "long",
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-  timeZone: "UTC",
-};

@@ -64,10 +64,6 @@ const AttendancePegawai = async (
       d.tanggal
   `;
 
-  // console.log(
-  //   dataQuery.replace(/'/g, '"').replace(/\n/g, "").replace(/\s+/g, " ").trim()
-  // );
-
   const data = (await prisma.$queryRawUnsafe(dataQuery)) as any;
 
   const newData = data?.map((item: any) => ({
@@ -93,6 +89,7 @@ const AttendancePegawai = async (
     jumlah_hari: item.jumlah_hari,
     jumlah_jam: item.jumlah_jam,
     tanggal_ot: item.tanggal_ot,
+    jam_ot: item.jam_ot,
     total_ot: item.total_ot,
   }));
 
