@@ -280,10 +280,11 @@ const SalaryPanji = async (bulan: number, tahun: number, pegawai: any) => {
     }
   });
 
-  let gajiData: any = [];
   let gajiPegawai: any = [];
 
   for (const item of (reportData as ReportData[]) || []) {
+    let gajiData: any = [];
+
     const masterGaji = await prisma.komponen_gaji.findMany({
       include: {
         master_gaji_pegawai: {
