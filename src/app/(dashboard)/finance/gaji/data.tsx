@@ -79,7 +79,9 @@ const Data = ({
         alert(res.message);
         if (response.ok) {
           mutate(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/web/gaji?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
+            search === ""
+              ? `${process.env.NEXT_PUBLIC_API_URL}/api/web/gaji?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
+              : `${process.env.NEXT_PUBLIC_API_URL}/api/web/gaji?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}&search=${search}`
           );
         }
       } catch (error) {
@@ -92,7 +94,9 @@ const Data = ({
   const closeModal = () => {
     setIsModalCreateOpen(false);
     mutate(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/web/gaji?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
+      search === ""
+        ? `${process.env.NEXT_PUBLIC_API_URL}/api/web/gaji?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/api/web/gaji?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}&search=${search}`
     );
   };
 
