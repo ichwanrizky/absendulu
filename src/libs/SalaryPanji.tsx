@@ -495,13 +495,13 @@ const SalaryPanji = async (bulan: number, tahun: number, pegawai: any) => {
       if ((i.id === 23 || i.id === 12) && item.type_gaji === "nonfixed") {
         if (i.tipe === "informasi")
           nominal = item.g1_count + item.g2_count + item.g3_count;
-        else if (i.tipe === "pengurangan")
+        else if (i.tipe === "pengurangan") {
+          const totalGatepass = item.g1_count + item.g2_count + item.g3_count;
           nominal = Math.round(
-            (basic_salary / 22 / 8) *
-              (item.g1_count + item.g2_count + item.g3_count) +
-              (komponen_fix / 22 / 8) *
-                (item.g1_count + item.g2_count + item.g3_count)
+            (basic_salary / 22 / 8 / 60) * totalGatepass +
+              (komponen_fix / 22 / 8 / 60) * totalGatepass
           );
+        }
       }
 
       // BPJS KES & JP (1%)
