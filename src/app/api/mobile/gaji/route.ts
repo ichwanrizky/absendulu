@@ -22,19 +22,63 @@ export async function GET(req: Request) {
       );
     }
 
+    const pegawai = session[1].pegawaiId;
+
+    const data = await prisma.gaji_pegawai.findMany({
+      select: {
+        tahun: true,
+        bulan: true,
+        nominal: true,
+        publish: true,
+        uuid: true,
+        pegawai: {
+          select: {
+            id: true,
+            nama: true,
+            status_nikah: true,
+            position: true,
+          },
+        },
+        department: {
+          select: {
+            nama_department: true,
+          },
+        },
+        gaji: {
+          orderBy: {
+            urut: "asc",
+          },
+        },
+      },
+      where: {
+        pegawai_id: pegawai,
+      },
+      orderBy: [
+        {
+          tahun: "desc",
+        },
+        {
+          bulan: "desc",
+        },
+      ],
+      take: 12,
+    });
+
+    const newData = data.map((item) => {
+      return {
+        bulan: monthNames(item.bulan),
+        tahun: item.tahun,
+        gaji: item.nominal,
+        slipStatus: item.publish,
+        url: `${process.env.IZIN_URL}/slipgaji/${item.uuid}`,
+      };
+    });
+
     return new NextResponse(
       JSON.stringify({
         status: true,
         message: "success",
-        data: [
-          // {
-          //   bulan: "Januari",
-          //   tahun: 2024,
-          //   gaji: 3000000,
-          //   slipStatus: false,
-          //   url: "https://example.com",
-          // },
-        ],
+        data: newData,
       }),
       {
         status: 200,
@@ -60,3 +104,22 @@ export async function GET(req: Request) {
     }
   }
 }
+
+const monthNames = (month: number) => {
+  const monthNames = [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Augustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ];
+
+  return monthNames[month - 1];
+};
