@@ -53,6 +53,7 @@ const getTanggalMerah = async (uuid: string, department: string) => {
 
 const Page = async ({ params }: any) => {
   const uuid = params.uuid;
+
   const session = await checkSession(uuid.toString());
 
   var tanggalmerah: any = [];
