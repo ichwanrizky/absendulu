@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/libs/db";
 import { checkSessionMobile } from "@/libs/checkSessionMobile";
+import { handleError } from "@/libs/handleError";
 
 export async function POST(req: Request) {
   try {
@@ -270,33 +271,7 @@ export async function POST(req: Request) {
       }
     );
   } catch (error) {
-    if (error instanceof Error) {
-      return new NextResponse(
-        JSON.stringify({
-          status: false,
-          message: error.message,
-        }),
-        {
-          status: 500,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
-
-    return new NextResponse(
-      JSON.stringify({
-        status: false,
-        message: "Internal Server Error",
-      }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    return handleError(error);
   }
 }
 

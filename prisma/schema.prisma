@@ -232,6 +232,8 @@ model absen {
   ket_masuk    String?
   ket_pulang   String?
   is_manual    Boolean   @default(false)
+
+  @@unique([pegawai_id, tanggal])
 }
 
 model pengajuan_izin {
@@ -274,6 +276,8 @@ model izin {
   pengajuan_izin    pengajuan_izin @relation(fields: [pengajuan_izin_id], references: [id])
   department_id     Int
   department        department     @relation(fields: [department_id], references: [id])
+
+  @@unique([pegawai_id, tanggal])
 }
 
 model request_session_izin {

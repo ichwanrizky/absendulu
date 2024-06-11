@@ -246,11 +246,14 @@ export async function POST(req: Request) {
 
     const formattedDate2 = new Date(jam_from);
     formattedDate2.setHours(formattedDate2.getHours() + 7);
-    formattedDate2.setSeconds(0);
+    formattedDate2.setSeconds(0); // Set seconds to zero
+    formattedDate2.setMilliseconds(0); // Also set milliseconds to zero, just to be sure
 
     const formattedDate3 = new Date(jam_to);
     formattedDate3.setHours(formattedDate3.getHours() + 7);
     formattedDate3.setSeconds(0);
+    formattedDate3.setSeconds(0); // Set seconds to zero
+    formattedDate3.setMilliseconds(0); // Also set milliseconds to zero, just to be sure
 
     if (formattedDate2 >= formattedDate3) {
       return new NextResponse(
