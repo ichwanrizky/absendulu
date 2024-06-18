@@ -104,6 +104,14 @@ export async function GET(req: Request) {
             tanggal: currentDate,
           },
         },
+        izin: {
+          select: {
+            jenis_izin: true,
+          },
+          where: {
+            tanggal: currentDate,
+          },
+        },
       },
       where: {
         is_active: true,
@@ -142,7 +150,14 @@ export async function GET(req: Request) {
       if (absenB - absenA !== 0) {
         return absenB - absenA;
       } else {
-        return a.nama.localeCompare(b.nama);
+        const izinA = a.izin.length > 0 ? 1 : 0;
+        const izinB = b.izin.length > 0 ? 1 : 0;
+
+        if (izinB - izinA !== 0) {
+          return izinB - izinA;
+        } else {
+          return a.nama.localeCompare(b.nama);
+        }
       }
     });
 
@@ -172,6 +187,7 @@ export async function GET(req: Request) {
           : "",
       late: item.absen.length === 0 ? "" : item.absen[0].late,
       early: item.absen.length === 0 ? "" : item.absen[0].early,
+      izin: item.izin.length === 0 ? "" : item.izin[0].jenis_izin,
     }));
 
     return new NextResponse(
