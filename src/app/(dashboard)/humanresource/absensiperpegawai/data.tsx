@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import useSWR from "swr";
+import { useEffect, useState } from "react";
+import useSWR, { mutate } from "swr";
 import { usePathname } from "next/navigation";
 
 type Department = {
@@ -22,6 +22,7 @@ interface Absensi {
   nama: string;
   tanggal: string;
   tanggal_libur: string | null;
+  absen_id: number;
   tanggal_absen: string | null;
   absen_masuk: string;
   absen_pulang: string;
@@ -58,6 +59,127 @@ const Data = ({
   const [tahun, setTahun] = useState(new Date().getFullYear().toString());
   const [pegawai, setPegawai] = useState(listPegawai[0]?.id.toString());
 
+  const [absenPegawai, setAbsenPegawai] = useState<any>([]);
+
+  const handleChangeAbsenMasuk = async (
+    absen_id: number,
+    tanggal: string,
+    value: string
+  ) => {
+    setAbsenPegawai(
+      absenPegawai.map((item: Absensi) => {
+        return {
+          ...item,
+          absen_masuk: item.absen_id === absen_id ? value : item.absen_masuk,
+        };
+      })
+    );
+
+    try {
+      const body = new FormData();
+      body.append("jenis", "absen_masuk");
+      body.append("absen_id", absen_id.toString());
+      body.append("absensi", value);
+      body.append("tanggal", tanggal);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/web/absensiperpegawai?menu_url=${menu_url}`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+          body: body,
+        }
+      );
+
+      const res = await response.json();
+      if (!response.ok) {
+        alert(res.message);
+      } else {
+        alert(res.message);
+      }
+    } catch (error) {
+      alert("something went wrong");
+    }
+  };
+
+  const handleChangeAbsenPulang = async (
+    absen_id: number,
+    tanggal: string,
+    value: string
+  ) => {
+    setAbsenPegawai(
+      absenPegawai.map((item: Absensi) => {
+        return {
+          ...item,
+          absen_pulang: item.absen_id === absen_id ? value : item.absen_pulang,
+        };
+      })
+    );
+
+    try {
+      const body = new FormData();
+      body.append("jenis", "absen_pulang");
+      body.append("absen_id", absen_id.toString());
+      body.append("absensi", value);
+      body.append("tanggal", tanggal);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/web/absensiperpegawai?menu_url=${menu_url}`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+          body: body,
+        }
+      );
+
+      const res = await response.json();
+      if (!response.ok) {
+        alert(res.message);
+      } else {
+        alert(res.message);
+      }
+    } catch (error) {
+      alert("something went wrong");
+    }
+  };
+
+  const handleGenAbsen = async (pegawai_id: number, tanggal: string) => {
+    if (confirm("Generate absensi ?")) {
+      try {
+        const body = new FormData();
+        body.append("pegawai_id", pegawai_id.toString());
+        body.append("tanggal", tanggal);
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/absensiperpegawai/generate?menu_url=${menu_url}`,
+          {
+            method: "POST",
+            headers: {
+              authorization: `Bearer ${accessToken}`,
+            },
+            body: body,
+          }
+        );
+
+        const res = await response.json();
+        if (!response.ok) {
+          alert(res.message);
+        } else {
+          alert(res.message);
+          mutate(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/web/absensiperpegawai?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}&pegawai=${pegawai}`
+          );
+        }
+      } catch (error) {
+        alert("something went wrong");
+      }
+    }
+  };
+
   const fetcher = (url: RequestInfo) => {
     return fetch(url, {
       headers: {
@@ -73,6 +195,11 @@ const Data = ({
     `${process.env.NEXT_PUBLIC_API_URL}/api/web/absensiperpegawai?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}&pegawai=${pegawai}`,
     fetcher
   );
+  useEffect(() => {
+    if (data?.data) {
+      setAbsenPegawai(data?.data);
+    }
+  }, [data]);
 
   if (isLoading) {
     return (
@@ -115,7 +242,8 @@ const Data = ({
     );
   }
 
-  const attendance = data?.data;
+  const actions = data?.actions;
+
   let latePegawai: number = 0;
   let jamOtPegawai: number = 0;
 
@@ -246,14 +374,14 @@ const Data = ({
               </tr>
             </thead>
             <tbody>
-              {attendance?.length === 0 ? (
+              {absenPegawai?.length === 0 ? (
                 <tr>
                   <td colSpan={8}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
               ) : (
-                attendance?.map((item: Absensi, index: number) => (
+                absenPegawai?.map((item: Absensi, index: number) => (
                   <tr
                     key={index}
                     style={
@@ -274,6 +402,25 @@ const Data = ({
                       }}
                     >
                       {item.tanggal}
+                      {actions?.includes("insert") &&
+                      item.tanggal_libur === null &&
+                      item.tanggal_absen === null &&
+                      item.tanggal_izin === null ? (
+                        <>
+                          <br />
+                          <button
+                            className="btn btn-sm btn-primary"
+                            type="button"
+                            onClick={() =>
+                              handleGenAbsen(item.id, item.tanggal)
+                            }
+                          >
+                            Gen Absen
+                          </button>
+                        </>
+                      ) : (
+                        ""
+                      )}
                     </td>
                     <td
                       align="center"
@@ -284,8 +431,41 @@ const Data = ({
                     >
                       {getDayInIndonesian(item.tanggal)}
                     </td>
-                    <td align="center">{item.absen_masuk}</td>
-                    <td align="center">{item.absen_pulang}</td>
+                    <td align="center">
+                      {actions?.includes("update")
+                        ? item.absen_masuk && (
+                            <input
+                              type="time"
+                              step="1"
+                              value={item.absen_masuk}
+                              onChange={(e) =>
+                                handleChangeAbsenMasuk(
+                                  item.absen_id,
+                                  item.tanggal,
+                                  e.target.value
+                                )
+                              }
+                            />
+                          )
+                        : item.absen_masuk}
+                    </td>
+                    <td align="center">
+                      {actions?.includes("update")
+                        ? item.absen_pulang && (
+                            <input
+                              type="time"
+                              value={item.absen_pulang}
+                              onChange={(e) =>
+                                handleChangeAbsenPulang(
+                                  item.absen_id,
+                                  item.tanggal,
+                                  e.target.value
+                                )
+                              }
+                            />
+                          )
+                        : item.absen_pulang}
+                    </td>
                     <td align="center">
                       {item.tanggal_libur === null &&
                         item.tanggal_absen !== null &&

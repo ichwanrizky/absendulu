@@ -24,6 +24,7 @@ const AttendancePegawai = async (
       p.type_gaji,
       d.tanggal,
       tml.tanggal as tanggal_libur,
+      a.id AS absen_id,
       a.tanggal AS tanggal_absen,
       a.absen_masuk,
       a.absen_pulang,
@@ -72,6 +73,7 @@ const AttendancePegawai = async (
     tanggal: item.tanggal,
     hari: new Date(item?.tanggal as Date).getDay(),
     tanggal_libur: item.tanggal_libur,
+    absen_id: item.absen_id,
     tanggal_absen: item.tanggal_absen,
     absen_masuk: item.absen_masuk
       ? new Date(item?.absen_masuk as Date)

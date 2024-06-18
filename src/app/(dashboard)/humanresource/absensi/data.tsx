@@ -15,6 +15,7 @@ type Absensi = {
   absenPulang: string;
   late: number;
   early: number;
+  izin: string;
 };
 
 type Department = {
@@ -201,12 +202,15 @@ const Data = ({
                 <th className="fw-semibold fs-6" style={{ width: "1%" }}>
                   TERLAMBAT
                 </th>
+                <th className="fw-semibold fs-6" style={{ width: "1%" }}>
+                  IZIN
+                </th>
               </tr>
             </thead>
             <tbody>
               {attendance?.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={7}>
                     <div className="text-center">Tidak ada data</div>
                   </td>
                 </tr>
@@ -214,7 +218,13 @@ const Data = ({
                 attendance?.map((item: Absensi, index: number) => (
                   <tr
                     key={index}
-                    style={item.id ? {} : { backgroundColor: "yellow" }}
+                    style={
+                      item.id
+                        ? {}
+                        : item.izin
+                        ? {}
+                        : { backgroundColor: "yellow" }
+                    }
                   >
                     <td align="center">{index + 1}</td>
                     <td align="left">{item.nama}</td>
@@ -222,6 +232,7 @@ const Data = ({
                     <td align="center">{item.absenMasuk}</td>
                     <td align="center">{item.absenPulang}</td>
                     <td align="center">{item.late}</td>
+                    <td align="center">{jenisPengajuan(item.izin)}</td>
                   </tr>
                 ))
               )}
@@ -232,4 +243,36 @@ const Data = ({
     </>
   );
 };
+
+const jenisPengajuan = (jenis: string) => {
+  switch (jenis) {
+    case "C":
+      return "Cuti";
+
+    case "CS":
+      return "Cuti Setengah Hari";
+
+    case "I":
+      return "Izin";
+
+    case "IS":
+      return "Izin Setengah Hari";
+
+    case "S":
+      return "Sakit";
+
+    case "G1":
+      return "Gatepass";
+
+    case "G2":
+      return "Datang Terlambat";
+
+    case "G3":
+      return "Pulang Awal";
+
+    case "P/M":
+      return "Lupa Absen";
+  }
+};
+
 export default Data;
