@@ -232,6 +232,8 @@ export async function POST(req: Request) {
       update = await prisma.absen.update({
         data: {
           absen_masuk: jam_absen,
+          ket_masuk: "Edit Absen",
+          is_manual: true,
         },
         where: {
           id: Number(absen_id),
@@ -243,6 +245,8 @@ export async function POST(req: Request) {
       update = await prisma.absen.update({
         data: {
           absen_pulang: jam_absen,
+          ket_pulang: "Edit Absen",
+          is_manual: true,
         },
         where: {
           id: Number(absen_id),
