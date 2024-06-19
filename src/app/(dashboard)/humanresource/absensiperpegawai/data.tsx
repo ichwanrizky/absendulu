@@ -17,7 +17,7 @@ type Pegawai = {
   nama: string;
 };
 
-interface Absensi {
+type Absensi = {
   id: number;
   nama: string;
   tanggal: string;
@@ -34,6 +34,10 @@ interface Absensi {
   tanggal_ot: string | null;
   jam_ot: string | null;
   total_ot: number | null;
+};
+
+interface isLoadingProps {
+  [key: number]: boolean;
 }
 
 const Data = ({
@@ -53,10 +57,17 @@ const Data = ({
   currentDate.setHours(0, 0, 0, 0);
   currentDate.setHours(currentDate.getHours() + 7);
 
+  // loading state
+  const [isLoadingEdit, setIsLoadingEdit] = useState<isLoadingProps>({});
+
   // filter
   const [selectDept, setSelectDept] = useState(departments[0].id.toString());
   const [bulan, setBulan] = useState((new Date().getMonth() + 1).toString());
   const [tahun, setTahun] = useState(new Date().getFullYear().toString());
+  const [listPegawaiAbsensi, setListPegawaiAbsensi] = useState(
+    listPegawai as Pegawai[]
+  );
+  console.log(listPegawaiAbsensi);
   const [pegawai, setPegawai] = useState(listPegawai[0]?.id.toString());
 
   const [absenPegawai, setAbsenPegawai] = useState<any>([]);
@@ -180,6 +191,40 @@ const Data = ({
     }
   };
 
+  const handleChangeDept = async (id: number) => {
+    try {
+      const body = new FormData();
+      body.append("department", id.toString());
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/listkaryawan_absen`,
+        {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+          method: "POST",
+          body: body,
+          next: {
+            revalidate: 60,
+          },
+        }
+      );
+      const res = await response.json();
+
+      if (response.ok) {
+        setListPegawaiAbsensi(res.data);
+        setPegawai(res.data[0].id.toString());
+      } else {
+        setListPegawaiAbsensi([]);
+        setPegawai("");
+      }
+    } catch (error) {
+      alert("something went wrong");
+      setListPegawaiAbsensi([]);
+      setPegawai("");
+    }
+  };
+
   const fetcher = (url: RequestInfo) => {
     return fetch(url, {
       headers: {
@@ -264,7 +309,10 @@ const Data = ({
               <select
                 className="form-select-sm ms-2"
                 value={selectDept}
-                onChange={(e) => setSelectDept(e.target.value)}
+                onChange={(e) => {
+                  setSelectDept(e.target.value);
+                  handleChangeDept(Number(e.target.value));
+                }}
               >
                 {departments?.map((item: Department, index: number) => (
                   <option value={item.id} key={index}>
@@ -319,7 +367,7 @@ const Data = ({
                 value={pegawai}
                 onChange={(e) => setPegawai(e.target.value)}
               >
-                {listPegawai?.map((item: Pegawai, index: number) => (
+                {listPegawaiAbsensi?.map((item: Pegawai, index: number) => (
                   <option value={item.id} key={index}>
                     {item.nama?.toUpperCase()}
                   </option>
