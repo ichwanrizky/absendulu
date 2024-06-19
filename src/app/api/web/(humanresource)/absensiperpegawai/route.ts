@@ -82,7 +82,7 @@ export async function GET(req: Request) {
     const tahun = searchParams.get("tahun");
     const pegawai = searchParams.get("pegawai");
 
-    if (!select_dept || !bulan || !tahun || !pegawai) {
+    if (!select_dept || !bulan || !tahun) {
       return new NextResponse(
         JSON.stringify({
           status: false,
