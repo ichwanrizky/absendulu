@@ -502,6 +502,7 @@ const Data = ({
                         ? item.absen_pulang && (
                             <input
                               type="time"
+                              step="1"
                               value={item.absen_pulang}
                               onChange={(e) =>
                                 handleChangeAbsenPulang(
