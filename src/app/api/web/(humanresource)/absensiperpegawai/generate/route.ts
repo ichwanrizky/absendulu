@@ -119,6 +119,9 @@ export async function POST(req: Request) {
     const jam_masuk_department = dataDepartment.pegawai[0].shift
       .jam_masuk as Date;
 
+    const jam_pulang_depaptment = dataDepartment.pegawai[0].shift
+      .jam_pulang as Date;
+
     const jam_masuk = new Date(tanggalAbsen as Date);
     jam_masuk.setHours(
       jam_masuk_department.getHours(),
@@ -126,11 +129,19 @@ export async function POST(req: Request) {
       jam_masuk_department.getSeconds()
     );
 
+    const jam_pulang = new Date(tanggalAbsen as Date);
+    jam_pulang.setHours(
+      jam_pulang_depaptment.getHours(),
+      jam_pulang_depaptment.getMinutes(),
+      jam_pulang_depaptment.getSeconds()
+    );
+
     const createAbsen = await prisma.absen.create({
       data: {
         pegawai_id: Number(pegawai_id),
         tanggal: tanggalAbsen,
         absen_masuk: jam_masuk,
+        absen_pulang: jam_pulang,
         shift_id: dataDepartment.pegawai[0]?.shift?.id
           ? dataDepartment.pegawai[0]?.shift?.id
           : 0,
