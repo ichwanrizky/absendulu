@@ -251,7 +251,6 @@ export async function POST(req: Request) {
 
     const formattedDate3 = new Date(jam_to);
     formattedDate3.setHours(formattedDate3.getHours() + 7);
-    formattedDate3.setSeconds(0);
     formattedDate3.setSeconds(0); // Set seconds to zero
     formattedDate3.setMilliseconds(0); // Also set milliseconds to zero, just to be sure
 
