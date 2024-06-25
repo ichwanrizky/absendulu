@@ -67,7 +67,6 @@ const Data = ({
   const [listPegawaiAbsensi, setListPegawaiAbsensi] = useState(
     listPegawai as Pegawai[]
   );
-  console.log(listPegawaiAbsensi);
   const [pegawai, setPegawai] = useState(listPegawai[0]?.id.toString());
 
   const [absenPegawai, setAbsenPegawai] = useState<any>([]);

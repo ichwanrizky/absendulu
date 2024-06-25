@@ -184,7 +184,8 @@ export async function POST(req: Request) {
     );
 
     const withoutSecond = new Date(formattedDate2);
-    withoutSecond.setSeconds(0, 0);
+    withoutSecond.setSeconds(0);
+    withoutSecond.setMilliseconds(0);
 
     const difference = (withoutSecond as any) - (jam_masuk as any);
 
