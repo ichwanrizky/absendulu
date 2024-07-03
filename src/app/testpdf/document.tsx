@@ -76,69 +76,15 @@ const styles = StyleSheet.create({
 
 const MyDocument = () => (
   <Document>
-    <Page size="A4" style={styles.page}>
-      <View style={styles.header}>
-        <Image src="assets/img/iso.png" style={{ width: 150 }} />
-      </View>
-      <View style={styles.title}>
-        <Image src="assets/img/panji.png" style={{ width: 110 }} />
-        <Text style={{ marginBottom: -5, marginTop: -2 }}>PT. PANJI JAYA</Text>
-      </View>
-      <View style={styles.section}>
-        <Text>Name: {exampleData.name}</Text>
-        <Text>Position: {exampleData.position}</Text>
-        <Text>Month: {exampleData.month}</Text>
-        <Text>Year: {exampleData.year}</Text>
-      </View>
-      <View style={styles.section}>
-        <View style={styles.table}>
-          <View style={styles.tableRow}>
-            <Text style={styles.bold}>INCOME</Text>
-            <Text style={styles.bold}>DEDUCTION</Text>
-          </View>
-          {exampleData.income.map((item, index) => (
-            <View key={index} style={styles.tableRow}>
-              <Text>{item.component}</Text>
-              <Text style={styles.tableCell}>
-                {item.amount.toLocaleString()}
-              </Text>
-            </View>
-          ))}
-          {exampleData.deduction.map((item, index) => (
-            <View key={index} style={styles.tableRow}>
-              <Text>{item.component}</Text>
-              <Text style={styles.tableCell}>
-                {item.amount.toLocaleString()}
-              </Text>
-            </View>
-          ))}
-          <View style={styles.tableRow}>
-            <Text style={styles.bold}>
-              TOTAL INCOME (A): {totalIncome.toLocaleString()}
-            </Text>
-            <Text style={styles.bold}>
-              TOTAL DEDUCTION (B): {totalDeduction.toLocaleString()}
-            </Text>
-          </View>
-          <View style={styles.tableRow}>
-            <Text style={styles.bold}>
-              TOTAL SALARY (A-B): {totalSalary.toLocaleString()}
-            </Text>
-          </View>
-        </View>
-      </View>
-      <View style={styles.section}>
-        <View style={styles.table}>
-          {exampleData.ul.map((item, index) => (
-            <View key={index} style={styles.tableRow}>
-              <Text>{item.component}</Text>
-              <Text style={styles.tableCell}>
-                {item.amount.toLocaleString()}
-              </Text>
-            </View>
-          ))}
-        </View>
-      </View>
+    <Page
+      size="A4"
+      style={{
+        paddingLeft: "15mm",
+        paddingRight: "15mm",
+        marginTop: "10mm",
+      }}
+    >
+      <View style={{ marginBottom: 85 }}></View>
     </Page>
   </Document>
 );

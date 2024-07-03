@@ -197,11 +197,13 @@ const Data = ({
           master_gaji_pegawai:
             item.master_gaji_pegawai.length > 0
               ? item.master_gaji_pegawai.map((item2: MasterGajiPegawai) => ({
-                  komponen_id: item2.komponen.id,
+                  id: item2.komponen.id,
+                  komponen: item2.komponen.komponen,
                   nominal: item2.nominal,
                 }))
               : newListKomponenGaji.map((item2: KomponenGaji) => ({
-                  komponen_id: item2.id,
+                  id: item2.id,
+                  komponen: item2.komponen,
                   nominal: 0,
                 })),
         }))
@@ -259,7 +261,7 @@ const Data = ({
         </div>
 
         <div className="table-responsive mt-3" style={{ maxHeight: "500px" }}>
-          <table className="table table-bordered">
+          <table className="table table-bordered table-striped">
             <thead>
               <tr>
                 <th

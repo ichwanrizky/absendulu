@@ -2,7 +2,15 @@
 
 import React, { ReactElement } from "react";
 import dynamic from "next/dynamic";
-import MyDocument from "./document";
+import {
+  PDFViewer,
+  Document,
+  Page,
+  Text,
+  View,
+  Image,
+  Font,
+} from "@react-pdf/renderer";
 
 const PDFViewer = dynamic(
   () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
@@ -20,42 +28,38 @@ const PDFDownloadLink = dynamic(
   }
 );
 
+const MyDocument = () => (
+  <Document>
+    <Page
+      size="A4"
+      style={{
+        paddingLeft: "15mm",
+        paddingRight: "15mm",
+        marginTop: "10mm",
+      }}
+    >
+      <View style={{ marginBottom: 85 }}></View>
+    </Page>
+  </Document>
+);
+
 export default function Preview(): ReactElement {
   return (
     <body>
-      <div
+      <main
         style={{
-          height: "100vh",
-          width: "100vw",
           display: "flex",
-          justifyContent: "center",
+          minHeight: "100vh",
+          flexDirection: "column",
           alignItems: "center",
+          gap: "1rem",
+          padding: "1rem",
         }}
       >
-        <PDFViewer
-          style={{ height: "100%", width: "100%" }}
-          showToolbar={false}
-        >
+        <PDFViewer width="100%" height="600">
           <MyDocument />
         </PDFViewer>
-        <div style={{ marginTop: 20 }}>
-          <PDFDownloadLink
-            document={<MyDocument />}
-            fileName="document.pdf"
-            style={{
-              padding: "10px 20px",
-              backgroundColor: "#007bff",
-              color: "#fff",
-              textDecoration: "none",
-              borderRadius: "4px",
-            }}
-          >
-            {({ blob, url, loading, error }) =>
-              loading ? "Loading document..." : "Download PDF"
-            }
-          </PDFDownloadLink>
-        </div>
-      </div>
+      </main>
     </body>
   );
 }

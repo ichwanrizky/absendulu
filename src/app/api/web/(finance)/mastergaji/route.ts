@@ -95,7 +95,7 @@ export async function GET(req: Request) {
           },
           orderBy: {
             komponen: {
-              urut: "asc",
+              urut_tampil: "asc",
             },
           },
         },
@@ -237,7 +237,7 @@ export async function POST(req: Request) {
         data: parseDataMasterGaji.flatMap((item: any) =>
           item.master_gaji_pegawai.map((item2: any) => ({
             pegawai_id: item.id,
-            komponen_id: item2.komponen_id,
+            komponen_id: item2.id,
             nominal: item2.nominal,
           }))
         ),
