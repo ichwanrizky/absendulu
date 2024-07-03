@@ -36,7 +36,7 @@ export async function POST(req: Request) {
         is_master: true,
       },
       orderBy: {
-        urut: "asc",
+        urut_tampil: "asc",
       },
     });
 
