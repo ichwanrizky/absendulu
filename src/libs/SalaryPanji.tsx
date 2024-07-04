@@ -505,7 +505,7 @@ const SalaryPanji = async (bulan: number, tahun: number, pegawai: any) => {
       }
 
       // BPJS KES & JP (1%)
-      if (i.id === 16 || i.id === 15) {
+      if (i.id === 16) {
         // BPJSKES PAK EDI
 
         if (item.pegawai_id === 70) {
@@ -517,9 +517,14 @@ const SalaryPanji = async (bulan: number, tahun: number, pegawai: any) => {
         }
       }
 
+      // JP (1%)
+      if (i.id === 15) {
+        nominal = Math.round(bpjs_tk * 0.01);
+      }
+
       // JHT (2%)
       if (i.id === 14) {
-        nominal = Math.round(bpjs_kes * 0.02);
+        nominal = Math.round(bpjs_tk * 0.02);
       }
 
       //   JUMLAH HARI KERJA
