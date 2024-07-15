@@ -410,7 +410,7 @@ model gaji {
   tipe            String?
   komponen        String?
   komponen_id     Int?
-  nominal         Int          @default(0)
+  nominal         Float        @default(0)
   urut            Int
   gaji_pegawai_id Int
   gaji_pegawai    gaji_pegawai @relation(fields: [gaji_pegawai_id], references: [id])
