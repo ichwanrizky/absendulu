@@ -205,11 +205,11 @@ const SalaryPanji = async (bulan: number, tahun: number, pegawai: any) => {
       if (item.jenis_izin === "C") {
         totalC += 1;
       } else if (item.jenis_izin === "CS") {
-        totalCS += 1;
+        totalCS += 0.5;
       } else if (item.jenis_izin === "I") {
         totalI += 1;
       } else if (item.jenis_izin === "IS") {
-        totalIS += 1;
+        totalIS += 0.5;
       } else if (item.jenis_izin === "S") {
         totalS += 1;
       } else if (item.jenis_izin === "G1") {
