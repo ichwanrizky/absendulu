@@ -165,7 +165,7 @@ export async function POST(
             if (checkTanggalMerah) {
               is_holiday = true;
 
-              if (roundedHours >= 4) {
+              if (roundedHours >= 5) {
                 newRoundedHours = roundedHours - 1;
               } else {
                 newRoundedHours = roundedHours;
