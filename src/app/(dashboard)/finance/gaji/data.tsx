@@ -175,6 +175,7 @@ const Data = ({
   }
 
   const salarys = data?.data;
+  console.log(salarys);
   const actions = data?.actions;
 
   return (
@@ -295,7 +296,19 @@ const Data = ({
                     <td align="center">{index + 1}</td>
                     <td align="left">{item.pegawai?.nama?.toUpperCase()}</td>
                     <td align="right">{numberWithCommas(item.nominal)}</td>
-                    <td align="left"></td>
+                    <td align="center">
+                      <a
+                        href={`/slipgaji/${item.uuid}`}
+                        className="btn btn-success btn-sm"
+                        target="_blank"
+                      >
+                        <i
+                          className="fa fa-file-text me-2"
+                          aria-hidden="true"
+                        />
+                        SLIP GAJI
+                      </a>
+                    </td>
                     <td align="center">
                       {actions?.includes("delete") &&
                         (isLoadingDelete[item.id] ? (
