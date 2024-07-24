@@ -27,7 +27,7 @@ type Gaji = {
   tipe: string;
   komponen: string;
   komponen_id: number;
-  nominal: number;
+  nominal: string;
   urut: number;
   gaji_pegawai_id: number;
 };
@@ -108,7 +108,7 @@ const Data = ({ gajiPegawai }: { gajiPegawai: GajiPegawai }) => {
               {gajiPegawai?.gaji
                 .filter((item: Gaji) => item.tipe === "penambahan")
                 .map((item: Gaji, index: number) => {
-                  totalA += item.nominal;
+                  totalA += Number(item.nominal);
                   return (
                     <div
                       className="d-flex justify-content-between"
@@ -133,7 +133,7 @@ const Data = ({ gajiPegawai }: { gajiPegawai: GajiPegawai }) => {
                         {item.komponen}
                       </span>
                       <span style={{ flexShrink: 0 }}>
-                        {item.nominal.toLocaleString()}
+                        {Number(item.nominal).toLocaleString("id-ID")}
                       </span>
                     </div>
                   );
@@ -143,7 +143,7 @@ const Data = ({ gajiPegawai }: { gajiPegawai: GajiPegawai }) => {
                 style={{ fontSize: "10pt" }}
               >
                 <span>Total Income (A)</span>
-                <span>{totalA.toLocaleString()}</span>
+                <span>{totalA.toLocaleString("id-ID")}</span>
               </div>
             </div>
             {/* <hr className="mt-4 mb-4" /> */}
@@ -152,7 +152,7 @@ const Data = ({ gajiPegawai }: { gajiPegawai: GajiPegawai }) => {
               {gajiPegawai?.gaji
                 .filter((item: Gaji) => item.tipe === "pengurangan")
                 .map((item: Gaji, index: number) => {
-                  totalB += item.nominal;
+                  totalB += Number(item.nominal);
                   return (
                     <div
                       className="d-flex justify-content-between"
@@ -177,7 +177,7 @@ const Data = ({ gajiPegawai }: { gajiPegawai: GajiPegawai }) => {
                         {item.komponen}
                       </span>
                       <span style={{ flexShrink: 0 }}>
-                        {item.nominal.toLocaleString()}
+                        {Number(item.nominal).toLocaleString("id-ID")}
                       </span>
                     </div>
                   );
@@ -187,13 +187,13 @@ const Data = ({ gajiPegawai }: { gajiPegawai: GajiPegawai }) => {
                 style={{ fontSize: "10pt" }}
               >
                 <span>Total Deduction (B)</span>
-                <span>{totalB.toLocaleString()}</span>
+                <span>{totalB.toLocaleString("id-ID")}</span>
               </div>
             </div>
             <div className="mb-3">
               <div className="d-flex justify-content-between fw-semibold">
                 <span>Total Salary</span>
-                <span>{(totalA - totalB).toLocaleString()}</span>
+                <span>{(totalA - totalB).toLocaleString("id-ID")}</span>
               </div>
             </div>
             <hr />
@@ -225,9 +225,7 @@ const Data = ({ gajiPegawai }: { gajiPegawai: GajiPegawai }) => {
                       >
                         {item.komponen}
                       </span>
-                      <span style={{ flexShrink: 0 }}>
-                        {item.nominal.toLocaleString()}
-                      </span>
+                      <span style={{ flexShrink: 0 }}>{item.nominal}</span>
                     </div>
                   );
                 })}

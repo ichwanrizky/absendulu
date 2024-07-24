@@ -24,7 +24,7 @@ interface Gaji {
   bulan: number;
   tahun: number;
   pegawai_id: number;
-  nominal: number;
+  nominal: string;
   publish: boolean;
   department_id: number;
   pegawai: Pegawai;
@@ -175,7 +175,6 @@ const Data = ({
   }
 
   const salarys = data?.data;
-  console.log(salarys);
   const actions = data?.actions;
 
   return (
@@ -295,7 +294,9 @@ const Data = ({
                   <tr key={index}>
                     <td align="center">{index + 1}</td>
                     <td align="left">{item.pegawai?.nama?.toUpperCase()}</td>
-                    <td align="right">{numberWithCommas(item.nominal)}</td>
+                    <td align="right">
+                      {Number(item.nominal).toLocaleString("id-ID")}
+                    </td>
                     <td align="center">
                       <a
                         href={`/slipgaji/${item.uuid}`}
