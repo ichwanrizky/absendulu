@@ -173,7 +173,7 @@ type Gaji = {
   tipe: string;
   komponen: string;
   komponen_id: number;
-  nominal: number;
+  nominal: string;
   urut: number;
   gaji_pegawai_id: number;
 };
@@ -225,14 +225,14 @@ const SlipGajiPdf = ({ gajiPegawai }: { gajiPegawai: GajiPegawai }) => {
             {gajiPegawai?.gaji
               .filter((item: Gaji) => item.tipe === "penambahan")
               .map((item: Gaji, index: number) => {
-                totalA += item.nominal;
+                totalA += Number(item.nominal);
 
                 return (
                   <View key={index} style={styles.noBorderTableRow}>
                     <Text style={styles.noBorderTableCol}>{item.komponen}</Text>
                     <Text>:</Text>
                     <Text style={styles.noBorderTableColWide}>
-                      {item.nominal.toLocaleString("id-ID")}
+                      {Number(item.nominal).toLocaleString("id-ID")}
                     </Text>
                   </View>
                 );
@@ -251,14 +251,14 @@ const SlipGajiPdf = ({ gajiPegawai }: { gajiPegawai: GajiPegawai }) => {
             {gajiPegawai?.gaji
               .filter((item: Gaji) => item.tipe === "pengurangan")
               .map((item: Gaji, index: number) => {
-                totalB += item.nominal;
+                totalB += Number(item.nominal);
 
                 return (
                   <View key={index} style={styles.noBorderTableRow}>
                     <Text style={styles.noBorderTableCol}>{item.komponen}</Text>
                     <Text>:</Text>
                     <Text style={styles.noBorderTableColWide}>
-                      {item.nominal.toLocaleString("id-ID")}
+                      {Number(item.nominal).toLocaleString("id-ID")}
                     </Text>
                   </View>
                 );
@@ -291,7 +291,7 @@ const SlipGajiPdf = ({ gajiPegawai }: { gajiPegawai: GajiPegawai }) => {
                     <Text style={styles.noBorderTableCol}>{item.komponen}</Text>
                     <Text>:</Text>
                     <Text style={styles.noBorderTableColWide}>
-                      {item.nominal.toLocaleString("id-ID")}
+                      {item.nominal}
                     </Text>
                   </View>
                 );

@@ -102,6 +102,11 @@ export async function GET(req: Request) {
           },
         },
       },
+      orderBy: {
+        pegawai: {
+          nama: "asc",
+        },
+      },
     });
 
     if (!data) {
@@ -235,7 +240,7 @@ export async function POST(req: Request) {
                     tipe: item2.tipe,
                     komponen: item2.komponen_name,
                     komponen_id: item2.komponen_id,
-                    nominal: Number(item2.nominal),
+                    nominal: item2.nominal.toString(),
                     urut: item2.urut_tampil,
                   })),
                 },
