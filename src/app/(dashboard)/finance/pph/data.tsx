@@ -2,6 +2,7 @@
 import { useState } from "react";
 import useSWR, { mutate } from "swr";
 import { usePathname } from "next/navigation";
+import * as XLSX from "xlsx";
 
 type Department = {
   id: number;
@@ -19,6 +20,7 @@ type Pph = {
   pegawai: {
     id: number;
     nama: string;
+    npwp: string;
   };
 };
 
@@ -33,11 +35,48 @@ const Data = ({
   const lastSlashIndex = pathname.lastIndexOf("/");
   const menu_url = pathname.substring(lastSlashIndex + 1);
 
+  const [isLoadingExport, setIsLoadingExport] = useState(false);
+
   // filter
   const [search, setSearch] = useState("");
   const [bulan, setBulan] = useState((new Date().getMonth() + 1).toString());
   const [tahun, setTahun] = useState(new Date().getFullYear().toString());
   const [selectDept, setSelectDept] = useState(departments[0].id.toString());
+
+  const exportToExcel = async (dataPph: Pph[]) => {
+    try {
+      const headerTitles = ["NO", "NAMA", "NPWP", "GAJI", "PPH21"];
+      const data = dataPph.map((item, index: number) => {
+        return {
+          NO: index + 1,
+          NAMA: item.pegawai.nama?.toUpperCase(),
+          NPWP: item.pegawai.npwp,
+          GAJI: item.gaji,
+          PPH21: item.pph21,
+        };
+      });
+
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.aoa_to_sheet([headerTitles]);
+      XLSX.utils.sheet_add_json(worksheet, data, {
+        skipHeader: true,
+        origin: "A2",
+      });
+      const colWidths = headerTitles.map((title, index) => {
+        const maxContentWidth = Math.max(
+          ...data.map((row: any) =>
+            row[title] ? row[title].toString().length : 0
+          )
+        );
+        return { wch: Math.max(title.length, maxContentWidth) };
+      });
+      worksheet["!cols"] = colWidths;
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+      XLSX.writeFile(workbook, `DATA PPH21 ${bulan}-${tahun}.xlsx`);
+    } catch (error) {
+      alert("something went wrong");
+    }
+  };
 
   const fetcher = (url: RequestInfo) => {
     return fetch(url, {
@@ -114,7 +153,6 @@ const Data = ({
   }
 
   const dataPph = data?.data;
-  const actions = data?.actions;
 
   let totalPph = 0;
 
@@ -125,7 +163,7 @@ const Data = ({
           <div className="col-sm-12 d-flex justify-content-between align-items-center">
             <div>
               <select
-                className="form-select-sm ms-2"
+                className="form-select-sm"
                 value={selectDept}
                 onChange={(e) => setSelectDept(e.target.value)}
               >
@@ -192,6 +230,36 @@ const Data = ({
                 border: "1px solid #ced4da",
               }}
             />
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="col-sm-12 d-flex justify-content-between align-items-center mt-2">
+            <div>
+              {dataPph?.length > 0 &&
+                (isLoadingExport ? (
+                  <button
+                    type="button"
+                    className="btn btn-success btn-sm fw-bold"
+                    disabled
+                  >
+                    <span
+                      className="spinner-border spinner-border-sm me-2"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                    LOADING...
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-success btn-sm fw-bold"
+                    onClick={() => exportToExcel(dataPph)}
+                  >
+                    EXPORT TO EXCEL
+                  </button>
+                ))}
+            </div>
           </div>
         </div>
 

@@ -130,7 +130,7 @@ const Data = ({
     );
   };
 
-  const exportToExcel = async (dataSalary: Gaji[]) => {
+  const exportToExcel = async () => {
     setIsLoadingExport(true);
     try {
       const body = new FormData();
@@ -224,7 +224,7 @@ const Data = ({
         });
         worksheet["!cols"] = colWidths;
         XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-        XLSX.writeFile(workbook, `GajiExportHeadersOnly.xlsx`);
+        XLSX.writeFile(workbook, `DATA GAJI ${bulan}-${tahun}.xlsx`);
       }
     } catch (error) {
       alert("something went wrong");
@@ -416,7 +416,7 @@ const Data = ({
                   <button
                     type="button"
                     className="btn btn-success btn-sm fw-bold"
-                    onClick={() => exportToExcel(salarys)}
+                    onClick={() => exportToExcel()}
                   >
                     EXPORT TO EXCEL
                   </button>
