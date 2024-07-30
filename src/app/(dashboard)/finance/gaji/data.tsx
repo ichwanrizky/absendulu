@@ -3,6 +3,7 @@ import { useState } from "react";
 import useSWR, { mutate } from "swr";
 import ModalCreate from "./modalCreate";
 import { usePathname } from "next/navigation";
+import * as XLSX from "xlsx";
 
 type Department = {
   id: number;
@@ -16,6 +17,11 @@ type Department = {
 interface Pegawai {
   id: number;
   nama: string;
+  status_nikah: string;
+  no_rek: string;
+  position: string;
+  department: Department;
+  sub_department: SubDepartment;
 }
 
 interface Gaji {
@@ -28,7 +34,30 @@ interface Gaji {
   publish: boolean;
   department_id: number;
   pegawai: Pegawai;
+  komponen_id: number;
+  tipe: string;
 }
+
+type ListKomponen = {
+  id: number;
+  komponen: string;
+  tipe: string;
+};
+
+type ListGaji = {
+  id: number;
+  nama: string;
+  status_nikah: string;
+  no_rek: string;
+  position: string;
+  department: Department;
+  sub_department: SubDepartment;
+  gaji: Gaji[];
+};
+
+type SubDepartment = {
+  nama_sub_department: string;
+};
 
 interface isLoadingProps {
   [key: number]: boolean;
@@ -47,6 +76,7 @@ const Data = ({
 
   // loading state
   const [isLoadingDelete, setIsLoadingDelete] = useState<isLoadingProps>({});
+  const [isLoadingExport, setIsLoadingExport] = useState(false);
 
   // modal state
   const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
@@ -98,6 +128,108 @@ const Data = ({
         ? `${process.env.NEXT_PUBLIC_API_URL}/api/web/gaji?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}`
         : `${process.env.NEXT_PUBLIC_API_URL}/api/web/gaji?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}&search=${search}`
     );
+  };
+
+  const exportToExcel = async () => {
+    setIsLoadingExport(true);
+    try {
+      const body = new FormData();
+      body.append("department", selectDept);
+      body.append("tahun", tahun);
+      body.append("bulan", bulan);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/lib/exportexcel_gaji`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+          body: body,
+        }
+      );
+      const res = await response.json();
+      if (!response.ok) {
+        alert(res.message);
+      } else {
+        // export here
+        const headers = res.data.listKomponen;
+        const data = res.data.listGaji;
+
+        const headerTitles = [
+          "NO",
+          "NAMA",
+          "POSITION",
+          "DEPARTMENT",
+          "SUB DEPARTMENT",
+          "STATUS NIKAH",
+          "REKENING",
+          ...headers.map((item: ListKomponen) => item.komponen),
+          "TOTAL SALARY",
+        ];
+
+        const exportData = data.map((item: ListGaji, index: number) => {
+          const komponenValues = headers.reduce((acc: any, header: any) => {
+            const komponenItem = item.gaji.find(
+              (item2: Gaji) => item2.komponen_id === header.id
+            );
+            if (komponenItem) {
+              acc[header.komponen] =
+                komponenItem.tipe === "penambahan" ||
+                komponenItem.tipe === "pengurangan"
+                  ? Number(komponenItem.nominal)
+                  : komponenItem.nominal?.toString();
+            } else {
+              acc[header.komponen] = "INVALID DATA";
+            }
+            return acc;
+          }, {});
+
+          return {
+            NO: index + 1,
+            NAMA: item.nama?.toUpperCase(),
+            POSITION: item.position?.toUpperCase(),
+            DEPARTMENT: item.department.nama_department?.toUpperCase(),
+            "SUB DEPARTMENT":
+              item.sub_department.nama_sub_department?.toUpperCase(),
+            "STATUS NIKAH": item.status_nikah?.toUpperCase(),
+            REKENING: item.no_rek?.toUpperCase(),
+            ...komponenValues,
+            "TOTAL SALARY": item.gaji.reduce((acc: number, item2: Gaji) => {
+              const nominal = Number(item2.nominal);
+              if (item2.tipe === "penambahan") {
+                return acc + nominal;
+              } else if (item2.tipe === "pengurangan") {
+                return acc - nominal;
+              } else {
+                return acc;
+              }
+            }, 0),
+          };
+        });
+
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.aoa_to_sheet([headerTitles]);
+        XLSX.utils.sheet_add_json(worksheet, exportData, {
+          skipHeader: true,
+          origin: "A2",
+        });
+        const colWidths = headerTitles.map((title, index) => {
+          const maxContentWidth = Math.max(
+            ...exportData.map((row: any) =>
+              row[title] ? row[title].toString().length : 0
+            )
+          );
+          return { wch: Math.max(title.length, maxContentWidth) };
+        });
+        worksheet["!cols"] = colWidths;
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+        XLSX.writeFile(workbook, `DATA GAJI ${bulan}-${tahun}.xlsx`);
+      }
+    } catch (error) {
+      alert("something went wrong");
+    }
+    setIsLoadingExport(false);
   };
 
   const fetcher = (url: RequestInfo) => {
@@ -263,7 +395,37 @@ const Data = ({
           </div>
         </div>
 
-        <div className="table-responsive mt-3">
+        <div className="row">
+          <div className="col-sm-12 d-flex justify-content-between align-items-center mt-2">
+            <div>
+              {salarys?.length > 0 &&
+                (isLoadingExport ? (
+                  <button
+                    type="button"
+                    className="btn btn-success btn-sm fw-bold"
+                    disabled
+                  >
+                    <span
+                      className="spinner-border spinner-border-sm me-2"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                    LOADING...
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-success btn-sm fw-bold"
+                    onClick={() => exportToExcel()}
+                  >
+                    EXPORT TO EXCEL
+                  </button>
+                ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="table-responsive mt-3" style={{ maxHeight: "500px" }}>
           <table className="table table-bordered">
             <thead>
               <tr>
@@ -348,10 +510,6 @@ const Data = ({
       )}
     </>
   );
-};
-
-const numberWithCommas = (num: number) => {
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
 
 export default Data;
