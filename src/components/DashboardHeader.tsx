@@ -50,10 +50,10 @@ const DashboardHeader = ({ session }: { session: any }) => {
               />
               <div className="dropdown-user-details">
                 <div className="dropdown-user-details-name">
-                  {session.pegawaiName.toUpperCase()}
+                  {session.pegawaiName?.toUpperCase()}
                 </div>
                 <div className="dropdown-user-details-email">
-                  {session.roleName.toUpperCase()}
+                  {session.roleName?.toUpperCase()}
                 </div>
               </div>
             </h6>
