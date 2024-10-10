@@ -110,7 +110,7 @@ const Data = ({
       }
 
       const fileSize = file.size / 1024;
-      if (fileSize > 500) {
+      if (fileSize > 2048) {
         alert("Maximum file size is 500KB.");
         event.target.value = "";
         return;
