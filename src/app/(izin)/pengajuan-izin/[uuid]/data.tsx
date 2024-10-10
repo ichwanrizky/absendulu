@@ -64,19 +64,23 @@ const Data = ({
     if (confirm("Apakan anda yakin ingin mengajukan izin ini?")) {
       setIsLoading(true);
       try {
-        const body = new FormData();
-        body.append("jenis_izin", jenisIzin);
-        body.append("tanggal", tanggalIzin?.toISOString() || "");
-        body.append("jumlah_hari", jumlahHari);
-        body.append("jumlah_jam", jumlahJam);
-        body.append("keterangan", keterangan);
-        body.append("mc", base64);
+        const body = {
+          jenis_izin: jenisIzin,
+          tanggal: tanggalIzin?.toISOString() || "",
+          jumlah_hari: jumlahHari,
+          jumlah_jam: jumlahJam,
+          keterangan: keterangan,
+          mc: base64,
+        };
 
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/lib/pengajuan-izin/${session.uuid}`,
           {
             method: "POST",
-            body: body,
+            body: JSON.stringify(body),
+            headers: {
+              "Content-Type": "application/json",
+            },
           }
         );
         const res = await response.json();

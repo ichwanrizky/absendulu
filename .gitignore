@@ -38,4 +38,4 @@ next-env.d.ts
 
 
 # ignore public/izin files
-public/izin
+public/izin/**
