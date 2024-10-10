@@ -80,13 +80,14 @@ export async function POST(
       );
     }
 
-    const body = await req.formData();
-    const jenis_izin = body.get("jenis_izin")!.toString();
-    let tanggal = body.get("tanggal")!.toString();
-    let jumlah_hari = body.get("jumlah_hari")!.toString();
-    let jumlah_jam = body.get("jumlah_jam")!.toString();
-    const keterangan = body.get("keterangan")!.toString();
-    const mc = body.get("mc")?.toString();
+    const body = await req.json();
+
+    const jenis_izin = body.jenis_izin;
+    let tanggal = body.tanggal;
+    let jumlah_hari = body.jumlah_hari;
+    let jumlah_jam = body.jumlah_jam;
+    const keterangan = body.keterangan;
+    const mc = body.mc;
 
     if (
       jenis_izin == "C" ||
