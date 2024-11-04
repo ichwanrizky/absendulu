@@ -3,6 +3,8 @@ import { checkSession } from "@/libs/checkSession";
 import { checkRoles } from "@/libs/checkRoles";
 import prisma from "@/libs/db";
 import { handleError } from "@/libs/handleError";
+const path = require("path");
+const fs = require("fs");
 
 export async function DELETE(
   req: Request,
@@ -121,6 +123,18 @@ export async function DELETE(
           },
         }
       );
+    }
+
+    if (deletes[1].jenis_izin === "S") {
+      const filePath = path.join(
+        process.cwd(),
+        "public/izin",
+        deletes[1].uuid + ".png"
+      );
+
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
     }
 
     return new NextResponse(
