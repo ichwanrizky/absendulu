@@ -226,14 +226,61 @@ export async function POST(req: Request) {
     jam_absen.setHours(hours, minutes, seconds);
     jam_absen.setHours(jam_absen.getHours() + 7);
 
+    const shift = await prisma.absen.findFirst({
+      select: {
+        shift: {
+          select: {
+            jam_masuk: true,
+          },
+        },
+      },
+      where: {
+        id: Number(absen_id),
+      },
+    });
+
+    if (!shift) {
+      return new NextResponse(
+        JSON.stringify({
+          status: false,
+          message: "Shift not found",
+        }),
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
     let update;
 
     if (jenis === "absen_masuk") {
+      // late
+      const jam_masuk_department = new Date(shift.shift.jam_masuk as Date);
+      jam_masuk_department.setFullYear(
+        tanggalAbsen.getFullYear(),
+        tanggalAbsen.getMonth(),
+        tanggalAbsen.getDate()
+      );
+
+      const withoutSecond = new Date(jam_absen);
+      withoutSecond.setSeconds(0);
+      withoutSecond.setMilliseconds(0);
+
+      const difference = (withoutSecond as any) - (jam_masuk_department as any);
+      const differenceInMinutes = Math.round(difference / 60000);
+
+      let late = 0;
+      if (differenceInMinutes > 0) late = differenceInMinutes;
+
       update = await prisma.absen.update({
         data: {
           absen_masuk: jam_absen,
           ket_masuk: "Edit Absen",
           is_manual: true,
+          late: late,
         },
         where: {
           id: Number(absen_id),

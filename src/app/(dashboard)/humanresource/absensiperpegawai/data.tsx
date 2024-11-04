@@ -108,6 +108,9 @@ const Data = ({
         alert(res.message);
       } else {
         alert(res.message);
+        mutate(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/absensiperpegawai?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}&pegawai=${pegawai}`
+        );
       }
     } catch (error) {
       alert("something went wrong");
@@ -151,6 +154,9 @@ const Data = ({
         alert(res.message);
       } else {
         alert(res.message);
+        mutate(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/web/absensiperpegawai?menu_url=${menu_url}&select_dept=${selectDept}&bulan=${bulan}&tahun=${tahun}&pegawai=${pegawai}`
+        );
       }
     } catch (error) {
       alert("something went wrong");

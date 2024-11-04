@@ -363,7 +363,7 @@ const Data = ({
                     <td align="center">{item.jumlah_jam}</td>
                     <td align="center">
                       {item.jenis_izin === "S" && (
-                        <a href={`/izin/${item.uuid}.png`} target="_blank">
+                        <a href={`/files_mc/${item.uuid}.png`} target="_blank">
                           MC
                         </a>
                       )}
