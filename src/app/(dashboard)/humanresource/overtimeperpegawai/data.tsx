@@ -247,11 +247,14 @@ const Data = ({
                 value={tahun}
                 onChange={(e) => setTahun(e.target.value)}
               >
-                {Array.from({ length: 2 }, (_, i) => (
-                  <option value={new Date().getFullYear() + i} key={i}>
-                    {new Date().getFullYear() + i}
-                  </option>
-                ))}
+                {Array.from({ length: 3 }, (_, i) => {
+                  const year = new Date().getFullYear() - i;
+                  return year >= 2024 ? (
+                    <option value={year} key={i}>
+                      {year}
+                    </option>
+                  ) : null;
+                })}
               </select>
 
               <select
