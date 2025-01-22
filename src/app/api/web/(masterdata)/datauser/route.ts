@@ -252,6 +252,7 @@ export async function POST(req: Request) {
         id: true,
         nama: true,
         tgl_lahir: true,
+        telp: true,
       },
       where: {
         id: {
@@ -265,12 +266,31 @@ export async function POST(req: Request) {
     const formattedDate = new Date(currendDate);
     formattedDate.setHours(formattedDate.getHours() + 7);
 
+    // const formattedPegawai = await Promise.all(
+    //   dataPegawai.map(async (item) => {
+    //     const username = item.nama?.toLowerCase().split(" ")[0] + item.id;
+    //     const rawPassword =
+    //       item.nama?.toLowerCase().split(" ")[0] +
+    //       (item.tgl_lahir?.getFullYear() || "");
+    //     const password = await bcrypt.hash(rawPassword, 10);
+
+    //     return {
+    //       username,
+    //       password,
+    //       createdAt: formattedDate,
+    //       pegawai_id: item.id,
+    //       name: item.nama.toUpperCase(),
+    //     };
+    //   })
+    // );
     const formattedPegawai = await Promise.all(
       dataPegawai.map(async (item) => {
-        const username = item.nama?.toLowerCase().split(" ")[0] + item.id;
+        const username =
+          item.telp || item.nama?.toLowerCase().split(" ")[0] + item.id;
         const rawPassword =
+          item.telp ||
           item.nama?.toLowerCase().split(" ")[0] +
-          (item.tgl_lahir?.getFullYear() || "");
+            (item.tgl_lahir?.getFullYear() || "");
         const password = await bcrypt.hash(rawPassword, 10);
 
         return {
