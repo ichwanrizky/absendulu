@@ -454,3 +454,31 @@ model pph21 {
   gaji          Int        @default(0)
   pph21         Int        @default(0)
 }
+
+model box_master {
+  id                  Int                   @id @default(autoincrement())
+  box_name            String
+  active              Boolean               @default(true)
+  box_tranaction_item box_tranaction_item[]
+}
+
+model box_tranaction {
+  id                  Int                   @id @default(autoincrement())
+  do_number           String
+  date                DateTime              @db.Date
+  type                box_type
+  box_tranaction_item box_tranaction_item[]
+}
+
+enum box_type {
+  BEFORE
+  AFTER
+}
+
+model box_tranaction_item {
+  id                Int            @id @default(autoincrement())
+  box_tranaction_id Int
+  box_tranaction    box_tranaction @relation(fields: [box_tranaction_id], references: [id])
+  box_master_id     Int
+  box_master        box_master     @relation(fields: [box_master_id], references: [id])
+}
